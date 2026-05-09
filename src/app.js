@@ -1,0 +1,29 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const helmet = require('helmet');
+
+const db = require('./config/db.config');
+
+const app = new express();
+// middle for web security
+app.use(helmet());
+// cross origin resource sharing
+app.use(cors({
+    origin: 'http://localhost:8080',
+    methods: ['GET','POST','PUT','DELETE'],
+    credentials: false,
+    allowedHeaders: ['Content-Type'],
+}));
+// logging, dev -> colored logs
+app.use(morgan('dev'));
+// enables server to read json responses
+app.use(express.json());
+
+// routes
+const authRoute = require('./routes/auth.route');
+// route caller
+app.use('/auth',authRoute);
+
+module.exports = app;

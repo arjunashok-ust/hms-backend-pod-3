@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "hms-backend-connrection",
+        "projectKey": "hms-backend"
+    }
+}
