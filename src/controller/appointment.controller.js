@@ -2,7 +2,7 @@ const Appointment = require('../models/appointment.model');
 const Employee = require('../models/employee.model');
 const Patient = require('../models/employee.model');
 
-
+// create appointment
 const createAppointment = async (req,res) => {
     const {
         patientId,

@@ -6,3 +6,5 @@ node_modules/
 sonar-project.properties
 # vscode config
 .vscode/
+# sonar config
+sonar-project.properties

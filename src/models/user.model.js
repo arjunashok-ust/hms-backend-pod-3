@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     employeeId: { type: String, ref: 'Employee', required: true },
     lastLoginAt: { type: Date, default: null }
 },
-    {timestamps: { createdAt: 'created_at', }}
+    {timestamps: { createdAt: 'created_at' }}
 );
 
 module.exports = mongoose.model('Users', userSchema);

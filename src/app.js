@@ -7,7 +7,7 @@ const helmet = require('helmet');
 const db = require('./config/db.config');
 
 const app = new express();
-// middle for web security
+// middleware for web security
 app.use(helmet());
 // cross origin resource sharing
 app.use(cors({
@@ -23,7 +23,9 @@ app.use(express.json());
 
 // routes
 const authRoute = require('./routes/auth.route');
+const userRoute = require('./routes/user.route');
 // route caller
 app.use('/auth',authRoute);
+app.use('/user',userRoute);
 
 module.exports = app;

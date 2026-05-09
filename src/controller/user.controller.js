@@ -3,7 +3,7 @@ const User = require('../models/user.model');
 // Get User
 const getUserProfile = async (req, res) => {
     try {
-        const email = req.body;
+        const email = req.body.email;
 
         const user = await User.findOne({ email });
 
