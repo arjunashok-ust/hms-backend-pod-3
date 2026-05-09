@@ -9,10 +9,10 @@ const employeeSchema = new mongoose.Schema({
     designation: [{ type: String, enum: ['doctor', 'nurse', 'receptionist', 'owner', 'lab_tech', 'cashier', 'pharmacist'], required: true }],
     status: { type: String, enum: ['active', 'inactive'], required: true },
     joiningDate: { type: Date, required: true },
-    medicalRegistrationNo: { type: String, required: true, unique: true },
-    specialization: { type: String, required: true },
+    medicalRegistrationNo: { type: String, unique: true },
+    specialization: { type: String},
     qualification: [{ type: String, enum: ['MBBS', 'MD'], required: true }],
-    consultationFee: { type: Number, required: true },
+    consultationFee: { type: Number},
     availabilitySlots: [{
         type: String, enum: [
             "09:00-10:00",
@@ -27,7 +27,7 @@ const employeeSchema = new mongoose.Schema({
             "18:00-19:00",
             "19:00-20:00",
             "20:00-21:00",
-        ], required: true
+        ],
     }],
 });
 

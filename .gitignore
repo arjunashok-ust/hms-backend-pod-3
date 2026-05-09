@@ -4,3 +4,5 @@
 node_modules/
 # sonar qube configs
 sonar-project.properties
+# vscode config
+.vscode/

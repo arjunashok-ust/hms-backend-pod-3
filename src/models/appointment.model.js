@@ -3,7 +3,7 @@ const Counter = require('./counter.model');
 
 
 const appointmentSchema = new mongoose.Schema({
-    appointmentId: { type: String, unique: true, required: true },
+    appointmentId: { type: String, unique: true },
     patientId: { type: String, ref: 'Patients', required: true },
     doctorEmployeeId: { type: String, ref: 'Employees', required: true },
     date: { type: Date, required: true },
