@@ -11,7 +11,7 @@ const paymentSchema = new mongoose.Schema({
 });
 
 // pre hook
-paymentSchema.pre('save', async function (next) {
+paymentSchema.pre('save', async function () {
     if (this.isNew) {
         try {
             const counter = await Counter.findOneAndUpdate(
@@ -23,11 +23,10 @@ paymentSchema.pre('save', async function (next) {
             this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-            console.err("payment model pre hook error : " + err);
+            console.error("payment model pre hook error : " + err);
             throw err;
         }
     }
-    next();
 })
 
 module.exports = mongoose.model('Payments', paymentSchema);

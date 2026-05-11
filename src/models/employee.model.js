@@ -44,7 +44,7 @@ employeeSchema.pre('save', async function () {
             this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-            console.err("employee model pre hook error : "+err);
+            console.error("employee model pre hook error : "+err);
             throw (err);
         }
     }

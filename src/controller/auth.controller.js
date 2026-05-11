@@ -65,6 +65,7 @@ const signUp = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
+        
         console.log("account created.");
         // 201 created
         return res.status(201).json({
@@ -75,6 +76,7 @@ const signUp = async (req, res) => {
         });
     }
     catch (err) {
+        console.error(err);
         return res.status(500).json({ message: 'server error during signup' });
     }
 }
@@ -90,17 +92,17 @@ const login = async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (!existingUser) {
-            return res.status(404).json({ message: 'user not found.' })
+            return res.status(404).json({ message: 'invalid credentials.' })
         }
 
-        const isMatch = bcrypt.compare(password, existingUser.passwordHash);
+        const isMatch = await bcrypt.compare(password, existingUser.passwordHash);
 
         if (!isMatch) {
-            return res.status(401).json({ message: 'invalid password.' });
+            return res.status(401).json({ message: 'invalid credentials.' });
         }
 
         existingUser.lastLoginAt = Date.now();
-        existingUser.save();
+        await existingUser.save();
 
         console.log("login sucessfull");
         return res.status(200).json({
@@ -110,6 +112,7 @@ const login = async (req, res) => {
         });
     }
     catch (err) {
+        console.error(err);
         return res.status(500).json({message: 'server error during login'});
     }
 }

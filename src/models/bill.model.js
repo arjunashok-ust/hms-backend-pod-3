@@ -15,7 +15,7 @@ const billSchema = new mongoose.Schema({
 });
 
 // pre hook
-billSchema.pre('save', async function (next) {
+billSchema.pre('save', async function () {
     if (this.isNew) {
         try {
             const counter = await Counter.findOneAndUpdate(
@@ -27,11 +27,10 @@ billSchema.pre('save', async function (next) {
             this.billId = `BILL-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-            console.err("bill model pre hook error : "+err);
+            console.error("bill model pre hook error : "+err);
             throw err;
         }
     }
-    next();
 })
 
 module.exports = mongoose.model('Bills', billSchema);

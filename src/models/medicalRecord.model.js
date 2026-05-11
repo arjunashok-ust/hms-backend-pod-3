@@ -21,7 +21,7 @@ const medicalRecordSchema = new mongoose.Schema({
 );
 
 // pre hook
-medicalRecordSchema.pre('save', async function (next) {
+medicalRecordSchema.pre('save', async function () {
     if (this.isNew) {
         try {
             const counter = await Counter.findOneAndUpdate(
@@ -33,7 +33,7 @@ medicalRecordSchema.pre('save', async function (next) {
             this.medicalRecordId = `MED-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-            console.err("medical record model pre hook error : "+err);
+            console.error("medical record model pre hook error : "+err);
             throw err;
         }
     }

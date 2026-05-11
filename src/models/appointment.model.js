@@ -25,7 +25,7 @@ appointmentSchema.pre('save', async function () {
             this.appointmentId = `APP-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-            console.err("appointment model pre hook error : " + err);
+            console.error("appointment model pre hook error : " + err);
             throw err;
         }
     }
