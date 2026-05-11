@@ -7,8 +7,7 @@ const patientSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: true,
-        trim: true,
-        match: [/^[0-9]{10}$/, "Phone must be 10 digits"]
+        trim: true
     },
     email: {
         type: String,
@@ -18,7 +17,7 @@ const patientSchema = new mongoose.Schema({
     },
     gender: {type: String,enum: ["Male", "Female", "Other"],required: true},
     dob: {type: Date,required: true},
-    emergencyContact: {type: String,required: true},
+    emergencyContact: {type: String},
     status: {type: Boolean,default: true},
     address: {
         line1: { type: String, required: true },
