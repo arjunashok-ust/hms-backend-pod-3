@@ -10,12 +10,17 @@ const userSchema = new mongoose.Schema({
     },
     passwordHash: { type: String, required: true },
     status: { type: Boolean, default: true },
-    role: { type: String, required: true },
+    role: [
+        {
+            type: String,
+            enum: ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'],
+            required: true
+        }
+    ],
     employeeID: { type: String, ref: "Employees" },
     lastLogin: { type: Date, default: null },
     verificationToken: { type: String, default: null },
     verificationTokenExpiry: { type: Date, default: null },
-    isVerified: {type: Boolean, default : false}
 }, { timestamps: true });
 
 module.exports = mongoose.model("Users", userSchema);
