@@ -5,7 +5,7 @@ const counterSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true   // one counter per model
+        unique: true  
     },
     seq: {
         type: Number,

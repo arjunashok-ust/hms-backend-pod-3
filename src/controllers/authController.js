@@ -73,7 +73,6 @@ exports.signup = async (req, res) => {
                 id: userProfile._id,
                 email: userProfile.email,
                 employeeID: employeeProfile.employeeID,
-                // isVerified: userProfile.isVerified    // Uncomment when verificqation implemented
             }
         });
     }
