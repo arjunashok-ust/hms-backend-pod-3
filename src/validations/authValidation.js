@@ -4,18 +4,15 @@ const { body } = require("express-validator");
 
 exports.signupValidation = [
     body("email").isEmail().withMessage("Valid email required"),
-    body("password").isLength({min:8}).withMessage("Password must be atleast 8 characters"),
+    body("password").isLength({ min: 8 }).withMessage("Password must be atleast 8 characters"),
     body("role").notEmpty().withMessage("Role required"),
     body("phone").notEmpty().withMessage("Phone no required"),
     body("department").notEmpty().withMessage("Department required"),
     body("designation").notEmpty().withMessage("Designation required"),
     body("joiningDate").notEmpty().withMessage("Joining Date required"),
-    body("medicalRegistrationNo").notEmpty().withMessage("Medical Registration no required"),
-    body("qualification").notEmpty().withMessage("Qualification required"),
-    body("availabilitySlots").notEmpty().withMessage("Availabiltiy slots required")
 ]
 
 exports.loginValidation = [
     body("email").isEmail().withMessage("Valid email required"),
-    body("password").isLength({min:8}).withMessage("Password must be atleast 8 characters"),
+    body("password").isLength({ min: 8 }).withMessage("Password must be atleast 8 characters"),
 ]
