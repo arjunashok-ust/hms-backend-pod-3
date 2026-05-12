@@ -4,16 +4,9 @@ const jwt = require('jsonwebtoken');
 
 const deleteUserProfile = async (req, res) => {
     try {
-        const header = req.headers.authorization;
-        if (!header?.startsWith('Bearer ')) {
-            return res.status(401).json({ message: 'expired or invalid token.' });
-        }
-        const token = header.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (!decoded.roles?.includes('admin')) {
+        if (!req.user.roles?.includes('admin')) {
             return res.status(401).json({ message: 'not authorized to do this operation.' });
         }
-
         const EmployeeId = req.body.id;
         const existingUser = await User.findOne({ employeeId: EmployeeId });
         if (!existingUser) {

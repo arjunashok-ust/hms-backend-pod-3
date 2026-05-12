@@ -24,4 +24,26 @@ const getUserProfile = async (req, res) => {
     }
 }
 
+// Update User Profile
+const updateUserProfile = async (req, res) => {
+    try {
+        const {
+            employeeId,
+            data
+        } = req.body;
+
+        const existingUser = await Employee.findOne({ employeeCode: employeeId });
+        if(!existingUser){
+            return res.status(404).json({message: 'user not found!'});
+        }
+        if(data.employeeCode){
+            return res.status(401).json({message: 'employee code cant be edited'});
+        }
+        
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'internal server error during update user profile' });
+    }
+}
+
 module.exports = { getUserProfile }

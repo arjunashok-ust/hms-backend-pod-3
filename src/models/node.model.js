@@ -26,5 +26,5 @@ nodeSchema.pre('save', async () => {
     }
 });
 
-module.exports = mongoose.model();
+module.exports = mongoose.model('Nodes',nodeSchema);
 

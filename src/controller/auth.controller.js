@@ -38,6 +38,13 @@ const signUp = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
 
+        if(roles.includes('doctor','nurse','pharmacist','lab_tech')){
+            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo});
+            if(medicalRegNo){
+                return res.status(409).json({message: 'medical registration no should be unique.'});
+            }
+        }
+
         const profile = await Employee.create({
             name,
             email,
