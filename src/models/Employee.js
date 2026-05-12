@@ -7,15 +7,15 @@ const employeeSchema = mongoose.Schema({
     employeeId: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
-    department: { type: String, required: true, enum: ['opd', 'ipd', 'lab', 'pharmacy', 'admin'] },
+    department: { type: String, required: true },
     designation: { type: String, required: true },
     status: { type: Boolean, default: true },
     joiningDate: { type: Date },
-    medicalRegistrationNo: { type: String, unique: true },
-    specialization: { type: String, required: true },
-    qualification: [{ type: String, }],
-    consultationFee: { type: Number, required: true },
-    availabilitySlots: [{ type: String, required: true }]
+    medicalRegistrationNo: { type: String},
+    specialization: { type: String },
+    qualification: [{ type: String }],
+    consultationFee: { type: Number },
+    availabilitySlots: [{ type: String }]
 })
 employeeSchema.pre('save', async function (next) {
 

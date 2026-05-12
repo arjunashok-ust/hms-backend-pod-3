@@ -10,23 +10,40 @@ exports.signup=async(req,res)=>{
             email, 
             password,
             name,
-            roles,
+            role,
             phone,
             department,
             designation,
             status,
             joiningDate,
             specialization,
+            medicalRegistrationNo,
             qualification,
             consultationFee,
             availabilitySlots,
         }=req.body;
 
+        if (role === "doctor") {
+
+            if (!medicalRegistrationNo) {
+                return res.status(400).json({success: false, message: "Medical Registration Number is required"});
+            }
+
+            const existingMedicalRegistrationNo = await Employee.findOne({ medicalRegistrationNo});
+
+            if (existingMedicalRegistrationNo) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Medical Registration Number already exists,provide a different one",
+                });
+            }
+        }
+
         const existEmployee=await Employee.findOne({email});
         if(existEmployee){
             return res.status(409).json({message:"Email Id Already Registered"});
         }
-        console.log(existEmployee);
+        //console.log(existEmployee);
 
         const password_hash = await bcrypt.hash(password, 12);
 
@@ -38,18 +55,19 @@ exports.signup=async(req,res)=>{
             designation,
             status,
             joiningDate,
+            medicalRegistrationNo,
             specialization,
             qualification,
             consultationFee,
             availabilitySlots,
+
         });
      
         const user = await User.create({
             email,
             status,
             password_hash:password_hash,
-            
-            roles,
+            role,
             employeeId: profile.employeeId,
         }); 
         res.status(201).json({message:"Employee Registered Successfully",employee:profile,user:user});
@@ -73,7 +91,9 @@ exports.login=async(req,res)=>{
         if(!user){
             return res.status(404).json({message:"User Not Found"});
         }
-        const isPasswordValid=await bcrypt.compare(password,user.password_hash);
+
+        const isPasswordValid=Boolean(await bcrypt.compare(password,user.password_hash));
+
         if(!isPasswordValid){
             return res.status(401).json({ message: "Invalid email or password" });
         }
@@ -84,14 +104,14 @@ exports.login=async(req,res)=>{
         const token=jwt.sign(
              { email: user.email,
                 id:user._id,
-                 role: user.roles },
+                 role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN });
       
        return res.status(200).json({
              message: "Login successful",
             token,
-            user: {id: user._id,email: user.email,role: user.roles},
+            user: {id: user._id,email: user.email,role: user.role},
         });
         
     }catch(err){
@@ -124,19 +144,35 @@ exports.getEmployeeById=async(req,res)=>{
 
 exports.updateEmployeeById=async(req,res)=>{
     try{
+
+        const{employeeId}=req.params;
         const {
-            employeeId,
             name,
             phone,
             specialization,
             consultationFee,
-            availabilitySlots
+            availabilitySlots,
+            department,
+            designation,
         }=req.body;
-
-        const existEmployee=await Employee.findOne({employeeId});
-        if(!existEmployee){
-            return res.status(409).json({message:`Employee Not found with id ${employeeId}`});
+        
+        const user = await User.findById(req.user.id).select("-passwordHash -__v");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
+ 
+        console.log(employeeId+" empid"+user.employeeId);
+        
+        if (employeeId !== user.employeeId) {
+            return res.status(403).json({
+                message: "You can only update your own profile"
+            });
+        }
+
+
+        const existEmployee = await Employee.findOne({employeeId});
+
+
         if(name){
             existEmployee.name=name;
         }
@@ -152,13 +188,50 @@ exports.updateEmployeeById=async(req,res)=>{
         if(availabilitySlots){
             existEmployee.availabilitySlots=availabilitySlots;
         }
-        existEmployee.save();
-        return res.status(201).json({message:`Employee with id ${existEmployee.employeeId} is update successfully`});
+        if(department){
+            existEmployee.department=department;
+        }
+        if(designation){
+            existEmployee.designation=designation;
+        }
 
-
+        await existEmployee.save();
+        user.updated_at=new Date();
+        await user.save();
+       
+        return res.status(200).json({message:`Employee with id ${existEmployee.employeeId} is update successfully`});
 
     }catch(err){
         console.error("Update Profile Error: ",err);
     return res.status(500).json({ message:"Server error during updating employee"});
     }
-}
+};
+
+
+//ME Function
+exports.currentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-passwordHash -__v");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+ 
+        res.status(200).json({
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                lastLoginAt: user.lastLoginAt,
+                createdAt: user.createdAt
+            }
+        })
+ 
+    } catch (error) {
+        console.error("Unable to fetch current user", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+ 
+ 
+ 
+

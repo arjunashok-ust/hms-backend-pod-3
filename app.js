@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const mongoose = require("mongoose");
+const connectDB = require("../hms-backend-pod-3/src/config/db");
 
 
 const app = express();
@@ -33,11 +33,7 @@ app.use("/api/emp", employeeRoutes);
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err.message));
-
+connectDB();
 
 
 module.exports = app;

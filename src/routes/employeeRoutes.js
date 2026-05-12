@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
+const auth=require("../middlewares/authMiddleware");
 
 
 const{
     signup,
     login,
-    getEmployeeById,
-    updateEmployeeById,
-}=require("../controllers/EmployeeController");
+    currentUser,
+}=require("../controllers/employeeController");
 
 const signUpValidation=[
     body("email").isEmail().withMessage("Valid email required"),
@@ -18,9 +18,7 @@ const signUpValidation=[
 
 router.post("/signup",signUpValidation,validate,signup);
 router.post("/login",login);
-router.get("/getEmployeeById/:employeeId",getEmployeeById);
-router.post("/updateEmployeeById",updateEmployeeById);
-
+router.get("/currentUser",auth,currentUser);
 
 
 module.exports=router;
