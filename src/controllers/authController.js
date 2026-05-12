@@ -4,8 +4,7 @@ const crypto = require("node:crypto");
 const User = require("../models/User");
 
 const Employee = require("../models/Employee");
-const user = require("../models/User");
-const employee = require("../models/Employee");
+
 
 //Sign up
 
@@ -71,8 +70,6 @@ exports.signup = async (req, res) => {
 }
 
 //login
-
-
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -114,26 +111,25 @@ exports.login = async (req, res) => {
 };
 
 //get current user
-
-exports.currentUser =async (req, res) => {
+exports.currentUser = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("-passwordHash-__v");
-        if(!user){
-            return res.status(404).json({message: "User not found" });
+        const user = await User.findById(req.user.id).select("-passwordHash -__v");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
 
         res.status(200).json({
-            user:{
-                id:user._id,
+            user: {
+                id: user._id,
                 email: user.email,
                 role: user.role,
                 lastLoginAt: user.lastLoginAt,
                 createdAt: user.createdAt
             }
         })
-        
+
     } catch (error) {
         console.error("Unable to fetch current user", error);
-        res.status(500).json({message: error.message});
+        res.status(500).json({ message: error.message });
     }
 };

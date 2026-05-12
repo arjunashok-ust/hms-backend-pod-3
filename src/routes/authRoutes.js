@@ -4,7 +4,7 @@ const { body } = require("express-validator");
 const validate = require("../middleware/validate");
 const auth = require("../middleware/authMiddileware");
 
-const { signup, login, currentUser } = require("../controllers/authController");
+const { signup, login, currentUser} = require("../controllers/authController");
 
 const signupValidation = [
     body("name").notEmpty().withMessage("Name is required"),
