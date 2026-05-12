@@ -56,7 +56,7 @@ const signUp = async (req, res) => {
             email: email,
             passwordHash: passwordHash,
             status: status,
-            roles: designation,
+            roles: roles,
             employeeId: profile.employeeCode,
         });
 

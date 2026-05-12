@@ -11,8 +11,9 @@ const app = new express();
 app.use(helmet());
 // cross origin resource sharing
 app.use(cors({
+    // front end url
     origin: 'http://localhost:8080',
-    methods: ['GET','POST','PUT','DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: false,
     allowedHeaders: ['Content-Type'],
 }));
@@ -24,8 +25,10 @@ app.use(express.json());
 // routes
 const authRoute = require('./routes/auth.route');
 const userRoute = require('./routes/user.route');
+const adminRoute = require('./routes/admin.route');
 // route caller
-app.use('/auth',authRoute);
-app.use('/user',userRoute);
+app.use('/auth', authRoute);
+app.use('/user', userRoute);
+app.use('/admin', adminRoute);
 
 module.exports = app;

@@ -11,7 +11,7 @@ const validateSignUp = [
     body('designation').isIn(allowedRoleTypes).withMessage('designation is required.'),
     body('status').isIn(allowedStatusTypes).withMessage('status is required.'),
     body('joiningDate').notEmpty().withMessage('joining date is required.'),
-    body('specialization').notEmpty().withMessage('specialization is required.'),
+    // body('specialization').notEmpty().withMessage('specialization is required.'),
     body('qualification').notEmpty().withMessage('qualification is required.'),
 ];
 
