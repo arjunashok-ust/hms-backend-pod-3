@@ -6,10 +6,10 @@ const userSchemea = new mongoose.Schema({
     roles: {
         type: String,
         enum: ["Owner", "Admin", "Doctor", "Receptionist", "Cashier", "Nurse", "Lab_tech", "Pharmicist"],
-        required: true
+        
     },
     employeeId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'Employee',
     },
     createdAt: { type: Date, default: Date.now },

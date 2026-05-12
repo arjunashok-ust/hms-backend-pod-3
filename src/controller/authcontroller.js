@@ -24,78 +24,88 @@ const getProfile = async (req, res) => {
 };
 //Signup
 const signup = async (req, res) => {
-    // try {
-        const {
-            email,
-            password,
-            name,
-            phone,
-            department,
-            designation,
-            status,
-            joiningDate,
-            medicalRegistrationNo,
-            specialization,
-            qualification,
-            consultationFee,
-            availabilitySlots
-        } = req.body;
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(409).json({ message: "Email already registered" });
-        }
-        const password_hash = await bcrypt.hash(password, 12);
+  try {
 
-        const employee = new Employee();
-        employee.email = email;
-        employee.name = name;
-        employee.phone = phone;
-        employee.department = department;
-        employee.designation = designation;
-        employee.status = status;
-        employee.joiningDate = joiningDate;
-        employee.medicalRegistrationNo = medicalRegistrationNo;
-        employee.specialization = specialization;
-        employee.qualification = qualification;
-        employee.consultationFee = consultationFee;
-        employee.availabilitySlots = availabilitySlots;
+    const {
+      email,
+      password,
+      name,
+      phone,
+      department,
+      designation,
+      role,
+      status,
+      joiningDate,
+      medicalRegistrationNo,
+      specialization,
+      qualification,
+      consultationFee,
+      availabilitySlots
+    } = req.body;
 
-        const savedEmployee = await employee.save();
-        
-        const user = await User.create({
-            email,
-           passwordHash: password_hash,
-           status,
-           roles : designation,
-           lastLoginAt : Date.now(),
-        });
+    // Check existing user
+    const existingUser = await User.findOne({ email });
 
-        user.employeeId = savedEmployee.employeeCode;
-        user.save();
-           const token = jwt.sign(
-  { userId: user._id, role: user.roles },
-  process.env.JWT_SECRET,
-  { expiresIn: process.env.JWT_EXPIRES_IN }
-);
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered"
+      });
+    }
 
-        //const employee=await Employee.create(req.body);
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 12);
 
-        console.log("account created sucessfully.")
-        res.status(201).json({
-            success: true,
-            message: "Employee Created Successfully",
-            token,
-            data: savedEmployee
-        });
-    // }
-    // catch (error) {
-    //     return res.status(500).json({
-    //         success: false,
-    //         message: error
-    //     });
-    // }
+    // Create employee
+    const employee = new Employee({
+      email,
+      name,
+      phone,
+      department,
+      designation,
+      status,
+      joiningDate,
+      medicalRegistrationNo,
+      specialization,
+      qualification,
+      consultationFee,
+      availabilitySlots
+    });
+
+    const savedEmployee = await employee.save();
+
+    // Create user
+    await User.create({
+      email,
+      passwordHash: password_hash,
+      status,
+      roles: role,
+      employeeId: savedEmployee._id,
+      lastLoginAt: Date.now()
+    });
+
+   
+
+    console.log("Account created successfully");
+
+    return res.status(201).json({
+      success: true,
+      message: "Employee Created Successfully",
+    
+      data: savedEmployee
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
+
+
 const login = async (req, res) => {
     try {
         const {
@@ -124,7 +134,13 @@ const login = async (req, res) => {
         
 return res.status(200).json({
             message: "Login successfull",
-            token
+            token,
+            user:{
+                id : existingUser._id,
+                email : existingUser.email,
+                role: existingUser.roles,
+                
+            }
         });
 
     } catch (error) {
@@ -136,6 +152,6 @@ return res.status(200).json({
 };
 
 
-module.exports = { signup,login ,getProfile};
+module.exports = { signup,login ,getProfile };
 
 
