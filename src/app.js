@@ -21,14 +21,11 @@ app.use(cors({
 app.use(morgan('dev'));
 // enables server to read json responses
 app.use(express.json());
-
 // routes
 const authRoute = require('./routes/auth.route');
 const userRoute = require('./routes/user.route');
-const adminRoute = require('./routes/admin.route');
 // route caller
 app.use('/auth', authRoute);
 app.use('/user', userRoute);
-app.use('/admin', adminRoute);
 
 module.exports = app;

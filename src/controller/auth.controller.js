@@ -38,6 +38,17 @@ const signUp = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
 
+        if (!roles) {
+            return res.status(404).json({ message: 'role is required.' });
+        }
+
+        if (roles?.includes('doctor', 'nurse', 'pharmacist', 'lab_tech')) {
+            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+            if (medicalRegNo) {
+                return res.status(409).json({ message: 'medical registration no should be unique.' });
+            }
+        }
+
         const profile = await Employee.create({
             name,
             email,
@@ -60,19 +71,12 @@ const signUp = async (req, res) => {
             employeeId: profile.employeeCode,
         });
 
-        const token = jwt.sign(
-            { employeeId: user.employeeId, roles: roles },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
-        );
-        
         console.log("account created.");
         // 201 created
         return res.status(201).json({
             message: "account created sucessfully.",
-            email: email,
-            roles: roles,
-            token: token,
+            email: user.email,
+            roles: user.roles,
         });
     }
     catch (err) {
@@ -104,16 +108,23 @@ const login = async (req, res) => {
         existingUser.lastLoginAt = Date.now();
         await existingUser.save();
 
+        const token = await jwt.sign(
+            { id: existingUser.employeeId, role: existingUser.roles },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
         console.log("login sucessfull");
         return res.status(200).json({
             message: 'login sucessfull',
             email: existingUser.email,
-            employeeId: existingUser.employeeId
+            employeeId: existingUser.employeeId,
+            token: token
         });
     }
     catch (err) {
         console.error(err);
-        return res.status(500).json({message: 'server error during login'});
+        return res.status(500).json({ message: 'server error during login' });
     }
 }
 

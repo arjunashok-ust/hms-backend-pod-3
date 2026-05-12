@@ -7,6 +7,6 @@ const validate = require('../middleware/validate.middleware');
 const auth = require('../middleware/auth.middleware');
 
 // routes
-router.post('/getUserProfile',userValidate.validateGetUserProfile,validate,auth,userController.getUserProfile);
+router.post('/getUserProfile', userValidate.validateGetUserProfile, validate, auth, userController.getUserProfile);
 
 module.exports = router;
