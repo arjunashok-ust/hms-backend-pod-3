@@ -9,7 +9,7 @@ exports.signUp = async (req, res) => {
         const {
             name, email, password, department, designation,
             status, joiningDate, medicalRegistrationNo,
-            specilization, qualification, consultationFee,
+            specialization, qualification, consultationFee,
             availabilitySlots,lastLoginAt
         } = req.body;
 
@@ -20,13 +20,25 @@ exports.signUp = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        const employee = await employeeModel.create( req.body );
+        const employee = await employeeModel.create({
+            name,
+            email,
+            department,
+            designation,
+            status,
+            joiningDate,
+            medicalRegistrationNo,
+            specialization,
+            qualification,
+            consultationFee,
+            availabilitySlots
+        });
         const user = await userModel.create({
             email,
             passwordHash,
             status,
             roles: designation,
-            employeeId: employeeModel.employeeId,
+            employeeId: employee.employeeId,
             lastLoginAt
         });
 
@@ -53,7 +65,7 @@ exports.login = async(req, res) => {
         if(!user) {
             return res.status(401).json({message: "Invalid email or password"});
         }
-        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+        const passwordMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
         if(!passwordMatch) {
             return res.status(401).json({message: "Invalid email or password"});
         }

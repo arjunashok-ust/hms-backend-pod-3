@@ -20,14 +20,14 @@ const userSchema = new mongoose.Schema({
     },
     roles: {
         type: String,
-        enum: [
+         enum: [
             "OWNER",
-            "ADMIN",
-            "DOCTOR",
+            "DOCTOR", 
+            "NURSE", 
             "RECEPTIONIST",
-            "CASHIER",
-            "NURSE",
-            "LAB_TECH",
+            "CASHIER", 
+            "ADMIN",
+            "LAB_TECH", 
             "PHARMACIST"
         ],
         required: true

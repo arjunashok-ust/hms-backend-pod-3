@@ -31,6 +31,7 @@ const employeeSchema = new mongoose.Schema({
     designation: {
         type: String,
         enum: [
+            "OWNER",
             "DOCTOR", 
             "NURSE", 
             "RECEPTIONIST",
@@ -83,7 +84,7 @@ employeeSchema.pre('save', async function () {
             );
             this.employeeId = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
         } catch (err) {
-            throw err;
+            console.log("PreHook error in Employee.js: ",err.message);
         }
     }
 });
