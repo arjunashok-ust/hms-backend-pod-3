@@ -23,6 +23,12 @@ app.get("/", (req, res) => res.json({ message: "API running" }));
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
+const profileRoutes = require("./routes/profileRoutes");
+app.use("/api/profile", profileRoutes);
+
+const nodeRoutes = require("./routes/nodeRoutes");
+app.use("/api/node", nodeRoutes);
+
 try {
   mongoose.connect(process.env.MONGO_URI);
   console.log("MongoDB connected");
