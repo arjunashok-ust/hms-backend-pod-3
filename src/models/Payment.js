@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const paymentSchema = new mongoose.Schema(
     {
 
-        paymentId: { 
-            type: String, 
-            required: true, 
-            unique: true 
+        paymentId: {
+            type: String,
+            required: true,
+            unique: true
         },
 
         billId: {
@@ -50,7 +50,5 @@ paymentSchema.pre('save', async function (next) {
         }
     }
 });
-
-module.exports = mongoose.model("Employee", employeeSchema);
 
 module.exports = mongoose.model("Payment", paymentSchema);

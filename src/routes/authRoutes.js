@@ -4,7 +4,7 @@ const { body } = require("express-validator");
 const validate = require("../middleware/validate");
 const auth = require("../middleware/authMiddileware");
 
-const { signup, login, currentUser} = require("../controllers/authController");
+const { signup, login, currentUser } = require("../controllers/authController");
 
 const signupValidation = [
     body("name").notEmpty().withMessage("Name is required"),
@@ -41,8 +41,8 @@ const signupValidation = [
 
 
 const loginValidation = [
-  body("email").isEmail().withMessage("Valid email required"),
-  body("password").notEmpty().withMessage("Password is required"),
+    body("email").isEmail().withMessage("Valid email required"),
+    body("password").notEmpty().withMessage("Password is required"),
 ];
 
 router.post("/signup", signupValidation, validate, signup);

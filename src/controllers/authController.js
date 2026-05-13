@@ -7,7 +7,6 @@ const Employee = require("../models/Employee");
 
 
 //Sign up
-
 exports.signup = async (req, res) => {
     try {
         const {

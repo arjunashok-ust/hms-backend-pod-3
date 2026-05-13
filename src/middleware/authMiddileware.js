@@ -23,12 +23,11 @@ const authenticateUser = (req, res, next) => {
 
     }
     catch (err) {
-      console.error("Error:", err);
-      return res.status(401).json({
-          message: "Invalid or expired token"
-      });
+        console.error("Error:", err);
+        return res.status(401).json({
+            message: "Invalid or expired token"
+        });
     }
 };
 
 module.exports = authenticateUser;
- 

@@ -27,4 +27,4 @@ app.use("/api/auth", authRoutes);
 
 connectDB();
 
- module.exports = app;
+module.exports = app;
