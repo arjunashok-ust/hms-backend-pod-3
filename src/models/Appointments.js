@@ -15,7 +15,7 @@ const appointmentsSchema = new mongoose.Schema({
     },
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true },
-    status: { type: String, enum: ["Scheduled", "Completed", "Cancelled"], default: "Scheduled" },
+    status: { type: String, enum: ["SCHEDULED", "COMPLETED", "CANCELLED"], default: "Scheduled" },
     createdByEmployeeID: { type: mongoose.Schema.Types.ObjectId, ref: "Employees" }
 }, { timestamps: true });
 

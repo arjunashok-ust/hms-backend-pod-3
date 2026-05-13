@@ -8,20 +8,20 @@ const employeeSchema = new mongoose.Schema({
     email: { type: String, required: true, trim: true, unique: true },
     department: {
         type: String,
-        enum: ["OPD", "IPD", "Lab", "Pharmacy", "Admin"],
+        enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],
         required: true
     },
     designation: { type: String, required: true },
     status: { type: Boolean, default: true },
     joiningDate: { type: Date, required: true },
-    medicalRegistrationNo: { type: String, unique: true },
+    medicalRegistrationNo: { type: String },
     specialization: { type: String },
     qualification: [{ type: String }],
     consultationFee: { type: Number },
     availabilitySlots: [
         {
-            startTime:{type:String},
-            endTime: {type:String}
+            startTime: { type: String },
+            endTime: { type: String }
         }
     ]
 }, { timestamps: true });

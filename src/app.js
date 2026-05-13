@@ -11,7 +11,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
-    credentials: true,
+    credentials: false,
   })
 );
 
@@ -22,6 +22,9 @@ app.get("/", (req, res) => res.json({ message: "API running" }));
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
+
+const profileRoutes = require("./routes/profileRoutes");
+app.use("/api/profile", profileRoutes);
 
 try {
   mongoose.connect(process.env.MONGO_URI);

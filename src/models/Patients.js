@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
 
 const patientSchema = new mongoose.Schema({
-    UHID: {type: String,unique: true},
-    name: {type: String,required: true,trim: true},
+    UHID: { type: String, unique: true },
+    name: { type: String, required: true, trim: true },
     phone: {
         type: String,
         required: true,
@@ -15,10 +15,10 @@ const patientSchema = new mongoose.Schema({
         trim: true,
         unique: true
     },
-    gender: {type: String,enum: ["Male", "Female", "Other"],required: true},
-    dob: {type: Date,required: true},
-    emergencyContact: {type: String},
-    status: {type: Boolean,default: true},
+    gender: { type: String, enum: ["MALE", "FEMALE", "OTHER"], required: true },
+    dob: { type: Date, required: true },
+    emergencyContact: { type: String },
+    status: { type: Boolean, default: true },
     address: {
         line1: { type: String, required: true },
         line2: { type: String },

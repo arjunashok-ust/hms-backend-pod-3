@@ -1,13 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("node:crypto");
-const Appointments = require("../models/Appointments");
-const Bills = require("../models/Bills");
-const Counter = require("../models/Counter");
 const Employees = require("../models/Employees");
-const MedicalRecords = require("../models/MedicalRecords");
-const Patients = require("../models/Patients");
-const Payments = require("../models/Payments");
 const Users = require("../models/Users");
 
 exports.signup = async (req, res) => {
@@ -33,15 +26,16 @@ exports.signup = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Email already exists" })
         }
-
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-        const verificationTokenExpiry = new Date(
-            Date.now() + 24 * 60 * 60 * 1000,
-        );
+        if (role?.includes('DOCTOR', 'NURSE', 'PHARMACIST', 'LAB_TECH')) {
+            const medicalRegNo = await Employees.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+            if (medicalRegNo) {
+                return res.status(409).json({ message: 'Person with this Medical Registration no. already exists.' });
+            }
+        }
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        const employeeProfile = await Employees.create({
+        const newEmployee = await Employees.create({
             email,
             name,
             status,
@@ -57,22 +51,20 @@ exports.signup = async (req, res) => {
             availabilitySlots
         })
 
-        const userProfile = await Users.create({
+        const newUser = await Users.create({
             email,
             passwordHash,
             role,
             status,
-            employeeID: employeeProfile.employeeCode,
-            verificationToken,
-            verificationTokenExpiry
+            employeeID: newEmployee.employeeCode,
         })
 
         res.status(201).json({
             message: "Account created successfully",
             user: {
-                id: userProfile._id,
-                email: userProfile.email,
-                employeeID: employeeProfile.employeeID,
+                id: newUser._id,
+                email: newUser.email,
+                employeeID: newEmployee.employeeCode,
             }
         });
     }
@@ -112,7 +104,7 @@ exports.login = async (req, res) => {
             .select("-__v")
 
         res.status(200).json({
-            message: "Login",
+            message: `Logged in successfully as ${profile.name}`,
             token,
             user: {
                 profile
@@ -125,20 +117,3 @@ exports.login = async (req, res) => {
             .json({ message: err.message });
     }
 };
-
-exports.me = async (req, res) => {
-    try {
-        const user = await Users.findById(req.user.id).select("-__v -passwordHash")
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        const profile = await Employees.findOne({ email: user.email }).select("-__v");
-        res.status(200).json({
-            user: profile
-        })
-    }
-    catch {
-        console.error("Me error:", err);
-        res.status(500).json({ message: err.message });
-    }
-}

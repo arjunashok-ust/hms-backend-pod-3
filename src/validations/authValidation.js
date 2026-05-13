@@ -22,19 +22,25 @@ exports.signupValidation = [
   body("role")
     .trim()
     .notEmpty()
-    .withMessage("Role is required"),
+    .withMessage("Role is required")
+    .toUpperCase()
+    .isIn(['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'])
+    .withMessage("Invalid role"),
 
   body("phone")
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .isMobilePhone()
+    .isMobilePhone('en-IN')
     .withMessage("Enter a valid phone number"),
 
   body("department")
     .trim()
+    .toUpperCase()
     .notEmpty()
-    .withMessage("Department is required"),
+    .withMessage("Department is required")
+    .isIn(["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"])
+    .withMessage("Provide valid department"),
 
   body("designation")
     .trim()
