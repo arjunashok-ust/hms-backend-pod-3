@@ -2,9 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 const User = require("../models/User");
-
 const Employee = require("../models/Employee");
-
 
 //Sign up
 exports.signup = async (req, res) => {
@@ -29,6 +27,24 @@ exports.signup = async (req, res) => {
             return res.status(409).json({ message: "Email already registered." });
         }
 
+        const medicalRoles = ["DOCTOR", "NURSE", "PHARMACIST", "LAB_TECH"];
+
+        if (medicalRoles.includes(role)) {
+ 
+            if (!medicalRegistrationNo) {
+                return res.status(400).json({success: false, message: "Medical Registration Number is required"});
+            }
+ 
+            const existingMedicalRegistrationNo = await Employee.findOne({ medicalRegistrationNo});
+ 
+            if (existingMedicalRegistrationNo) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Medical Registration Number already exists,provide a different one",
+                });
+            }
+        }
+ 
         const password_hash = await bcrypt.hash(password, 12);
 
         const employee = await Employee.create(
