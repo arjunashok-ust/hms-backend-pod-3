@@ -32,19 +32,19 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         enum: [
             "OWNER",
-            "DOCTOR", 
-            "NURSE", 
+            "DOCTOR",
+            "NURSE",
             "RECEPTIONIST",
-            "CASHIER", 
+            "CASHIER",
             "ADMIN",
-            "LAB_TECH", 
+            "LAB_TECH",
             "PHARMACIST"
         ],
         required: true
     },
     status: {
         type: String,
-        enum: [ "ACTIVE", "INACTIVE" ],
+        enum: ["ACTIVE", "INACTIVE"],
         required: true
     },
     joiningDate: {
@@ -82,10 +82,10 @@ employeeSchema.pre('save', async function () {
             );
             this.employeeId = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
         } catch (err) {
-            console.log("PreHook error in Employee.js: ",err.message);
+            console.log("PreHook error in Employee.js: ", err.message);
         }
     }
 });
 
-const employeeModel = mongoose.model("Employee",employeeSchema);
+const employeeModel = mongoose.model("Employee", employeeSchema);
 module.exports = employeeModel;

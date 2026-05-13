@@ -27,7 +27,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ "BOOKED", "CANCELLED", "COMPLETED" ],
+        enum: ["BOOKED", "CANCELLED", "COMPLETED"],
         required: true
     },
     createdByEmployeeId: {
@@ -54,4 +54,4 @@ appointmentSchema.pre('save', async function (next) {
     next();
 });
 
-const appointmentModel = mongoose.model("Appointment",appointmentSchema);
+const appointmentModel = mongoose.model("Appointment", appointmentSchema);

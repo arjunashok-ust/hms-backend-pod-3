@@ -27,7 +27,7 @@ const billSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ "PENDING", "PAID", "PARTIAL" ],
+        enum: ["PENDING", "PAID", "PARTIAL"],
         required: true
     },
     createdByEmployeeId: {
@@ -54,4 +54,4 @@ billSchema.pre('save', async function (next) {
     next();
 });
 
-const billModel = mongoose.model("Bill",billSchema);
+const billModel = mongoose.model("Bill", billSchema);

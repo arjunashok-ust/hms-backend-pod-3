@@ -10,7 +10,7 @@ exports.signUp = async (req, res) => {
             name, email, password, department, designation,
             status, joiningDate, medicalRegistrationNo,
             specialization, qualification, consultationFee,
-            availabilitySlots,lastLoginAt
+            availabilitySlots, lastLoginAt
         } = req.body;
 
         const existingUser = await employeeModel.findOne({ email });
@@ -18,11 +18,11 @@ exports.signUp = async (req, res) => {
             return res.status(409).json({ message: "The employee is already registered" });
         }
 
-        if(roles.includes("DOCTOR","NURSE","LAB_TECH","PHARMACIST")) {
+        if (roles.includes("DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST")) {
             const medicRegNo = employeeModel.findOne(medicalRegistrationNo);
         }
-        
-        if(medicalRegistrationNo) {
+
+        if (medicalRegistrationNo) {
             return res.status(409).json({ message: 'medical registration no should be unique.' });
         }
 
@@ -65,17 +65,17 @@ exports.signUp = async (req, res) => {
 }
 
 //LOGIN
-exports.login = async(req, res) => {
+exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         const user = await userModel.findOne({ email });
-        if(!user) {
-            return res.status(401).json({message: "Invalid email or password"});
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
         }
         const passwordMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
-        if(!passwordMatch) {
-            return res.status(401).json({message: "Invalid email or password"});
+        if (!passwordMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
         }
 
         const token = jwt.sign(
@@ -93,17 +93,17 @@ exports.login = async(req, res) => {
                 role: user.roles
             }
         });
-    } catch(err) {
+    } catch (err) {
         console.log("Login error: ", err);
         res.status(500).json({ message: err.message });
     }
 }
 
 //profile
-exports.profile = async(req, res) => {
+exports.profile = async (req, res) => {
     try {
         const user = await userModel.findById(req.user.id).select("-passwordHash -__v");
-        if(!user) {
+        if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
@@ -116,51 +116,51 @@ exports.profile = async(req, res) => {
                 created_at: user.createdAt,
             }
         });
-    } catch(err) {
+    } catch (err) {
         console.error("Profile error:", err);
         res.status(500).json({ message: err.message });
     }
 }
 
 //updateEmployee
-exports.updateEmployee = async(req, res) => {
+exports.updateEmployee = async (req, res) => {
     try {
         const user = await userModel.findById(req.user.id);
-        if(!user) {
-            return res.status(404).json({message: "User not found"});
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
         const { name, email, status, consultationFee, availabilitySlots } = req.body;
-        await employeeModel.findOneAndUpdate({employeeId: req.params.id},
+        await employeeModel.findOneAndUpdate({ employeeId: req.params.id },
             { name, email, status, consultationFee, availabilitySlots },
             { returnDocument: "after" }
         );
-        await userModel.findOneAndUpdate({employeeId: req.params.id},
+        await userModel.findOneAndUpdate({ employeeId: req.params.id },
             { name, email, status, consultationFee, availabilitySlots },
             { returnDocument: "after" }
         );
-        res.status(200).json({message: "Updates successfull"});
-    } catch(err) {
-        console.log("updateUSer error: ",err);
-        res.status(500).json({message: err.message});
+        res.status(200).json({ message: "Updates successfull" });
+    } catch (err) {
+        console.log("updateUSer error: ", err);
+        res.status(500).json({ message: err.message });
     }
 }
 
 //Delete only by admin
-exports.adminDelete = async(req, res) => {
+exports.adminDelete = async (req, res) => {
     try {
         const user = await userModel.findById(req.user.id);
-        if(!user) {
-            return res.status(404).json({message: "User not found"});
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
-        if(!user.roles === "ADMIN") {
-            return res.status(404).json({message: "Only admin is able to delete users"});
+        if (!user.roles === "ADMIN") {
+            return res.status(404).json({ message: "Only admin is able to delete users" });
         }
         const email = req.body;
         await userModel.findOneAndDelete(email);
         await employeeModel.findOneAndDelete(email);
-        res.status(200).json({message: "Deleted user successfully"});
-    } catch(err) {
-        console.log("adminDelete error: ",err);
-        res.status(500).json({message: err.message});
+        res.status(200).json({ message: "Deleted user successfully" });
+    } catch (err) {
+        console.log("adminDelete error: ", err);
+        res.status(500).json({ message: err.message });
     }
 }

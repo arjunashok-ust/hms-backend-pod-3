@@ -21,7 +21,7 @@ const customerSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: [ "MALE", "FEMALE", "OTHER" ]
+        enum: ["MALE", "FEMALE", "OTHER"]
     },
     dob: {
         type: Date,
@@ -37,25 +37,25 @@ const customerSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ "ACTIVE", "INACTIVE" ],
+        enum: ["ACTIVE", "INACTIVE"],
         required: true
     }
 });
 
 customerSchema.pre('save', async function (next) {
-    if(this.isNew) {
+    if (this.isNew) {
         try {
             const counter = await Counter.findOneAndUpdate(
                 { name: "customer" },
-                { $inc: { seq: 1}},
+                { $inc: { seq: 1 } },
                 { new: true, upsert: true }
             );
             this.uhid = `UHID-${String(counter.seq).padStart(6, '0')}`;
-        } catch(err) {
+        } catch (err) {
             return next(err);
         }
     }
     next();
 });
 
-const customerModel = mongoose.model("Customer",customerSchema);
+const customerModel = mongoose.model("Customer", customerSchema);

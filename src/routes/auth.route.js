@@ -8,7 +8,7 @@ const { signUp, login, profile, adminDelete, updateEmployee } = require("../cont
 router.post("/signup", validateSignUp, validate, signUp);
 router.post("/login", loginValidation, validate, login);
 router.get("/profile", authMiddleware, validate, profile);
-router.delete("/admindelete",authMiddleware, validate, adminDelete);
-router.put("/updateEmployee/:id", authMiddleware,validate, updateEmployee);
+router.delete("/admindelete", authMiddleware, validate, adminDelete);
+router.put("/updateEmployee/:id", authMiddleware, validate, updateEmployee);
 
 module.exports = router;

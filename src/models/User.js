@@ -15,19 +15,19 @@ const userSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ "ACTIVE", "INACTIVE" ],
+        enum: ["ACTIVE", "INACTIVE"],
         required: true
     },
     roles: {
         type: String,
-         enum: [
+        enum: [
             "OWNER",
-            "DOCTOR", 
-            "NURSE", 
+            "DOCTOR",
+            "NURSE",
             "RECEPTIONIST",
-            "CASHIER", 
+            "CASHIER",
             "ADMIN",
-            "LAB_TECH", 
+            "LAB_TECH",
             "PHARMACIST"
         ],
         required: true
@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
     },
     lastLoginAt: {
         type: Date,
-        required:true
+        required: true
     }
 }, {
     timestamps: {
@@ -46,5 +46,5 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-const userModel = mongoose.model("User",userSchema);
+const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;
