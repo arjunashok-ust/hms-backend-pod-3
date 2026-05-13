@@ -1,5 +1,5 @@
 # Healthcare Management System – Sprint 1
- 
+## POD-3 Feature branch of Merin
 ## Overview
 Sprint 1 focuses on building the **backend foundation** of the Healthcare Management System using **Node.js and Express**.  
 This sprint establishes the **core architecture, API design, authentication, and security mechanisms** required for a scalable system.
@@ -37,16 +37,9 @@ This sprint establishes the **core architecture, API design, authentication, and
  
 ### Authentication & Security
 - JWT-based authentication
-- Role-based access control (RBAC)
-- CORS configuration
-- Rate limiting & input validation
+- Input validation
  
 ### Error Handling
 - Centralized error handling middleware
 - Custom validation logic
  
-### Mini Project
-- Healthcare backend for:
-  - Patients
-  - Appointments
-- Demonstrates real-world workflow
