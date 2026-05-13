@@ -10,12 +10,20 @@ exports.signUp = async (req, res) => {
             name, email, password, department, designation,
             status, joiningDate, medicalRegistrationNo,
             specialization, qualification, consultationFee,
-            availabilitySlots,lastLoginAt
+            availabilitySlots, lastLoginAt
         } = req.body;
 
         const existingUser = await employeeModel.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ message: "The employee is already registered" });
+        }
+
+        if (roles.includes("DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST")) {
+            const medicRegNo = employeeModel.findOne(medicalRegistrationNo);
+        }
+
+        if (medicalRegistrationNo) {
+            return res.status(409).json({ message: 'medical registration no should be unique.' });
         }
 
         const passwordHash = await bcrypt.hash(password, 12);
@@ -57,17 +65,17 @@ exports.signUp = async (req, res) => {
 }
 
 //LOGIN
-exports.login = async(req, res) => {
+exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         const user = await userModel.findOne({ email });
-        if(!user) {
-            return res.status(401).json({message: "Invalid email or password"});
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
         }
         const passwordMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
-        if(!passwordMatch) {
-            return res.status(401).json({message: "Invalid email or password"});
+        if (!passwordMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
         }
 
         const token = jwt.sign(
@@ -85,17 +93,17 @@ exports.login = async(req, res) => {
                 role: user.roles
             }
         });
-    } catch(err) {
+    } catch (err) {
         console.log("Login error: ", err);
         res.status(500).json({ message: err.message });
     }
 }
 
 //profile
-exports.profile = async( req, res ) => {
+exports.profile = async (req, res) => {
     try {
         const user = await userModel.findById(req.user.id).select("-passwordHash -__v");
-        if(!user) {
+        if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
@@ -108,7 +116,7 @@ exports.profile = async( req, res ) => {
                 created_at: user.createdAt,
             }
         });
-    } catch(err) {
+    } catch (err) {
         console.error("Profile error:", err);
         res.status(500).json({ message: err.message });
     }

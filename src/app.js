@@ -12,9 +12,9 @@ app.use(express.json());
 
 db.connectDB();
 
-app.get("/",(req, res) => res.json({message: "API Running "}));
+app.get("/", (req, res) => res.json({ message: "API Running " }));
 
 const authRouter = require("./routes/auth.route");
-app.use("/hms",authRouter);
+app.use("/hms", authRouter);
 
 module.exports = app;

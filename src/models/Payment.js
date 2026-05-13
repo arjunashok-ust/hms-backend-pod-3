@@ -18,7 +18,7 @@ const paymentSchema = new mongoose.Schema({
     },
     method: {
         type: String,
-        enum: [ "CASH", "CARD", "UPI" ],
+        enum: ["CASH", "CARD", "UPI"],
         required: true
     },
     paidAt: {
@@ -38,10 +38,10 @@ PaymentSchema.pre('save', async function (next) {
         try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'payment' },
-                { $inc: { seq: 1 } }, 
-                { new: true, upsert: true } 
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
-            this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`; 
+            this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`;
         } catch (err) {
             return next(err);
         }
@@ -50,4 +50,4 @@ PaymentSchema.pre('save', async function (next) {
 });
 
 
-const paymentModel = mongoose.model("Payment",paymentSchema);
+const paymentModel = mongoose.model("Payment", paymentSchema);

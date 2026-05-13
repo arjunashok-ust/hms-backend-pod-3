@@ -31,8 +31,8 @@ const medicalRecordSchema = new mongoose.Schema({
         required: true
     },
     prescriptionItems: [{
-        name: { type: String,required: true },
-        dosage: { type: String,required: true },
+        name: { type: String, required: true },
+        dosage: { type: String, required: true },
         duration: { type: String, required: true },
         required: true
     }],
@@ -45,4 +45,4 @@ const medicalRecordSchema = new mongoose.Schema({
         createdAt: "createdAt"
     }
 });
-const medicalRecordModel = mongoose.model("MedicalRecord",medicalRecordSchema);
+const medicalRecordModel = mongoose.model("MedicalRecord", medicalRecordSchema);
