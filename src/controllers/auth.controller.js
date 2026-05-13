@@ -18,12 +18,11 @@ exports.signUp = async (req, res) => {
             return res.status(409).json({ message: "The employee is already registered" });
         }
 
-        if (roles.includes("DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST")) {
-            const medicRegNo = employeeModel.findOne(medicalRegistrationNo);
-        }
-
-        if (medicalRegistrationNo) {
-            return res.status(409).json({ message: 'medical registration no should be unique.' });
+        if (designation.includes("DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST")) {
+            const medicRegNo = await employeeModel.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+            if (medicRegNo) {
+                return res.status(409).json({ message: 'medical registration no should be unique.' });
+            }
         }
 
         const passwordHash = await bcrypt.hash(password, 12);
