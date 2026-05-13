@@ -6,7 +6,6 @@ const userSchemea = new mongoose.Schema({
     roles: {
         type: String,
         enum: ["Owner", "Admin", "Doctor", "Receptionist", "Cashier", "Nurse", "Lab_tech", "Pharmicist"],
-        
     },
     employeeId: {
         type: String,

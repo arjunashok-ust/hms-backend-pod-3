@@ -10,7 +10,7 @@ const employeeSchema = new mongoose.Schema({
     designation : {type : String, enum :["Doctor", "Nurse", "Receptionist","Admin"]},
     status :{type : String, enum :["Active", "Inactive"], default : "Active"},
     joiningDate : {type : Date, required : true},
-    medicalRegistrationNo : {type : String, required : true, unique : true},
+    medicalRegistrationNo : {type : String},
     specialization : {type : String},
     qualification : [{ type: String }],
     consultationFee : {type : Number},

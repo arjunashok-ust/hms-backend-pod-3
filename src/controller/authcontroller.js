@@ -6,9 +6,8 @@ const Employee = require("../models/Employee");
 
 const getProfile = async (req, res) => {
   try {
-    // req.user comes from token middleware
     const user = await User.findById(req.user.userId)
-      .select("-passwordHash")   // hide password
+      .select("-passwordHash")  
       .populate("employeeId");
  
     res.status(200).json({
@@ -22,11 +21,8 @@ const getProfile = async (req, res) => {
     });
   }
 };
-//Signup
 const signup = async (req, res) => {
-
   try {
-
     const {
       email,
       password,
@@ -44,7 +40,6 @@ const signup = async (req, res) => {
       availabilitySlots
     } = req.body;
 
-    // Check existing user
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -54,10 +49,15 @@ const signup = async (req, res) => {
       });
     }
 
-    // Hash password
+    if (role?.includes('Doctor', 'Nurse', 'Pharmacist', 'Lab_tech')) {
+            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+            if (medicalRegNo) {
+                return res.status(409).json({ message: 'medical registration no should be unique.' });
+            }
+        }
+
     const password_hash = await bcrypt.hash(password, 12);
 
-    // Create employee
     const employee = new Employee({
       email,
       name,
@@ -75,7 +75,6 @@ const signup = async (req, res) => {
 
     const savedEmployee = await employee.save();
 
-    // Create user
     await User.create({
       email,
       passwordHash: password_hash,
@@ -85,19 +84,14 @@ const signup = async (req, res) => {
       lastLoginAt: Date.now()
     });
 
-   
-
     console.log("Account created successfully");
-
     return res.status(201).json({
       success: true,
       message: "Employee Created Successfully",
-    
       data: savedEmployee
     });
 
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message
@@ -105,16 +99,13 @@ const signup = async (req, res) => {
   }
 };
 
-
 const login = async (req, res) => {
     try {
         const {
             email,
             password
         } = req.body;
-
         const existingUser = await User.findOne({ email });
-
         if(!existingUser){
            return  res.status(404).json({message: "Email is not registered"});
         }
@@ -130,16 +121,14 @@ const login = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-
         
-return res.status(200).json({
+        return res.status(200).json({
             message: "Login successfull",
             token,
             user:{
                 id : existingUser._id,
                 email : existingUser.email,
                 role: existingUser.roles,
-                
             }
         });
 
@@ -150,7 +139,6 @@ return res.status(200).json({
         });
     }
 };
-
 
 module.exports = { signup,login ,getProfile };
 
