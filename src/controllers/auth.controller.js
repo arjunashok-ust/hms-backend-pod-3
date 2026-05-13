@@ -18,6 +18,14 @@ exports.signUp = async (req, res) => {
             return res.status(409).json({ message: "The employee is already registered" });
         }
 
+        if(roles.includes("DOCTOR","NURSE","LAB_TECH","PHARMACIST")) {
+            const medicRegNo = employeeModel.findOne(medicalRegistrationNo);
+        }
+        
+        if(medicalRegistrationNo) {
+            return res.status(409).json({ message: 'medical registration no should be unique.' });
+        }
+
         const passwordHash = await bcrypt.hash(password, 12);
 
         const employee = await employeeModel.create({
@@ -92,7 +100,7 @@ exports.login = async(req, res) => {
 }
 
 //profile
-exports.profile = async( req, res ) => {
+exports.profile = async(req, res) => {
     try {
         const user = await userModel.findById(req.user.id).select("-passwordHash -__v");
         if(!user) {
@@ -111,5 +119,48 @@ exports.profile = async( req, res ) => {
     } catch(err) {
         console.error("Profile error:", err);
         res.status(500).json({ message: err.message });
+    }
+}
+
+//updateEmployee
+exports.updateEmployee = async(req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id);
+        if(!user) {
+            return res.status(404).json({message: "User not found"});
+        }
+        const { name, email, status, consultationFee, availabilitySlots } = req.body;
+        await employeeModel.findOneAndUpdate({employeeId: req.params.id},
+            { name, email, status, consultationFee, availabilitySlots },
+            { returnDocument: "after" }
+        );
+        await userModel.findOneAndUpdate({employeeId: req.params.id},
+            { name, email, status, consultationFee, availabilitySlots },
+            { returnDocument: "after" }
+        );
+        res.status(200).json({message: "Updates successfull"});
+    } catch(err) {
+        console.log("updateUSer error: ",err);
+        res.status(500).json({message: err.message});
+    }
+}
+
+//Delete only by admin
+exports.adminDelete = async(req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id);
+        if(!user) {
+            return res.status(404).json({message: "User not found"});
+        }
+        if(!user.roles === "ADMIN") {
+            return res.status(404).json({message: "Only admin is able to delete users"});
+        }
+        const email = req.body;
+        await userModel.findOneAndDelete(email);
+        await employeeModel.findOneAndDelete(email);
+        res.status(200).json({message: "Deleted user successfully"});
+    } catch(err) {
+        console.log("adminDelete error: ",err);
+        res.status(500).json({message: err.message});
     }
 }

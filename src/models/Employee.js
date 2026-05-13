@@ -53,8 +53,6 @@ const employeeSchema = new mongoose.Schema({
     },
     medicalRegistrationNo: {
         type: String,
-        required: true,
-        unique: true
     },
     specialization: {
         type: String,
