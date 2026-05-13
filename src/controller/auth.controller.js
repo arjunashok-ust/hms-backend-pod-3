@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const crypto = require('node:crypto');
-
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
