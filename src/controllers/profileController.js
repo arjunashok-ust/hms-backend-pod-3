@@ -4,7 +4,7 @@ const Users = require("../models/Users");
 
 exports.getMe = async (req, res) => {
     try {
-        const user = await Users.findById(req.user.id).select("-__v -passwordHash")
+        const user = await Users.findOne({ employeeID: req.user.employeeID }).select("-__v -passwordHash")
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }

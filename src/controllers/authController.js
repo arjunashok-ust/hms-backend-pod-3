@@ -62,7 +62,6 @@ exports.signup = async (req, res) => {
         res.status(201).json({
             message: "Account created successfully",
             user: {
-                id: newUser._id,
                 email: newUser.email,
                 employeeID: newEmployee.employeeCode,
             }
@@ -95,7 +94,8 @@ exports.login = async (req, res) => {
         await user.save();
 
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            ///
+            { employeeID: user.employeeID, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN },
         );
