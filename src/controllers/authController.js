@@ -101,7 +101,7 @@ exports.login = async (req, res) => {
         await user.save();
 
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user.employeeid, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN },
         );
@@ -110,7 +110,7 @@ exports.login = async (req, res) => {
             message: "Login successful",
             token,
             user: {
-                id: user._id,
+                id: user.employeeid,
                 email: user.email,
                 role: user.role,
                 lastLoginAt: user.lastLoginAt
@@ -125,14 +125,14 @@ exports.login = async (req, res) => {
 //get current user
 exports.currentUser = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("-passwordHash -__v");
+        const user = await User.findOne({employeeid: req.user.id}).select("-passwordHash -__v");
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
         res.status(200).json({
             user: {
-                id: user._id,
+                id: user.employeeid,
                 email: user.email,
                 role: user.role,
                 lastLoginAt: user.lastLoginAt,
