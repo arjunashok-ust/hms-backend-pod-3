@@ -24,7 +24,6 @@ exports.signup = async (req, res) => {
             availabilitySlots
         } = req.body;
 
-
         const existingEmployee = await Employee.findOne({ email });
         if (existingEmployee) {
             return res.status(409).json({ message: "Email already registered." });
@@ -61,7 +60,6 @@ exports.signup = async (req, res) => {
             employee,
             user
         })
-
     } catch (error) {
         console.error("Signnup error:", error);
         res.status(500).json({ message: "Server error during signup" });
@@ -85,7 +83,6 @@ exports.login = async (req, res) => {
 
         user.lastLoginAt = new Date();
         await user.save();
-
 
         const token = jwt.sign(
             { id: user._id, role: user.role },
@@ -126,7 +123,6 @@ exports.currentUser = async (req, res) => {
                 createdAt: user.createdAt
             }
         })
-
     } catch (error) {
         console.error("Unable to fetch current user", error);
         res.status(500).json({ message: error.message });

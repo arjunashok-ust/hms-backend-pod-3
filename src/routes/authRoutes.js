@@ -8,11 +8,8 @@ const { signup, login, currentUser } = require("../controllers/authController");
 
 const signupValidation = [
     body("name").notEmpty().withMessage("Name is required"),
-
     body("email").isEmail().withMessage("Valid email is required"),
-
     body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
-
     body("role").isIn([
         "OWNER",
         "ADMIN",
@@ -23,19 +20,12 @@ const signupValidation = [
         "LAB_TECH",
         "PHARMACIST",
     ]).withMessage("Invalid role"),
-
     body("phone").notEmpty().withMessage("Phone number is required"),
-
     body("department").notEmpty().withMessage("Invalid department"),
-
     body("designation").notEmpty().withMessage("Designation is required"),
-
     body("joiningDate").notEmpty().withMessage("Joining date is required"),
-
     body("specialization").optional().notEmpty().withMessage("Specialization cannot be empty"),
-
     body("qualification").optional().isArray().withMessage("Qualification must be an array"),
-
     body("availabilitySlots").optional().isArray().withMessage("Availability slots must be an array"),
 ];
 
