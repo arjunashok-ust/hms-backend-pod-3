@@ -12,10 +12,9 @@ app.use(helmet());
 // cross origin resource sharing
 app.use(cors({
     // front end url
-    origin: 'http://localhost:8080',
+    origin: process.env.FRONT_END_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: false,
-    allowedHeaders: ['Content-Type'],
+    credentials: true,
 }));
 // logging, dev -> colored logs
 app.use(morgan('dev'));

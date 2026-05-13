@@ -37,17 +37,8 @@ This sprint establishes the **core architecture, API design, authentication, and
 
 ### Authentication & Security
 - JWT-based authentication
-- Role-based access control (RBAC)
-- CORS configuration
-- Rate limiting & input validation
+- input validation
 
 ### Error Handling
 - Centralized error handling middleware
 - Custom validation logic
-
-### Mini Project
-- Healthcare backend for:
-  - Patients
-  - Appointments
-- Demonstrates real-world workflow
-
