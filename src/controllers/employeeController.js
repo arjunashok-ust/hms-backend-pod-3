@@ -23,7 +23,7 @@ exports.signup=async(req,res)=>{
             availabilitySlots,
         }=req.body;
 
-        if (role === "doctor") {
+        if (role === "doctor" || role === "lab_Tech"|| role === "nurse"|| role === "pharmacist") {
 
             if (!medicalRegistrationNo) {
                 return res.status(400).json({success: false, message: "Medical Registration Number is required"});
@@ -43,7 +43,7 @@ exports.signup=async(req,res)=>{
         if(existEmployee){
             return res.status(409).json({message:"Email Id Already Registered"});
         }
-        //console.log(existEmployee);
+
 
         const password_hash = await bcrypt.hash(password, 12);
 
@@ -104,8 +104,8 @@ exports.login=async(req,res)=>{
         const token=jwt.sign(
              { email: user.email,
                 id:user._id,
-                 role: user.role },
-      process.env.JWT_SECRET,
+                role: user.role },
+                process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN });
       
        return res.status(200).json({
@@ -117,93 +117,6 @@ exports.login=async(req,res)=>{
     }catch(err){
          console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
-    }
-};
-
-//Get Employee Details by EMP-ID
-
-exports.getEmployeeById=async(req,res)=>{
-    try{
-        const{employeeId}=req.params;
-
-        const existEmployee=await Employee.findOne({employeeId}); 
-        console.log(existEmployee);
-        if(!existEmployee){
-            return res.status(409).json({message:"Employee Doesn't Exist"});
-        }
-        return res.status(200).json({message:`Employee Found ${existEmployee}`});
-    }catch(err){
-        console.error("Get Employee Error: ",err);
-    return res.status(500).json({ message:"Server error during getting employee"});
-    }
-
-}
-
-
-//Update employee details by EMP-ID
-
-exports.updateEmployeeById=async(req,res)=>{
-    try{
-
-        const{employeeId}=req.params;
-        const {
-            name,
-            phone,
-            specialization,
-            consultationFee,
-            availabilitySlots,
-            department,
-            designation,
-        }=req.body;
-        
-        const user = await User.findById(req.user.id).select("-passwordHash -__v");
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
- 
-        console.log(employeeId+" empid"+user.employeeId);
-        
-        if (employeeId !== user.employeeId) {
-            return res.status(403).json({
-                message: "You can only update your own profile"
-            });
-        }
-
-
-        const existEmployee = await Employee.findOne({employeeId});
-
-
-        if(name){
-            existEmployee.name=name;
-        }
-        if(phone){
-            existEmployee.phone=phone;
-        }
-        if(specialization){
-            existEmployee.specialization=specialization;
-        }
-        if(consultationFee){
-            existEmployee.consultationFee=consultationFee;
-        }
-        if(availabilitySlots){
-            existEmployee.availabilitySlots=availabilitySlots;
-        }
-        if(department){
-            existEmployee.department=department;
-        }
-        if(designation){
-            existEmployee.designation=designation;
-        }
-
-        await existEmployee.save();
-        user.updated_at=new Date();
-        await user.save();
-       
-        return res.status(200).json({message:`Employee with id ${existEmployee.employeeId} is update successfully`});
-
-    }catch(err){
-        console.error("Update Profile Error: ",err);
-    return res.status(500).json({ message:"Server error during updating employee"});
     }
 };
 
