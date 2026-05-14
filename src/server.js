@@ -1,7 +1,6 @@
 const app = require('./app');
 const db = require('./config/db.config');
 
-// mongo db connection
 db.connectDB();
 
 app.listen(process.env.PORT, () => {
