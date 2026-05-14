@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
+const mail = require('../utils/mail.utils')
 
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
@@ -72,7 +73,22 @@ const signUp = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-        
+        // Send Verification Mail
+        const verification_token = crypto.randomBytes(32).toString("hex");
+        const verification_expiry = Date.now() + 60 * 60 * 24;
+
+        await mail.sendMail({
+            to: user.email,
+            subject: 'HMS System | User Email Verification',
+            html: `
+            <h1>Hospital Management System</h1><br>
+            <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
+            <a href="#">
+            <input type="Button" value="Verify">
+            </a>
+            `
+        });
+        console.log(`verification token sent to ${user.email}`);
         console.log("account created.");
         // 201 created
         return res.status(201).json({

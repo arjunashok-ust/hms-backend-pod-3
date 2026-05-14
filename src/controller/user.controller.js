@@ -39,7 +39,12 @@ const updateUserProfile = async (req, res) => {
         if(data.employeeCode){
             return res.status(401).json({message: 'employee code cant be edited'});
         }
-        
+
+        // Email Check Here
+
+        // Updation Here
+
+        // Response Here
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'internal server error during update user profile' });

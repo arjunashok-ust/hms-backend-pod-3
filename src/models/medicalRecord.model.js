@@ -39,4 +39,4 @@ medicalRecordSchema.pre('save', async function () {
     }
 })
 
-module.exports = mongoose.model('MedicalRecordSchema', medicalRecordSchema);
+module.exports = mongoose.model('MedicalRecord', medicalRecordSchema);

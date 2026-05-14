@@ -7,9 +7,11 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], required: true, default: 'active' },
     roles: [{ type: String, enum: ['owner', 'admin', 'doctor', 'receptionist', 'cashier', 'nurse', 'lab_tech', 'pharmacist'], required: true }],
     employeeId: { type: String, ref: 'Employee', required: true },
+    verification_token: { type: String, unique: true },
+    verification_expiry: {type: Date},
     lastLoginAt: { type: Date, default: null }
 },
-    {timestamps: { createdAt: 'created_at' }}
+    { timestamps: { createdAt: 'created_at' } }
 );
 
 module.exports = mongoose.model('Users', userSchema);
