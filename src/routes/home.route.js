@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-const sendTestMail = require('../test');
-
-router.get("/", sendTestMail);
+router.get("/", async (req, res) => { return res.status(200).json({ message: 'Welcome to hms-backend' }) });
 
 module.exports = router;
