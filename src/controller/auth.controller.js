@@ -30,21 +30,21 @@ const signUp = async (req, res) => {
             availabilitySlots,
         } = req.body;
 
-        // const existingUser = await Employee.findOne({ email });
+        const existingUser = await Employee.findOne({ email });
 
-        // if (existingUser) {
-        //     // 409 conflict
-        //     return res.status(409).json({ message: 'email is already registered.' });
-        // }
+        if (existingUser) {
+            // 409 conflict
+            return res.status(409).json({ message: 'email is already registered.' });
+        }
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        // if(roles.includes('doctor','nurse','pharmacist','lab_tech')){
-        //     const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo});
-        //     if(medicalRegNo){
-        //         return res.status(409).json({message: 'medical registration no should be unique.'});
-        //     }
-        // }
+        if(roles.includes('doctor','nurse','pharmacist','lab_tech')){
+            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo});
+            if(medicalRegNo){
+                return res.status(409).json({message: 'medical registration no should be unique.'});
+            }
+        }
 
         const profile = await Employee.create({
             name,
@@ -73,7 +73,7 @@ const signUp = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-        // Send Verification Mail
+        
         const verification_token = crypto.randomBytes(32).toString("hex");
         const verification_expiry = Date.now() + 60 * 60 * 24;
 
