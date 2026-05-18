@@ -7,6 +7,9 @@ const Appointment = require('../models/appointment.model');
 const medicalRecord = require('../models/medicalRecord.model');
 const Bill = require('../models/bill.model');
 const Payment = require('../models/payment.model');
+const Role = require('../models/role.model');
+const Department = require('../models/department.model');
+const Specialization = require('../models/specialization.model')
 
 // SignUp
 const signUp = async (req, res) => {
@@ -126,5 +129,21 @@ const login = async (req, res) => {
     }
 }
 
-module.exports = { signUp, login };
+const getRoles = async (req, res) => {
+    const roles = await Role.find({}, 'role_name');
+    return res.status(200).json(roles);
+}
+
+const getDepartments = async (req, res) => {
+    const departments = await Department.find({}, 'department_name');
+    return res.status(200).json(departments);
+}
+
+const getSpecializations = async (req,res) => {
+    const specializations = await Specialization.find({},'specialization_name');
+    return res.status(200).json(specializations);
+}
+
+
+module.exports = { signUp, login, getRoles, getDepartments,getSpecializations };
 

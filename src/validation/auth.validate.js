@@ -1,7 +1,7 @@
 const { body, query } = require('express-validator');
 
-const allowedRoleTypes = ['owner', 'admin', 'doctor', 'receptionist', 'cashier', 'nurse', 'lab_tech', 'pharmacist'];
-const allowedStatusTypes = ['active','inactive'];
+const allowedRoleTypes = ['Owner', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist'];
+const allowedStatusTypes = ['Active','Inactive'];
 
 const validateSignUp = [
     body('name').notEmpty().withMessage('name is required.'),
