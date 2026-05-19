@@ -5,18 +5,15 @@ const employeeSchema = new mongoose.Schema({
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
-    department: { type: String, enum: ['opd', 'ipd', 'lab', 'pharmacy', 'admin'], required: true },
-    designation: { type: String, enum: ['doctor', 'nurse', 'receptionist', 'owner', 'lab_tech', 'cashier', 'pharmacist'], required: true },
-    status: { type: String, enum: ['active', 'inactive'], required: true },
+    department: { type: String, enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Admin'], required: true },
+    designation: { type: String, enum: ['Doctor', 'Nurse', 'Receptionist', 'Owner', 'Lab_Tech', 'Cashier', 'Pharmacist'], required: true },
+    status: { type: String, enum: ['Active', 'Inactive'], required: true },
     joiningDate: { type: Date, required: true },
     medicalRegistrationNo: { type: String },
     specialization: { type: String },
     qualification: [{ type: String, enum: ['MBBS', 'MD'], required: true }],
     consultationFee: { type: Number },
-    availabilitySlots: {
-        startTime: { type: String },
-        endTime: { type: String }
-    },
+    availabilitySlots: [{type: String }],
 });
 
 // pre hook

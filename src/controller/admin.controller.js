@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const deleteUserProfile = async (req, res) => {
     try {
-        if (!req.user.roles?.includes('admin')) {
+        if (!req.user.roles?.includes('Admin')) {
             return res.status(401).json({ message: 'not authorized to do this operation.' });
         }
         const EmployeeId = req.body.id;

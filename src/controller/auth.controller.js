@@ -11,6 +11,10 @@ const medicalRecord = require('../models/medicalRecord.model');
 const Bill = require('../models/bill.model');
 const Payment = require('../models/payment.model');
 
+const Role = require('../models/role.model');
+const Department = require('../models/department.model');
+const Specialization = require('../models/specialization.model');
+
 // SignUp
 const signUp = async (req, res) => {
     try {
@@ -39,10 +43,10 @@ const signUp = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        if(roles.includes('doctor','nurse','pharmacist','lab_tech')){
-            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo});
-            if(medicalRegNo){
-                return res.status(409).json({message: 'medical registration no should be unique.'});
+        if (roles.includes('doctor', 'nurse', 'pharmacist', 'lab_tech')) {
+            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+            if (medicalRegNo) {
+                return res.status(409).json({ message: 'medical registration no should be unique.' });
             }
         }
 
@@ -73,7 +77,7 @@ const signUp = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-        
+
         const verification_token = crypto.randomBytes(32).toString("hex");
         const verification_expiry = Date.now() + 60 * 60 * 24;
 
@@ -127,18 +131,63 @@ const login = async (req, res) => {
         existingUser.lastLoginAt = Date.now();
         await existingUser.save();
 
+        const token = jwt.sign(
+            {
+                email: existingUser.email,
+                roles: existingUser.roles,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN })
+
         console.log("login sucessfull");
         return res.status(200).json({
             message: 'login sucessfull',
             email: existingUser.email,
-            employeeId: existingUser.employeeId
+            token: token
         });
     }
     catch (err) {
         console.error(err);
-        return res.status(500).json({message: 'server error during login'});
+        return res.status(500).json({ message: 'server error during login' });
     }
 }
 
-module.exports = { signUp, login };
+// getRoles
+const getRoles = async (req, res) => {
+    try {
+        const roles = await Role.find({}, 'role_name');
+        return res.status(200).json(
+            roles
+        )
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// getDepartments
+const getDepartments = async (req, res) => {
+    try {
+        const departments = await Department.find({}, 'department_name');
+        return res.status(200).json(
+            departments
+        )
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+// getSpecializations
+const getSpecializations = async (req, res) => {
+    try {
+        const specializations = await Specialization.find({}, 'specialization_name');
+        return res.status(200).json(
+            specializations
+        )
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+module.exports = { signUp, login, getRoles, getSpecializations,getDepartments };
 

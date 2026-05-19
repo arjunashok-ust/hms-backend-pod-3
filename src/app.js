@@ -15,6 +15,7 @@ app.use(cors({
     credentials: false,
     allowedHeaders: ['Content-Type'],
 }));
+
 app.use(morgan('dev'));
 app.use(express.json());
 
@@ -28,6 +29,5 @@ app.use("/", homeRoute);
 app.use('/auth', authRoute);
 app.use('/user', userRoute);
 app.use('/admin', adminRoute);
-app.use('/ui', nodeRoute);
 
 module.exports = app;
