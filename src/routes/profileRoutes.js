@@ -14,5 +14,6 @@ const {
 
 router.delete("/deleteProfile", authenticateToken, deleteProfile);
 router.patch("/updateProfile", authenticateToken, updateProfile);
+router.get("/me", authenticateToken, getMe);
 
 module.exports = router;

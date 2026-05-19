@@ -22,13 +22,25 @@ exports.signupValidation = [
   body("role")
     .trim()
     .notEmpty()
-    .withMessage("Role is required"),
+    .withMessage("Role is required")
+    .toUpperCase()
+    .isIn([
+      "OWNER",
+      "ADMIN",
+      "DOCTOR",
+      "RECEPTIONIST",
+      "CASHIER",
+      "NURSE",
+      "LAB_TECH",
+      "PHARMACIST",
+    ])
+    .withMessage("Invalid role"),
 
   body("phone")
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .isMobilePhone()
+    .isMobilePhone("en-IN")
     .withMessage("Enter a valid phone number"),
 
   body("department")
@@ -36,17 +48,38 @@ exports.signupValidation = [
     .notEmpty()
     .withMessage("Department is required"),
 
-  body("designation")
+  body("designation").trim().notEmpty().withMessage("Designation is required"),
+
+  body("qualification")
     .trim()
     .notEmpty()
-    .withMessage("Designation is required"),
+    .withMessage("qualification is required"),
+
+
+  body("specialization")
+    .if(body("role").toUpperCase().equals("DOCTOR"))
+    .trim()
+    .notEmpty()
+    .withMessage("Specialization is required for doctors"),
+
+  body("consultationFee")
+    .if(body("role").toUpperCase().equals("DOCTOR"))
+    .notEmpty()
+    .withMessage("Consultation fees is required for doctors")
+    .isNumeric()
+    .withMessage("Consultation fees must be a number"),
+
+  body("availabilitySlots")
+    .if(body("role").toUpperCase().equals("DOCTOR"))
+    .isArray({ min: 1 })
+    .withMessage("Availability slots are required for doctors"),
 
   body("joiningDate")
     .notEmpty()
     .withMessage("Joining date is required")
     .isISO8601()
     .withMessage("Joining date must be a valid date (YYYY-MM-DD)")
-    .toDate()
+    .toDate(),
 ];
 
 exports.loginValidation = [
@@ -56,7 +89,5 @@ exports.loginValidation = [
     .withMessage("A valid email is required")
     .normalizeEmail(),
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required")
+  body("password").notEmpty().withMessage("Password is required"),
 ];
