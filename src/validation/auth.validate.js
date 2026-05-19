@@ -1,7 +1,7 @@
 const { body, query } = require('express-validator');
 
 const allowedRoleTypes = ['Owner', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist'];
-const allowedStatusTypes = ['Active','Inactive'];
+const allowedStatusTypes = ['Active', 'Inactive'];
 
 const validateSignUp = [
     body('name').notEmpty().withMessage('name is required.'),
@@ -20,4 +20,24 @@ const validateLogin = [
     body("password").notEmpty().withMessage("password is required.")
 ]
 
-module.exports = { validateSignUp,validateLogin }
+const validateResetPassword = [
+    body("prevPassword").notEmpty().withMessage("Previous Password is Required."),
+        body("newPassword").notEmpty().withMessage("New Password is Required."),
+    body("employeeId").notEmpty().withMessage("Employee Id is Required.")
+]
+
+const validateRefresh = [
+    body("employeeId").notEmpty().withMessage("EmployeeId Is Required")
+]
+
+const validateSetPassword = [
+    body("employeeId").notEmpty().withMessage("EmployeeId Is Required"),
+    body("password").notEmpty().withMessage("Password Is Required")
+]
+
+const validateVerifyMail = [
+    query("email").notEmpty().withMessage("Email Is Required"),
+    query("verification_token").notEmpty().withMessage("Verification Token Is Required")
+]
+
+module.exports = { validateSignUp, validateLogin, validateResetPassword, validateRefresh, validateSetPassword, validateVerifyMail }

@@ -13,7 +13,7 @@ app.use(cors({
     origin: process.env.FRONT_END_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: false,
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type','Authorization'],
 }));
 
 app.use(morgan('dev'));
@@ -24,10 +24,12 @@ const userRoute = require('./routes/user.route');
 const adminRoute = require('./routes/admin.route');
 const nodeRoute = require('./routes/node.route');
 const homeRoute = require('./routes/home.route');
+const uiRoute = require('./routes/ui.route');
 
 app.use("/", homeRoute);
 app.use('/auth', authRoute);
 app.use('/user', userRoute);
 app.use('/admin', adminRoute);
+app.use('/ui',uiRoute);
 
 module.exports = app;

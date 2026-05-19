@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
     employeeId: { type: String, ref: 'Employee', required: true },
     verification_token: { type: String, unique: true },
     verification_expiry: {type: Date},
+    isActivated: {type: Boolean,default: false},
+    isVerified: {type: Boolean,default: false},
+    firstLogin: {type: Boolean,default: true},
     lastLoginAt: { type: Date, default: null }
 },
     { timestamps: { createdAt: 'created_at' } }

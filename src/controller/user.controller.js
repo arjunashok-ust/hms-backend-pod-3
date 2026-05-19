@@ -10,15 +10,16 @@ const getUserProfile = async (req, res) => {
         const employee = await Employee.findOne({ email });
 
         if (!user) return res.status(404).json({ message: 'user not found.' });
-
+        
         return res.status(200).json({
             message: 'sucessfully obtained user information',
-            name: employee.name,
             email: user.email,
-            employeeId: user.employeeId,
             status: user.status,
             roles: user.roles,
-            lastLoginAt: user.lastLoginAt
+            employeeId: user.employeeId,
+            isActivated: user.isActivated,
+            isVerified: user.isVerified,
+            firstLogin: user.firstLogin
         });
     }
     catch (err) {
@@ -56,12 +57,13 @@ const updateUserProfile = async (req, res) => {
 
 const getAllUsers = async (req,res) => {
     try{
-        
+        const user = Employee
     }
     catch(err){
         console.error(err);
         return res.status(400).json({message: `server error during get all users.`});
     }
 }
+
 
 module.exports = { getUserProfile }
