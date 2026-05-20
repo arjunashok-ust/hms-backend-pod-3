@@ -65,5 +65,7 @@ const getAllUsers = async (req,res) => {
     }
 }
 
+// user first login
+
 
 module.exports = { getUserProfile }

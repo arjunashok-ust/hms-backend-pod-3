@@ -1,4 +1,5 @@
 const Node = require('../models/node.model');
+const Role = require('../models/role.model');
 
 // Create Node
 const addNode = async (req, res) => {
@@ -47,6 +48,24 @@ const deleteNode = async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'server error during delete node' });
+    }
+}
+
+// Get Node
+const getNode = async (req, res) => {
+    try {
+        const {
+            role
+        } = req.query.role;
+
+        const isRole = await Role.findOne({ role_name: role });
+        if (!isRole) {
+            return res.status(400).json({ message: "Unknown Role" });
+        }
+
+        // return node
+    } catch (err) {
+        return res.status(500).json({message: 'Server Error During Get Node!'});
     }
 }
 

@@ -77,6 +77,7 @@ const signUp = async (req, res) => {
             verification_expiry: verification_expiry,
             isActivated: false,
             isVerified: false,
+            firstLogin: true,
         });
 
         // user email verification
@@ -185,6 +186,7 @@ const signUpAdmin = async (req, res) => {
             verification_expiry: verification_expiry,
             isActivated: true,
             isVerified: false,
+            firstLogin: true
         });
 
         // user credentials
@@ -249,8 +251,18 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'invalid credentials.' });
         }
 
+        if(!existingUser.isVerified){
+            return res.status(400).json({message: 'User Email Is Not Verified.'});
+        }
+
+        if(!existingUser.isActivated){
+            return res.status(400).json({message: 'Your Account Is Not Activated'});
+        }
+
+
         existingUser.lastLoginAt = Date.now();
         await existingUser.save();
+
 
         const token = jwt.sign(
             {
@@ -264,7 +276,8 @@ const login = async (req, res) => {
         return res.status(200).json({
             message: 'login sucessfull',
             email: existingUser.email,
-            token: token
+            token: token,
+            firstLogin: existingUser.firstLogin
         });
     }
     catch (err) {
