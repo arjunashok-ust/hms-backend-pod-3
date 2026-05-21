@@ -20,7 +20,7 @@ const signUp = async (req, res) => {
     try {
         const {
             name,
-            roles,
+            role,
             email,
             password,
             department,
@@ -43,7 +43,7 @@ const signUp = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        if (roles.includes('Doctor', 'Nurse', 'Pharmacist', 'Lab_Tech')) {
+        if (role == 'Doctor') {
             const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
             if (medicalRegNo) {
                 return res.status(409).json({ message: 'medical registration no should be unique.' });
@@ -71,7 +71,7 @@ const signUp = async (req, res) => {
             email: email,
             passwordHash: passwordHash,
             status: status,
-            roles: roles,
+            role: role,
             employeeId: profile.employeeCode,
             verification_token: verification_token,
             verification_expiry: verification_expiry,
@@ -127,7 +127,7 @@ const signUpAdmin = async (req, res) => {
     try {
         const {
             name,
-            roles,
+            role,
             email,
             password,
             department,
@@ -148,7 +148,7 @@ const signUpAdmin = async (req, res) => {
             return res.status(409).json({ message: 'email is already registered.' });
         }
 
-        if (roles.includes('Doctor', 'Nurse', 'Pharmacist', 'Lab_Tech')) {
+        if (role.includes('Doctor', 'Nurse', 'Pharmacist', 'Lab_Tech')) {
             const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
             if (medicalRegNo) {
                 return res.status(409).json({ message: 'medical registration no should be unique.' });
@@ -180,7 +180,7 @@ const signUpAdmin = async (req, res) => {
             email: email,
             passwordHash: passwordHash,
             status: status,
-            roles: roles,
+            role: role,
             employeeId: profile.employeeCode,
             verification_token: verification_token,
             verification_expiry: verification_expiry,
@@ -267,7 +267,7 @@ const login = async (req, res) => {
         const token = jwt.sign(
             {
                 email: existingUser.email,
-                roles: existingUser.roles,
+                role: existingUser.role,
             },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN })

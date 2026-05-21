@@ -13,9 +13,10 @@ const getUserProfile = async (req, res) => {
         
         return res.status(200).json({
             message: 'sucessfully obtained user information',
+            name: employee.name,
             email: user.email,
             status: user.status,
-            roles: user.roles,
+            role: user.role,
             employeeId: user.employeeId,
             isActivated: user.isActivated,
             isVerified: user.isVerified,
@@ -55,17 +56,6 @@ const updateUserProfile = async (req, res) => {
     }
 }
 
-const getAllUsers = async (req,res) => {
-    try{
-        const user = Employee
-    }
-    catch(err){
-        console.error(err);
-        return res.status(400).json({message: `server error during get all users.`});
-    }
-}
-
-// user first login
 
 
 module.exports = { getUserProfile }

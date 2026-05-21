@@ -11,9 +11,9 @@ const employeeSchema = new mongoose.Schema({
     joiningDate: { type: Date, required: true },
     medicalRegistrationNo: { type: String },
     specialization: { type: String },
-    qualification: [{ type: String, enum: ['MBBS', 'MD'], required: true }],
+    qualification: [{ type: String }],
     consultationFee: { type: Number },
-    availabilitySlots: [{type: String }],
+    availabilitySlots: [{ type: String }],
 });
 
 // pre hook

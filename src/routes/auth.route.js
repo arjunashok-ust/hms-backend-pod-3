@@ -12,6 +12,6 @@ router.post('/signUpAdmin',authValidate.validateSignUp,validate,authController.s
 router.post('/reset-password',authValidate.validateResetPassword,validate,authController.resetPassword);
 router.post('/refresh',authValidate.validateRefresh,validate,authController.refresh);
 router.post('/set-password',authValidate.validateSetPassword,validate,authController.setPassword);
-router.post('/verify-email',authValidate.validateVerifyMail,validate,authController.verifyMail);
+router.get('/verify-email',authValidate.validateVerifyMail,validate,authController.verifyMail);
 
 module.exports = router;

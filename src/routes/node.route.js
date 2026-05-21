@@ -7,5 +7,6 @@ const validate = require('../middleware/validate.middleware');
 
 router.post('/addNode',validateNode.validateCreateNode,validate,nodeController.addNode);
 router.post('/deleteNode',validateNode.validateDeleteNode,validate,nodeController.deleteNode);
+router.get('/getNodes',validate,nodeController.getNodes);
 
 module.exports = router;

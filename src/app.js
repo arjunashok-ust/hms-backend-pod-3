@@ -31,5 +31,6 @@ app.use('/auth', authRoute);
 app.use('/user', userRoute);
 app.use('/admin', adminRoute);
 app.use('/ui',uiRoute);
+app.use('/node',nodeRoute);
 
 module.exports = app;

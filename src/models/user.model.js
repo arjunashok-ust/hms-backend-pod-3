@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     status: { type: String, enum: ['Active', 'Inactive'], required: true, default: 'active' },
-    roles: [{ type: String, enum: ['Owner', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist'], required: true }],
+    role: { type: String, enum: ['Owner', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist'], required: true },
     employeeId: { type: String, ref: 'Employee', required: true },
     verification_token: { type: String, unique: true },
     verification_expiry: {type: Date},

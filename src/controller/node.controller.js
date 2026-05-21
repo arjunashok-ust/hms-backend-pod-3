@@ -21,7 +21,7 @@ const addNode = async (req, res) => {
 
         return res.status(200).json({
             message: `node created successfully, ${node.name}`,
-            roles: role
+            role: role
         });
     } catch (err) {
         console.error(err);
@@ -43,7 +43,7 @@ const deleteNode = async (req, res) => {
 
         return res.status(200).json({
             message: `node deleted successfully ${node.name}`,
-            roles: node.roles
+            role: node.role
         })
     } catch (err) {
         console.error(err);
@@ -52,21 +52,23 @@ const deleteNode = async (req, res) => {
 }
 
 // Get Node
-const getNode = async (req, res) => {
+const getNodes = async (req, res) => {
     try {
-        const {
-            role
-        } = req.query.role;
+
+        const role = req.query.role;
+        console.log(role);
 
         const isRole = await Role.findOne({ role_name: role });
         if (!isRole) {
             return res.status(400).json({ message: "Unknown Role" });
         }
 
-        // return node
+        const node = await Node.find({ role: role }).sort({ order: 1 });
+
+        return res.status(200).json(node);
     } catch (err) {
-        return res.status(500).json({message: 'Server Error During Get Node!'});
+        return res.status(500).json({ message: 'Server Error During Get Node!' });
     }
 }
 
-module.exports = { addNode, deleteNode }
+module.exports = { addNode, deleteNode, getNodes }

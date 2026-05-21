@@ -1,12 +1,15 @@
 const User = require('../models/user.model');
 const Employee = require('../models/employee.model');
+const Patient = require('../models/patient.model');
+const Appointment = require('../models/appointment.model');
 const jwt = require('jsonwebtoken');
+const Department = require('../models/department.model');
 
 const deleteUserProfile = async (req, res) => {
     try {
-        if (!req.user.roles?.includes('Admin')) {
-            return res.status(401).json({ message: 'not authorized to do this operation.' });
-        }
+        // if (!req.user.roles?.includes('Admin')) {
+        //     return res.status(401).json({ message: 'not authorized to do this operation.' });
+        // }
         const EmployeeId = req.body.id;
         const existingUser = await User.findOne({ employeeId: EmployeeId });
         if (!existingUser) {
@@ -31,5 +34,47 @@ const deleteUserProfile = async (req, res) => {
     }
 }
 
-module.exports = { deleteUserProfile };
+getDashboardData = async (req, res) => {
+    try {
+        // if (req.user.role) {
+        //     return res.status(401).json({ message: 'You are not authorized to do this operation.' });
+        // }
+        const employeeCount = await Employee.countDocuments();
+        const activeCount = await Employee.countDocuments({ status: 'Active' });
+        const pendingApprovalCount = await User.countDocuments({ isActivated: false });
+        const pendingVerifyCount = await User.countDocuments({ isVerified: false });
+        const patientCount = await Patient.countDocuments();
+        const appointmentCount = await Appointment.countDocuments();
+        const departmentCount = await Department.countDocuments();
+
+        return res.status(200).json({
+            message: 'Dashboard Data Fetched',
+            employeeCount: employeeCount,
+            activeCount: activeCount,
+            pendingApprovalCount: pendingApprovalCount,
+            pendingVerifyCount: pendingVerifyCount,
+            patientCount: patientCount,
+            departmentCount: departmentCount,
+            appointmentCount: appointmentCount,
+        });
+    }
+    catch (err) {
+        return res.status(500).json({ message: 'Server Error During Get Dashboard Data' });
+    }
+}
+
+const getAllUsers = async (req, res) => {
+    try {
+        // if (req.user.role) {
+        //     return res.status(401).json({ message: 'You are not authorized to do this operation.' });
+        // }
+        const employee = await Employee.find();
+
+        return res.status(200).json(employee);
+    } catch (err) {
+        return res.status(500).json({ message: 'Server Error During Get All Users' });
+    }
+}
+
+module.exports = { deleteUserProfile, getDashboardData, getAllUsers };
 
