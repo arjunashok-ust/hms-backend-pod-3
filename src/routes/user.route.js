@@ -7,6 +7,8 @@ const validate = require('../middleware/validate.middleware');
 const auth = require('../middleware/auth.middleware');
 
 // routes
-router.get('/getUserProfile',userValidate.validateGetUserProfile,validate,auth,userController.getUserProfile);
+router.get('/getUserProfile',userValidate.validateGetUserProfile,validate,userController.getUserProfile);
+router.get('/getNameByEmployeeId',userValidate.validateGetNameByEmployeeId,validate,userController.getNameByEmployeeId);
+router.get('/getNameByPatientId',userValidate.validateGetNameByPatientId,validate,userController.getNameByPatientId);
 
 module.exports = router;

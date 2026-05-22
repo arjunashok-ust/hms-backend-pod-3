@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Counter = require('./counter.model');
 
 const patientSchema = new mongoose.Schema({
-    uhid: { type: String, unique: true, required: true },
+    uhid: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, default: null, required: true },
     email: { type: String, required: true, unique: true },
@@ -31,4 +31,4 @@ patientSchema.pre('save', async function () {
     }
 });
 
-module.exports = mongoose.model('Patients', patientSchema);
+module.exports = mongoose.model('patients', patientSchema);

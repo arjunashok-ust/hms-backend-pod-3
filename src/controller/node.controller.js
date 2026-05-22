@@ -1,35 +1,6 @@
 const Node = require('../models/node.model');
 const Role = require('../models/role.model');
 
-// Create Node
-const addNode = async (req, res) => {
-    try {
-        const {
-            name,
-            role
-        } = req.body;
-
-        const existingNode = await Node.findOne({ name: name });
-        if (existingNode) {
-            return res.status(409).json({ message: 'node already defined.' });
-        }
-
-        const node = await Node.create({
-            name,
-            role
-        });
-
-        return res.status(200).json({
-            message: `node created successfully, ${node.name}`,
-            role: role
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'server error during add node' });
-    }
-}
-
-
 // Delete Node
 const deleteNode = async (req, res) => {
     try {
@@ -71,4 +42,4 @@ const getNodes = async (req, res) => {
     }
 }
 
-module.exports = { addNode, deleteNode, getNodes }
+module.exports = { getNodes }

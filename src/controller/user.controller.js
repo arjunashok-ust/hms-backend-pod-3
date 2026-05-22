@@ -1,5 +1,6 @@
 const User = require('../models/user.model');
 const Employee = require('../models/employee.model');
+const Patient = require('../models/patient.model');
 
 // Get User
 const getUserProfile = async (req, res) => {
@@ -10,7 +11,7 @@ const getUserProfile = async (req, res) => {
         const employee = await Employee.findOne({ email });
 
         if (!user) return res.status(404).json({ message: 'user not found.' });
-        
+
         return res.status(200).json({
             message: 'sucessfully obtained user information',
             name: employee.name,
@@ -29,33 +30,37 @@ const getUserProfile = async (req, res) => {
     }
 }
 
-// Update User Profile
-const updateUserProfile = async (req, res) => {
+
+const getNameByEmployeeId = async (req, res) => {
     try {
-        const {
-            employeeId,
-            data
-        } = req.body;
-
-        const existingUser = await Employee.findOne({ employeeCode: employeeId });
-        if(!existingUser){
-            return res.status(404).json({message: 'user not found!'});
+        const employeeId = req.query.employeeId;
+        const employee = await Employee.findOne({ employeeCode: employeeId });
+        if (!employee) {
+            return res.status(404).json({ message: "User not found!" });
         }
-        if(data.employeeCode){
-            return res.status(401).json({message: 'employee code cant be edited'});
-        }
-
-        // Email Check Here
-
-        // Updation Here
-
-        // Response Here
-    } catch (err) {
+        return res.status(200).json(employee.name);
+    }
+    catch (err) {
         console.error(err);
-        return res.status(500).json({ message: 'internal server error during update user profile' });
+        return res.status(500).json({ message: 'Server Error During Get Name By EmployeeId' });
+    }
+}
+
+const getNameByPatientId = async (req, res) => {
+    try {
+        const patientId = req.query.patientId;
+        const patient = await Patient.findOne({ uhid: patientId });
+        if (!patient) {
+            return res.status(404).json({ message: "User not found!" });
+        }
+        return res.status(200).json(patient.name);
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server Error During Get Name By Patient Id' });
     }
 }
 
 
 
-module.exports = { getUserProfile }
+module.exports = { getUserProfile,getNameByEmployeeId,getNameByPatientId }

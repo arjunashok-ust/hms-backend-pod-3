@@ -23,14 +23,14 @@ const authRoute = require('./routes/auth.route');
 const userRoute = require('./routes/user.route');
 const adminRoute = require('./routes/admin.route');
 const nodeRoute = require('./routes/node.route');
-const homeRoute = require('./routes/home.route');
 const uiRoute = require('./routes/ui.route');
+const appointmentRoute = require('./routes/appointment.route');
 
-app.use("/", homeRoute);
 app.use('/auth', authRoute);
 app.use('/user', userRoute);
 app.use('/admin', adminRoute);
 app.use('/ui',uiRoute);
 app.use('/node',nodeRoute);
+app.use('/appointment',appointmentRoute);
 
 module.exports = app;
