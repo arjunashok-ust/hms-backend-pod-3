@@ -19,6 +19,8 @@ const getUserProfile = async (req, res) => {
             status: user.status,
             role: user.role,
             employeeId: user.employeeId,
+            designation: employee.designation,
+            department: employee.department,
             isActivated: user.isActivated,
             isVerified: user.isVerified,
             firstLogin: user.firstLogin

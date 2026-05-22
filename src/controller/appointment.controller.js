@@ -77,5 +77,42 @@ const getDoctors = async (req, res) => {
     }
 }
 
-module.exports = { createAppointment, getAllAppointments, getDoctors }
+const getAppointmentUiData = async(req,res) => {
+    try{
+        const appointmentCount = await Appointment.find().countDocuments();
+        if(!appointmentCount){
+            return res.status(404).json({ message: "No Appointment Found" });
+        }
+
+        const bookedCount = await Appointment.find({status: 'Booked'}).countDocuments();
+        const cancelledCount = await Appointment.find({status: 'Cancelled'}).countDocuments();
+        const completedCount = await Appointment.find({status: 'Completed'}).countDocuments();
+
+        return res.status(200).json({
+            appointmentCount: appointmentCount,
+            bookedCount: bookedCount,
+            cancelledCount: cancelledCount,
+            completedCount: completedCount,
+        })
+    } catch(err){
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Get All Doctors" });
+    }
+}
+
+const deleteAppointment = async (req,res) => {
+    try {
+        const appointmentId = req.query.appointmentId;
+        const appointment = await Appointment.findOne({ appointmentId: appointmentId});
+        if(!appointment){
+            return res.status(404).json({message: "Appointment Not Found"});
+        }
+        await appointment.deleteOne();
+        return res.status(200).json({message: 'Appointment Deleted Sucessfully'});
+    } catch(err){
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Delete Appointment" });
+    }
+}
+module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment }
 

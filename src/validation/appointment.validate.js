@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body,query } = require('express-validator');
 
 
 const validateCreateAppointment = [
@@ -10,4 +10,8 @@ const validateCreateAppointment = [
     body("createdByEmployeeId").notEmpty().withMessage("Creator Employee Id is Required"),
 ]
 
-module.exports = { validateCreateAppointment }
+const validateDeleteAppointment = [
+    query("appointmentId").notEmpty().withMessage("Appointment Id is Required")
+]
+
+module.exports = { validateCreateAppointment, validateDeleteAppointment }
