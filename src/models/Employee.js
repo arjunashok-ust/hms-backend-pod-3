@@ -18,28 +18,19 @@ const employeeSchema = mongoose.Schema({
     availabilitySlots: [{ type: String }]
 })
 employeeSchema.pre('save', async function (next) {
-
     if (this.isNew) {
-
         try {
-
             const employeeCounter = await Counter.findOneAndUpdate(
                 { name: 'employee' },
                 { $inc: { seq: 1 } },
                 { new: true, upsert: true }
             );
-
             this.employeeId =
                 `EMP-${String(employeeCounter.seq).padStart(6, '0')}`;
-
-
         } catch (err) {
-
             return next(err);
-
         }
     }
-
 });
 
 module.exports = mongoose.model('Employee', employeeSchema);
