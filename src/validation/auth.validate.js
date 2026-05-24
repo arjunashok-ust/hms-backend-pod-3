@@ -13,6 +13,15 @@ const validateSignUp = [
     body('joiningDate').notEmpty().withMessage('joining date is required.'),
 ];
 
+const validateAdminSignUp = [
+    body('name').notEmpty().withMessage('name is required.'),
+    body('email').isEmail().withMessage('invalid email format'),
+    body('department').notEmpty().withMessage('department is required.'),
+    body('designation').isIn(allowedRoleTypes).withMessage('designation is required.'),
+    body('status').isIn(allowedStatusTypes).withMessage('status is required.'),
+    body('joiningDate').notEmpty().withMessage('joining date is required.'),
+];
+
 const validateLogin = [
     body("email").isEmail().withMessage("email is invalid."),
     body("password").notEmpty().withMessage("password is required.")
@@ -20,7 +29,7 @@ const validateLogin = [
 
 const validateResetPassword = [
     body("prevPassword").notEmpty().withMessage("Previous Password is Required."),
-        body("newPassword").notEmpty().withMessage("New Password is Required."),
+    body("newPassword").notEmpty().withMessage("New Password is Required."),
     body("employeeId").notEmpty().withMessage("Employee Id is Required.")
 ]
 
@@ -29,7 +38,7 @@ const validateRefresh = [
 ]
 
 const validateSetPassword = [
-    body("employeeId").notEmpty().withMessage("EmployeeId Is Required"),
+    body("email").isEmail().withMessage("Email Is Invalid"),
     body("password").notEmpty().withMessage("Password Is Required")
 ]
 
@@ -38,4 +47,4 @@ const validateVerifyMail = [
     query("verification_token").notEmpty().withMessage("Verification Token Is Required")
 ]
 
-module.exports = { validateSignUp, validateLogin, validateResetPassword, validateRefresh, validateSetPassword, validateVerifyMail }
+module.exports = { validateSignUp, validateAdminSignUp, validateLogin, validateResetPassword, validateRefresh, validateSetPassword, validateVerifyMail }

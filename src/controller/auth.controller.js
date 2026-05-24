@@ -77,7 +77,7 @@ const signUp = async (req, res) => {
             verification_expiry: verification_expiry,
             isActivated: false,
             isVerified: false,
-            firstLogin: true,
+            firstLogin: false,
         });
 
         // user email verification
@@ -129,7 +129,6 @@ const signUpAdmin = async (req, res) => {
             name,
             role,
             email,
-            password,
             department,
             designation,
             status,
@@ -353,9 +352,9 @@ const refresh = async (req,res) => {
 // set password for first time users
 const setPassword = async (req,res) => {
     try{
-        const { employeeId,password } = req.body;
+        const { email,password } = req.body;
 
-        const user = await User.findOne({ employeeId });
+        const user = await User.findOne({ email: email });
 
         if(!user){
             return res.status(404).json({message: 'User Not Found!'});

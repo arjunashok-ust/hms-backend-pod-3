@@ -10,14 +10,15 @@ const deleteUserProfile = async (req, res) => {
         // if (!req.user.roles?.includes('Admin')) {
         //     return res.status(401).json({ message: 'not authorized to do this operation.' });
         // }
-        const EmployeeId = req.body.id;
+        const EmployeeId = req.body.employeeId;
         const existingUser = await User.findOne({ employeeId: EmployeeId });
         if (!existingUser) {
             return res.status(404).json({ message: 'user not found.' });
         }
-        if (existingUser.roles.includes('admin')) {
+        if (existingUser.role.includes('Admin')) {
             return res.status(401).json({ message: 'no permission to do that.' });
         }
+
         await existingUser.deleteOne();
 
         const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
