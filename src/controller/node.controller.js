@@ -1,31 +1,9 @@
 const Node = require('../models/node.model');
 const Role = require('../models/role.model');
 
-// Delete Node
-const deleteNode = async (req, res) => {
-    try {
-        const name = req.body.name;
-
-        const node = await Node.findOneAndDelete({ name });
-
-        if (!node) {
-            return res.status(404).json({ message: 'node not found' });
-        }
-
-        return res.status(200).json({
-            message: `node deleted successfully ${node.name}`,
-            role: node.role
-        })
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'server error during delete node' });
-    }
-}
-
 // Get Node
 const getNodes = async (req, res) => {
     try {
-
         const role = req.query.role;
         console.log(role);
 

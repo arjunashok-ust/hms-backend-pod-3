@@ -4,13 +4,13 @@ const Counter = require('./counter.model');
 const patientSchema = new mongoose.Schema({
     uhid: { type: String, unique: true },
     name: { type: String, required: true },
-    phone: { type: String, default: null, required: true },
+    phone: { type: String, default: null},
     email: { type: String, required: true, unique: true },
-    gender: { type: String, enum: ['male', 'female'], required: true },
+    gender: { type: String, enum: ['Male', 'Female'], required: true },
     dob: { type: Date, required: true },
     address: { type: String, required: true },
     emergencyContact: { type: String, default: null },
-    status: { type: String, enum: ['active', 'inactive'] },
+    status: { type: String, enum: ['Active', 'Inactive'] },
 });
 
 // pre hook

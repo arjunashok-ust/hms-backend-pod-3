@@ -5,7 +5,7 @@ const Specialization = require('../models/specialization.model');
 // getRoles
 const getRoles = async (req, res) => {
     try {
-        const roles = await Role.find({}, 'role_name');
+        const roles = await Role.find({ role_name: {$ne: 'Admin'}}, 'role_name');
         return res.status(200).json(
             roles
         )

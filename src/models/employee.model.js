@@ -7,7 +7,7 @@ const employeeSchema = new mongoose.Schema({
     email: { type: String, required: true, lowercase: true, trim: true },
     department: { type: String, enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Admin','ICU'], required: true },
     designation: { type: String, enum: ['Doctor', 'Nurse', 'Receptionist', 'Owner', 'Lab_Tech', 'Cashier', 'Pharmacist'], required: true },
-    status: { type: String, enum: ['Active', 'Inactive'], required: true },
+    status: { type: String, enum: ['Active', 'Inactive','Rejected'], required: true },
     joiningDate: { type: Date, required: true },
     medicalRegistrationNo: { type: String ,sparse: true},
     specialization: { type: String },

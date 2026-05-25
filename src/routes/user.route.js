@@ -10,5 +10,8 @@ const auth = require('../middleware/auth.middleware');
 router.get('/getUserProfile',userValidate.validateGetUserProfile,validate,userController.getUserProfile);
 router.get('/getNameByEmployeeId',userValidate.validateGetNameByEmployeeId,validate,userController.getNameByEmployeeId);
 router.get('/getNameByPatientId',userValidate.validateGetNameByPatientId,validate,userController.getNameByPatientId);
+router.post('/createPatient', userValidate.validateCreatePatient,validate,userController.createPatient);
+router.get('/getPatients',validate,auth,userController.getPatients);
+router.post('/deletePatient',userValidate.validateDeletePatient,validate,userController.deletePatient);
 
 module.exports = router;

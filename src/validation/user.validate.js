@@ -1,4 +1,4 @@
-const { query } = require('express-validator');
+const { body,query } = require('express-validator');
 
 const validateGetUserProfile = [
     query('email').isEmail().withMessage('invalid email format'),
@@ -12,4 +12,17 @@ const validateGetNameByPatientId = [
     query('patientId').notEmpty().withMessage('Patient Id Is Required'),
 ]
 
-module.exports = { validateGetUserProfile,validateGetNameByEmployeeId,validateGetNameByPatientId };
+const validateCreatePatient = [
+    body("name").notEmpty().withMessage('Name is required'),
+    body("email").isEmail().withMessage('Email is required'),
+    body("gender").notEmpty().withMessage('Gender is required'),
+    body("dob").notEmpty().withMessage('DOB is required'),
+    body("address").notEmpty().withMessage('Address is required'),
+    body("status").notEmpty().withMessage('Status is required')
+]
+
+const validateDeletePatient = [
+    body("patientId").notEmpty().withMessage("PatientId is required")
+]
+
+module.exports = { validateGetUserProfile,validateGetNameByEmployeeId,validateGetNameByPatientId,validateCreatePatient,validateDeletePatient };
