@@ -5,7 +5,6 @@ const appointmentValidate = require('../validation/appointment.validate');
 const appointmentController = require('../controller/appointment.controller');
 const validate = require('../middleware/validate.middleware');
 const auth = require('../middleware/auth.middleware');
-const access = require('../middleware/access-control.middleware');
 
 router.post('/createAppointment',appointmentValidate.validateCreateAppointment,validate,auth,appointmentController.createAppointment);
 router.get('/getAllAppointments',validate,auth,appointmentController.getAllAppointments);

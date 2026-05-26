@@ -5,7 +5,6 @@ const adminController = require('../controller/admin.controller');
 const validateAdmin = require('../validation/admin.validate');
 const validate = require('../middleware/validate.middleware');
 const auth = require('../middleware/auth.middleware');
-const access = require('../middleware/access-control.middleware');
 
 
 router.post('/deleteUserProfile', validateAdmin.validateDeleteUserProfile, validate, auth, adminController.deleteUserProfile);
