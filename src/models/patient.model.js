@@ -10,7 +10,6 @@ const patientSchema = new mongoose.Schema({
     dob: { type: Date, required: true },
     address: { type: String, required: true },
     emergencyContact: { type: String, default: null },
-    status: { type: String, enum: ['Active', 'Inactive'] },
 });
 
 // pre hook

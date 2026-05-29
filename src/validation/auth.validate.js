@@ -6,36 +6,18 @@ const allowedStatusTypes = ['Active', 'Inactive'];
 const validateSignUp = [
     body('name').notEmpty().withMessage('name is required.'),
     body('email').isEmail().withMessage('invalid email format'),
-    body('password').notEmpty().withMessage('password is empty.'),
     body('department').notEmpty().withMessage('department is required.'),
+    body('joiningDate').isBefore(new Date().toISOString()).withMessage("date must be in the past"),
     body('designation').isIn(allowedRoleTypes).withMessage('designation is required.'),
     body('status').isIn(allowedStatusTypes).withMessage('status is required.'),
-    body('joiningDate').notEmpty().withMessage('joining date is required.'),
 ];
 
-const validateAdminSignUp = [
-    body('name').notEmpty().withMessage('name is required.'),
-    body('email').isEmail().withMessage('invalid email format'),
-    body('department').notEmpty().withMessage('department is required.'),
-    body('designation').isIn(allowedRoleTypes).withMessage('designation is required.'),
-    body('status').isIn(allowedStatusTypes).withMessage('status is required.'),
-    body('joiningDate').notEmpty().withMessage('joining date is required.'),
-];
 
 const validateLogin = [
     body("email").isEmail().withMessage("email is invalid."),
     body("password").notEmpty().withMessage("password is required.")
 ]
 
-const validateResetPassword = [
-    body("prevPassword").notEmpty().withMessage("Previous Password is Required."),
-    body("newPassword").notEmpty().withMessage("New Password is Required."),
-    body("employeeId").notEmpty().withMessage("Employee Id is Required.")
-]
-
-const validateRefresh = [
-    body("employeeId").notEmpty().withMessage("EmployeeId Is Required")
-]
 
 const validateSetPassword = [
     body("email").isEmail().withMessage("Email Is Invalid"),
@@ -47,4 +29,4 @@ const validateVerifyMail = [
     query("verification_token").notEmpty().withMessage("Verification Token Is Required")
 ]
 
-module.exports = { validateSignUp, validateAdminSignUp, validateLogin, validateResetPassword, validateRefresh, validateSetPassword, validateVerifyMail }
+module.exports = { validateSignUp, validateLogin,  validateSetPassword, validateVerifyMail }

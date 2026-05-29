@@ -5,18 +5,45 @@ const Appointment = require('../models/appointment.model');
 const jwt = require('jsonwebtoken');
 const Department = require('../models/department.model');
 
+const showError = (res, err, message) => {
+    console.error(err);
+    return res.status(500).json({ message: message });
+}
+
+const findUserByEmployeeId = async (employeeId) => {
+    return await User.findOne({employeeId});
+}
+
+const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage) => {
+    try {
+        const employeeId = req.body.employeeId;
+        const user = await findUserByEmployeeId(employeeId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.status == status) {
+            return res.status(403).json({ message: alreadyMessage });
+        }
+
+        user.status = status;
+        await user.save();
+
+        return res.status(200).json({
+            message: sucessMessage,
+            employeeId: user.employeeId,
+        });
+    } catch (err) {
+        showError(res, err, 'Server Error During Approve User');
+    }
+}
+
 const deleteUserProfile = async (req, res) => {
     try {
-        // if (!req.user.roles?.includes('Admin')) {
-        //     return res.status(401).json({ message: 'not authorized to do this operation.' });
-        // }
         const EmployeeId = req.body.employeeId;
-        const existingUser = await User.findOne({ employeeId: EmployeeId });
+        const existingUser = await findUserByEmployeeId(EmployeeId);
         if (!existingUser) {
             return res.status(404).json({ message: 'user not found.' });
-        }
-        if (existingUser.role.includes('Admin')) {
-            return res.status(401).json({ message: 'no permission to do that.' });
         }
 
         await existingUser.deleteOne();
@@ -26,27 +53,25 @@ const deleteUserProfile = async (req, res) => {
             return res.status(404).json({ message: 'employee not found.' });
         }
         return res.status(200).json({
-            message: 'account deleted successfully',
+            message: 'Account deleted successfully',
             employeeId: EmployeeId,
         });
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "server error during delete user profile." });
+        showError(res, err, "server error during delete user profile.");
     }
 }
 
-getDashboardData = async (req, res) => {
+const getDashboardData = async (req, res) => {
     try {
-        // if (req.user.role) {
-        //     return res.status(401).json({ message: 'You are not authorized to do this operation.' });
-        // }
-        const employeeCount = await Employee.countDocuments();
-        const activeCount = await Employee.countDocuments({ status: 'Active' });
-        const pendingApprovalCount = await User.countDocuments({ isActivated: false });
-        const pendingVerifyCount = await User.countDocuments({ isVerified: false });
-        const patientCount = await Patient.countDocuments();
-        const appointmentCount = await Appointment.countDocuments();
-        const departmentCount = await Department.countDocuments();
+        const [employeeCount, activeCount, pendingApprovalCount, pendingVerifyCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
+            Employee.countDocuments(),
+            Employee.countDocuments({ status: 'Active' }),
+            User.countDocuments({ status: 'Pending' }),
+            User.countDocuments({ isVerified: false }),
+            Patient.countDocuments(),
+            Appointment.countDocuments(),
+            Department.countDocuments(),
+        ]);
 
         return res.status(200).json({
             message: 'Dashboard Data Fetched',
@@ -60,76 +85,38 @@ getDashboardData = async (req, res) => {
         });
     }
     catch (err) {
-        return res.status(500).json({ message: 'Server Error During Get Dashboard Data' });
+        showError(res, err, 'Server Error During Get Dashboard Data');
     }
 }
 
 const getAllUsers = async (req, res) => {
     try {
-        // if (req.user.role) {
-        //     return res.status(401).json({ message: 'You are not authorized to do this operation.' });
-        // }
         const employee = await Employee.find();
 
         return res.status(200).json(employee);
     } catch (err) {
-        return res.status(500).json({ message: 'Server Error During Get All Users' });
+        showError(res, err, 'Server Error During Get All Users');
     }
 }
 
 const getUsers = async (req, res) => {
     try {
-        // if (req.user.role) {
-        //     return res.status(401).json({ message: 'You are not authorized to do this operation.' });
-        // }
         const user = await User.find();
-
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
         return res.status(200).json(user);
     } catch (err) {
-        return res.status(500).json({ message: 'Server Error During Get All Users' });
+        showError(res, err, 'Server Error During Get All Users');
     }
 }
 
 const approveUser = async (req, res) => {
-    try {
-        const employeeId = req.body.employeeId;
-        const user = await User.findOne({ employeeId: employeeId });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        user.isActivated = true;
-        user.status = 'Active';
-        user.save();
-
-        return res.status(200).json({
-            message: 'Account activated sucessfully',
-            employeeId: user.employeeId
-        });
-    } catch (err) {
-        return res.status(500).json({ message: 'Server Error During Approve User' });
-    }
+    return changeUserStatus(req, res, 'Active', 'Account is already activated', 'Account activated sucessfully');
 }
 
 const rejectUser = async (req, res) => {
-    try {
-        const employeeId = req.body.employeeId;
-        const user = await User.findOne({ employeeId: employeeId });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        user.isActivated = false;
-        user.status = 'Rejected';
-        user.save();
-
-        return res.status(200).json({
-            message: 'Account activation application rejected',
-            employeeId: user.employeeId
-        });
-    } catch (err) {
-        return res.status(500).json({ message: 'Server Error During Approve User' });
-    }
+    return changeUserStatus(req,res,'Inactive','Account is already not active','Account activation request rejected sucessfully');
 }
 
 // Update User Profile
@@ -140,22 +127,22 @@ const updateUserProfile = async (req, res) => {
             data,
         } = req.body;
 
-        const existingUser = await User.findOne({ employeeId });
+        const existingUser = await findUserByEmployeeId(employeeId);
 
         if (!existingUser) {
             return res.status(404).json({ message: "User not found!" });
         }
 
-        const user = await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
+        await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
 
         return res.status(200).json({
-            message: "Profile updated sucessfully!"
+            message: "Profile updated sucessfully!",
         });
     }
     catch (err) {
-        return res.status(500).json({ message: `Server error during update profile` });
+        showError(res, err, `Server error during update profile`);
     }
 }
 
-module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser,updateUserProfile };
+module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile };
 

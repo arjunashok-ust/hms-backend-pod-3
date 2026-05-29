@@ -19,13 +19,11 @@ const createAppointment = async (req, res) => {
         }
 
         const doctor = await Employee.findOne({ employeeCode: doctorEmployeeId,designation: 'Doctor' });
-
         if (!doctor) {
             return res.status(404).json({ message: "Doctor Not Found" });
         }
 
         const creator = await Employee.findOne({ employeeCode: createdByEmployeeId });
-
         if (!creator) {
             return res.status(404).json({ message: "Creator Employee Not Found!" });
         }
@@ -46,7 +44,7 @@ const createAppointment = async (req, res) => {
         })
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ message: "Server Error During Create Appointment" });
+        return res.status(500).json({ message: err.message });
     }
 }
 
@@ -114,5 +112,6 @@ const deleteAppointment = async (req,res) => {
         return res.status(500).json({ message: "Server Error During Delete Appointment" });
     }
 }
+
 module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment }
 
