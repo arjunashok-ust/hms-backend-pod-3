@@ -1,10 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 const employeeModel = require("../models/Employee");
 const userModel = require("../models/User");
 const mail = require("../utils/mailService.util");
-const { error } = require("console");
 
 //SIGNUP employee
 exports.employeeSignup = async (req, res) => {
@@ -107,6 +106,7 @@ exports.verifyEmail = async( req, res ) => {
         await user.save();
         return res.status(200).json({message: "Email verification successfull"});
     } catch(err) {
+        console.error(err);
         return res.status(500).json({message: "Error during email verification"});
     }
 }
@@ -151,58 +151,6 @@ exports.login = async (req, res) => {
     } catch (err) {
         console.log("Login error: ", err);
         res.status(500).json({ message: err.message });
-    }
-}
-
-//reset password
-exports.resetPassword = async( req, res ) => {
-    try {
-        const { oldPassword, newPassword, employeeId } = req.body;
-        const existingUser = await userModel.findOne({ employeeId });
-        if(!existingUser) {
-            return res.status(404).json({message: "User not found"});
-        }
-
-        const oldPasswordHash = existingUser.passwordHash;
-        const valid = await bcrypt.compare(oldPassword, oldPasswordHash);
-        if(!valid) {
-            return res.status(400).json({message: "The password you have given is incorrect"});
-        }
-        if(oldPassword == newPassword) {
-            return res.status(400).json({message: "Please input different password from old one"});
-        }
-
-        const passwordHash = await bcrypt.hash(newPassword,12);
-        existingUser.passwordHash = passwordHash;
-        await existingUser.save();
-        return res.status(200).json({message: "Successfully reset the password"});
-    } catch(err) {
-        console.error(err);
-        res.status(500).json({message: "Error during password reset"});
-    }
-}
-
-//refresh token
-exports.refresh = async( req, res ) => {
-    try {
-        const employeeId = req.body.employeeId;
-        const existingUser = await userModel.findOne({ employeeId });
-        if(!existingUser) {
-            return res.status(404).json({message: "User not found"});
-        }
-
-        const newToken = await jwt.sign(
-            {email: existingUser.email, roles: existingUser.roles},
-            process.env.JWT_SECRET,
-            {expiresIn: process.env.JWT_EXPIRES_IN}
-        );
-
-        return res.status(200).json({message: "New token is generated",
-            token: newToken,
-        })
-    } catch(err) {
-        console.error(err);
-        return res.status(500).json({message: "Error during refresh token"});
     }
 }
 

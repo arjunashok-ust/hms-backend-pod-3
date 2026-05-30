@@ -90,7 +90,7 @@ exports.createPatient = async (req, res) => {
             return res.status(401).json({ message: 'Email is already registered.' });
         }
 
-        const patient = await customerModel.create({
+        await customerModel.create({
             name: name,
             phone: phone,
             email: email,

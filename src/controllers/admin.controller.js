@@ -12,7 +12,7 @@ exports.adminDelete = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        if (user.roles !== "ADMIN") {
+        if (user.roles != "ADMIN") {
             return res.status(404).json({ message: "Only admin is able to delete users" });
         }
         const email = req.body;
@@ -80,11 +80,9 @@ exports.adminSignup = async (req, res) => {
             email,
             phone,
             name,
-            password,
             roles,
             department,
             designation,
-            status,
             joiningDate,
             specialization,
             medicalRegistrationNo,
