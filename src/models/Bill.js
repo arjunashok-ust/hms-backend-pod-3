@@ -4,7 +4,6 @@ const Counter = require("./Counter");
 const billSchema = new mongoose.Schema({
     billId: {
         type: String,
-        required: true,
         unique: true
     },
     patientId: {
@@ -48,10 +47,9 @@ billSchema.pre('save', async function (next) {
             );
             this.billId = `BILL-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
         } catch (err) {
-            return next(err);
+            console.log("PreHook error in Bill.js: ", err.message);
         }
     }
-    next();
 });
 
-const billModel = mongoose.model("Bill", billSchema);
+module.exports = mongoose.model("Bill", billSchema);

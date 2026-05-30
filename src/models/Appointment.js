@@ -4,7 +4,6 @@ const Counter = require("./Counter");
 const appointmentSchema = new mongoose.Schema({
     appointmentId: {
         type: String,
-        required: true,
         unique: true
     },
     patientId: {
@@ -46,12 +45,11 @@ appointmentSchema.pre('save', async function (next) {
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
-            this.appointmentId = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+            this.appointmentId = `APP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
         } catch (err) {
-            return next(err);
+            console.log("PreHook error in Appointment.js: ", err.message);
         }
     }
-    next();
 });
 
-const appointmentModel = mongoose.model("Appointment", appointmentSchema);
+module.exports = mongoose.model("Appointment", appointmentSchema);

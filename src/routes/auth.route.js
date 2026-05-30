@@ -2,13 +2,16 @@ const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");
 const authMiddleware = require("../middlewares/auth.middleware");
-const { validateSignUp, loginValidation } = require("./route.validation");
-const { signUp, login, profile, adminDelete, updateEmployee } = require("../controllers/auth.controller");
+const { validateSignUp, loginValidation, validateResetPassword, validateRefreshToken,
+    validateSetPassword, validateVerifyMail } = require("../validations/auth.validation");
+const { employeeSignup, login, setPassword, refresh, resetPassword, 
+        verifyEmail } = require("../controllers/auth.controller");
 
-router.post("/signup", validateSignUp, validate, signUp);
+router.post("/employeesignup", validateSignUp, validate, employeeSignup);
 router.post("/login", loginValidation, validate, login);
-router.get("/profile", authMiddleware, validate, profile);
-router.delete("/admindelete", authMiddleware, validate, adminDelete);
-router.put("/updateEmployee/:id", authMiddleware, validate, updateEmployee);
+router.get("/verifyemail",  validateVerifyMail, validate, verifyEmail);
+router.post("/setpassword", validateSetPassword, validate, setPassword);
+router.post("/refresh", authMiddleware, validateRefreshToken, validate, refresh);
+router.post("/resetpassword", authMiddleware, validateResetPassword, validate, resetPassword);
 
 module.exports = router;

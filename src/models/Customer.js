@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const customerSchema = new mongoose.Schema({
     uhid: {
         type: String,
-        required: true,
         unique: true
     },
     name: {
@@ -52,10 +52,9 @@ customerSchema.pre('save', async function (next) {
             );
             this.uhid = `UHID-${String(counter.seq).padStart(6, '0')}`;
         } catch (err) {
-            return next(err);
+            console.log("PreHook error in Customer.js: ", err.message);
         }
     }
-    next();
 });
 
-const customerModel = mongoose.model("Customer", customerSchema);
+module.exports = mongoose.model("Customer", customerSchema);

@@ -5,7 +5,6 @@ const medicalRecordSchema = new mongoose.Schema({
     medicalRecordId: {
         type: String,
         unique: true,
-        required: true
     },
     appointmentId: {
         type: String,
@@ -46,3 +45,4 @@ const medicalRecordSchema = new mongoose.Schema({
     }
 });
 const medicalRecordModel = mongoose.model("MedicalRecord", medicalRecordSchema);
+module.exports = medicalRecordModel;

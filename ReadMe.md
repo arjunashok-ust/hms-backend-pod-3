@@ -1,5 +1,5 @@
 # Healthcare Management System – Sprint 1
- 
+
 ## Overview
 Sprint 1 focuses on building the **backend foundation** of the Healthcare Management System using **Node.js and Express**.  
 This sprint establishes the **core architecture, API design, authentication, and security mechanisms** required for a scalable system.
@@ -11,7 +11,6 @@ This sprint establishes the **core architecture, API design, authentication, and
 - Implement **RESTful APIs**
 - Enable **secure authentication & authorization**
 - Ensure **data validation and error handling**
-- Develop a **mini healthcare workflow**
  
 ---
  
@@ -37,15 +36,8 @@ This sprint establishes the **core architecture, API design, authentication, and
  
 ### Authentication & Security
 - JWT-based authentication
-- Role-based access control (RBAC)
-- Rate limiting & input validation
+- Input validation
  
 ### Error Handling
 - Centralized error handling middleware
 - Custom validation logic
- 
-### Mini Project
-- Healthcare backend for:
-  - User
-  - Employee
-- Demonstrates real-world workflow

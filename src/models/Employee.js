@@ -17,6 +17,9 @@ const employeeSchema = new mongoose.Schema({
         trim: true,
         lowercase: true
     },
+    phone: {
+        type: Number,
+    },
     department: {
         type: String,
         enum: [
@@ -30,16 +33,6 @@ const employeeSchema = new mongoose.Schema({
     },
     designation: {
         type: String,
-        enum: [
-            "OWNER",
-            "DOCTOR",
-            "NURSE",
-            "RECEPTIONIST",
-            "CASHIER",
-            "ADMIN",
-            "LAB_TECH",
-            "PHARMACIST"
-        ],
         required: true
     },
     status: {
@@ -57,7 +50,6 @@ const employeeSchema = new mongoose.Schema({
     specialization: {
         type: String,
         trim: true,
-        lowercase: true
     },
     qualification: [{
         type: String,
@@ -67,9 +59,9 @@ const employeeSchema = new mongoose.Schema({
         type: Number,
     },
     availabilitySlots: [{
-        type: String,
+        type: String
     }]
-});
+}, { timestamps: true });
 
 // Pre-save hook to generate sequential ID
 employeeSchema.pre('save', async function () {

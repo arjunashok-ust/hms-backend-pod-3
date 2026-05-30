@@ -5,7 +5,6 @@ const paymentSchema = new mongoose.Schema({
     paymentId: {
         type: String,
         unique: true,
-        required: true
     },
     billId: {
         type: String,
@@ -43,11 +42,10 @@ PaymentSchema.pre('save', async function (next) {
             );
             this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`;
         } catch (err) {
-            return next(err);
+            console.log("PreHook error in Payment.js: ", err.message);
         }
     }
-    next();
 });
 
 
-const paymentModel = mongoose.model("Payment", paymentSchema);
+module.exports = mongoose.model("Payment", paymentSchema);
