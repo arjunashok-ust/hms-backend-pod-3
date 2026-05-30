@@ -7,7 +7,7 @@ exports.signupValidation = [
     .withMessage("A valid email is required")
     .normalizeEmail(),
 
- body("password")
+  body("password")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .matches(/[A-Z]/)
@@ -43,10 +43,7 @@ exports.signupValidation = [
     .isMobilePhone("en-IN")
     .withMessage("Enter a valid phone number"),
 
-  body("department")
-    .trim()
-    .notEmpty()
-    .withMessage("Department is required"),
+  body("department").trim().notEmpty().withMessage("Department is required"),
 
   body("designation").trim().notEmpty().withMessage("Designation is required"),
 
@@ -54,7 +51,6 @@ exports.signupValidation = [
     .trim()
     .notEmpty()
     .withMessage("qualification is required"),
-
 
   body("specialization")
     .if(body("role").toUpperCase().equals("DOCTOR"))
