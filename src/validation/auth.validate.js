@@ -1,14 +1,13 @@
 const { body, query } = require('express-validator');
 
-const allowedRoleTypes = ['Owner', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist'];
-const allowedStatusTypes = ['Active', 'Inactive'];
+const allowedStatusTypes = ['Active', 'Inactive','Pending'];
 
 const validateSignUp = [
     body('name').notEmpty().withMessage('name is required.'),
     body('email').isEmail().withMessage('invalid email format'),
     body('department').notEmpty().withMessage('department is required.'),
     body('joiningDate').isBefore(new Date().toISOString()).withMessage("date must be in the past"),
-    body('designation').isIn(allowedRoleTypes).withMessage('designation is required.'),
+    body('designation').notEmpty().withMessage('designation is required.'),
     body('status').isIn(allowedStatusTypes).withMessage('status is required.'),
 ];
 

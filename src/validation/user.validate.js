@@ -13,10 +13,10 @@ const validateGetNameByPatientId = [
 ]
 
 const validateCreatePatient = [
-    body("name").notEmpty().withMessage('Name is required'),
+    // body("name").notEmpty().withMessage('Name is required'),
     body("email").isEmail().withMessage('Email is required'),
     body("gender").notEmpty().withMessage('Gender is required'),
-    body("phone").isMobilePhone("en-IN").withMessage("Phone Number Invalid"),
+    body("phone").notEmpty().withMessage("Phone Number Invalid"),
     body("dob").notEmpty().withMessage('DOB is required'),
     body("address").notEmpty().withMessage('Address is required'),
     body("status").notEmpty().withMessage('Status is required')

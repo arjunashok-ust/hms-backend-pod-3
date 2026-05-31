@@ -11,7 +11,7 @@ const showError = (res, err, message) => {
 }
 
 const findUserByEmployeeId = async (employeeId) => {
-    return await User.findOne({employeeId});
+    return await User.findOne({ employeeId });
 }
 
 const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage) => {
@@ -89,6 +89,38 @@ const getDashboardData = async (req, res) => {
     }
 }
 
+const getUserEmployee = async (req, res) => {
+    try {
+        const employee = await Employee.find();
+        const user = await User.find();
+
+        const combined = user.map((u) => {
+            const emp = employee.find((emp) => emp.employeeCode === u.employeeId);
+            return {
+                name: emp.name,
+                email: u.email,
+                status: u.status,
+                role: u.role,
+                employeeId: u.employeeId,
+                isVerified: u.isVerified,
+                firstLogin: u.firstLogin,
+                department: emp.department,
+                designation: emp.designation,
+                joiningDate: emp.joiningDate,
+                medicalRegistrationNo: emp.medicalRegistrationNo,
+                specialization: emp.specialization,
+                qualification: emp.qualification,
+                consultationFee: emp.consultationFee,
+                availabilitySlots: emp.availabilitySlots,
+            }
+        })
+
+        return res.status(200).json(combined);
+    } catch (err) {
+        showError(res, err, 'Server Error During Get User Employee')
+    }
+}
+
 const getAllUsers = async (req, res) => {
     try {
         const employee = await Employee.find();
@@ -116,7 +148,7 @@ const approveUser = async (req, res) => {
 }
 
 const rejectUser = async (req, res) => {
-    return changeUserStatus(req,res,'Inactive','Account is already not active','Account activation request rejected sucessfully');
+    return changeUserStatus(req, res, 'Inactive', 'Account is already not active', 'Account activation request rejected sucessfully');
 }
 
 // Update User Profile
@@ -144,5 +176,5 @@ const updateUserProfile = async (req, res) => {
     }
 }
 
-module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile };
+module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile, getUserEmployee };
 
