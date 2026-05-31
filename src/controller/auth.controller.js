@@ -255,5 +255,99 @@ const verifyMail = async (req, res) => {
     }
 }
 
-module.exports = { signUp, login, setPassword, verifyMail };
+const patientSignUp = async (req, res) => {
+    try {
+        const {
+            name,
+            role,
+            email,
+            password,
+            status,
+            phone,
+            gender,
+            dob,
+            address,
+            emergencyContact
+        } = req.body;
+
+        const existingPatient = await Patient.findOne({ email });
+
+        if (existingPatient) {
+            // 409 conflict
+            return res.status(409).json({ message: 'Email is already registered.' });
+        }
+
+        const profile = await Patient.create({
+            name,
+            email,
+            status,
+            phone,
+            gender,
+            dob,
+            address,
+            emergencyContact
+        });
+
+        const verification_token = crypto.randomBytes(32).toString("hex");
+        const verification_expiry = Date.now() + 60 * 60 * 24;
+
+        if (!profile) {
+            throw new Error('Error sending mail, user is not found');
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        await User.create({
+            email: email,
+            passwordHash: passwordHash,
+            status: status,
+            role: role,
+            patientId: profile.uhid,
+            verification_token: verification_token,
+            verification_expiry: verification_expiry,
+            isVerified: false,
+            firstLogin: false,
+        });
+
+        // admin notification mail
+        await mail.sendMail({
+            to: process.env.ADMIN_MAIL,
+            subject: 'HMS Notification | Patient Approval',
+            html: `
+            <h1>Hospital Management System</h1><br>
+            <p> A new patient has registered on the <b>HMS</b> platform and is awaiting your approval.</p>
+            <p>
+            <b>Patient Details:</b><br>
+            Name: ${profile.name}<br>
+            Email: ${profile.email}<br>
+            </p>
+            `
+        });
+
+        // user email verification
+        await mail.sendMail({
+            to: profile.email,
+            subject: 'HMS System | Patient Email Verification',
+            html: `
+            <h1>Hospital Management System</h1><br>
+            <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
+            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <input type="Button" value="Verify">
+            </a>
+            `
+        });
+
+        // 201 created
+        return res.status(201).json({
+            message: "Account created sucessfully.",
+            email: email,
+        });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error during signup' });
+    }
+}
+
+module.exports = { signUp, login, setPassword, verifyMail, patientSignUp };
 

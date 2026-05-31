@@ -28,4 +28,16 @@ const validateVerifyMail = [
     query("verification_token").notEmpty().withMessage("Verification Token Is Required")
 ]
 
-module.exports = { validateSignUp, validateLogin,  validateSetPassword, validateVerifyMail }
+const validatePatientSignUp = [
+    body("name").notEmpty().withMessage("Name is required"),
+    body("role").notEmpty().withMessage("Role is required"),
+    body("email").isEmail().withMessage("Email is required"),
+    body("password").notEmpty().withMessage("Password is required"),
+    body("gender").notEmpty().withMessage("Gender is required"),
+    body("phone").notEmpty().withMessage("Phone Number Invalid"),
+    body("dob").notEmpty().withMessage("DOB is required"),
+    body("address").notEmpty().withMessage("Address is required"),
+    body("status").notEmpty().withMessage("Status is required")
+]
+
+module.exports = { validateSignUp, validateLogin,  validateSetPassword, validateVerifyMail, validatePatientSignUp }
