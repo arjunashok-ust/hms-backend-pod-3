@@ -95,7 +95,7 @@ const getUserEmployee = async (req, res) => {
         const user = await User.find();
 
         const combined = user.map((u) => {
-            const emp = employee.find((emp) => emp.employeeCode === u.employeeId);
+            const emp = employee.find((emp) => emp.employeeCode == u.employeeId);
             return {
                 name: emp.name,
                 email: u.email,
