@@ -1,5 +1,5 @@
 const app = require('./app');
-const db = require('./config/db.config');
+const db = require('./config/db');
 
 // mongo db connection
 db.connectDB();

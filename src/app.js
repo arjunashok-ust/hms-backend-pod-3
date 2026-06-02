@@ -4,7 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 
-const db = require('./config/db.config');
+const db = require('./config/db');
 
 const app = new express();
 // middleware for web security
@@ -22,10 +22,17 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // routes
-const authRoute = require('./routes/auth.route');
-const userRoute = require('./routes/user.route');
+const authRoute = require('./routes/authRoutes');
+const appointmentRoute = require('./routes/appointmentRoutes');
+const dashboardRoute = require('./routes/dashboardRoutes');
+const employeeRoute = require('./routes/employeeRoutes');
+const patientRoute = require('./routes/patientRoutes.app');
 // route caller
 app.use('/auth',authRoute);
-app.use('/user',userRoute);
+
+app.use('/apppointment',appointmentRoute);
+app.use('/dashboard', dashboardRoute);
+app.use('/employee', employeeRoute);
+app.use('/patientApi', patientRoute);
 
 module.exports = app;
