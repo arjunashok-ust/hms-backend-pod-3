@@ -25,6 +25,21 @@ app.get("/", (req, res) => res.json({ message: "API running" }));
 const authRoutes = require("./src/routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
+const userRoutes = require("./src/routes/userRoutes");
+app.use("/api/users", userRoutes);
+
+const adminRoutes = require("./src/routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
+const patientRoutes = require("./src/routes/patientRoutes");
+app.use("/api/patients", patientRoutes);
+
+const appointmentRoutes = require("./src/routes/appointmentRoutes");
+app.use("/api/appointment", appointmentRoutes);
+
+const nodeRoutes = require("./src/routes/nodeRoutes");
+app.use("/api/nodes", nodeRoutes);
+
 connectDB();
 
- module.exports = app;
+module.exports = app;

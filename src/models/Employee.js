@@ -10,13 +10,15 @@ const employeeSchema = new mongoose.Schema(
 
         name: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
 
         phone: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            match: [/^\d{10}$/, "Invalid phone number"]
         },
 
         email: {
@@ -40,9 +42,12 @@ const employeeSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE",
-            required: true,
+            enum: [
+                "PENDING",
+                "ACTIVE",
+                "INACTIVE"
+            ],
+            default: "PENDING"
         },
 
         joiningDate: {
@@ -51,9 +56,7 @@ const employeeSchema = new mongoose.Schema(
         },
 
         medicalRegistrationNo: {
-            type: String,
-            unique: true,
-            sparse: true
+            type: String
         },
 
         specialization: {

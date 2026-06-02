@@ -16,9 +16,19 @@ const userSchema = new mongoose.Schema({
     },
 
     status: {
-        type: String, enum: ["ACTIVE", "INACTIVE"],
-        default: "ACTIVE",
-        required: true
+        type: String, 
+        enum: ["ACTIVE", "INACTIVE", "PENDING"],
+        default: "PENDING",
+    },
+
+    isFirstLogin: {
+        type: Boolean,
+        default: false,
+    },
+
+    isVerified: {
+        type: Boolean,
+        default: false
     },
 
     role: {
@@ -27,11 +37,21 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
-    employeeid: {
-        type: String
+    employeeId: {
+        type: String,
+        required: true
     },
 
     lastLoginAt: {
+        type: Date,
+        default: null
+    },
+    verification_token: {
+        type: String,
+        default: null,
+    },
+
+    verification_expiry: {
         type: Date,
         default: null
     }

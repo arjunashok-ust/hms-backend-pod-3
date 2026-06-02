@@ -16,19 +16,15 @@ const authenticateUser = (req, res, next) => {
             token,
             process.env.JWT_SECRET
         );
-
         req.user = decoded;
-
         next();
-
     }
     catch (err) {
-      console.error("Error:", err);
-      return res.status(401).json({
-          message: "Invalid or expired token"
-      });
+        console.error("Error:", err);
+        return res.status(401).json({
+            message: "Invalid or expired token"
+        });
     }
 };
 
 module.exports = authenticateUser;
- 

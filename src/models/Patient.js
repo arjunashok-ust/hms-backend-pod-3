@@ -5,7 +5,6 @@ const patientSchema = new mongoose.Schema(
     {
         UHID: {
             type: String,
-            required: true
         },
 
         name: {

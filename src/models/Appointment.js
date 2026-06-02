@@ -8,11 +8,14 @@ const appointmentSchema = new mongoose.Schema(
         },
 
         patientId: {
-            type: String
+            type: String,
+            required: true,
+
         },
 
         doctorEmployeeId: {
-            type: String
+            type: String,
+            required: true
         },
 
         date: {
@@ -34,7 +37,8 @@ const appointmentSchema = new mongoose.Schema(
         },
         //
         createdByEmployeeId: {
-            type: String
+            type: String,
+            required: true
         },
     }
 );
@@ -54,6 +58,5 @@ appointmentSchema.pre('save', async function (next) {
         }
     }
 });
-
 
 module.exports = mongoose.model("Appointment", appointmentSchema);
