@@ -20,7 +20,7 @@ exports.employeeSignup = async (req, res) => {
             return res.status(409).json({ message: "The employee is already registered" });
         }
 
-        if ( roles=="DOCTOR" || roles=="PHARMACIST" || roles=="NURSE" || roles=="LAB_TECH" ) {
+        if (roles == "DOCTOR" || roles == "PHARMACIST" || roles == "NURSE" || roles == "LAB_TECH") {
             const medicRegNo = await employeeModel.findOne({ medicalRegistrationNo: medicalRegistrationNo });
             if (medicRegNo) {
                 return res.status(409).json({ message: 'medical registration no should be unique.' });
@@ -29,7 +29,7 @@ exports.employeeSignup = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 12);
         const verificationToken = crypto.randomBytes(32).toString("hex");
-        const verificationExpiry = Date.now() + 60 * 60 * 24*1000;
+        const verificationExpiry = Date.now() + 60 * 60 * 24 * 1000;
 
         const employee = await employeeModel.create({
             name,
@@ -59,7 +59,7 @@ exports.employeeSignup = async (req, res) => {
         await mail.sendEmail({
             to: user.email,
             subject: "User mail verification by HMS",
-            html:`<h1>Hospital Management System</h1><br>
+            html: `<h1>Hospital Management System</h1><br>
             <p>Thank you ${employee.name} for successfully registering with HMS,
              You can now verify your email by clicking the below button.</p><br>
             <a href="http://localhost:8080/hms/verifyEmail?email=${user.email}&verificationToken=${user.verificationToken}">
@@ -71,13 +71,13 @@ exports.employeeSignup = async (req, res) => {
         await mail.sendEmail({
             to: process.env.ADMIN_EMAIL,
             subject: "User Approval for HMS",
-            html:`<h1>Hospital Management System<h1><br>
+            html: `<h1>Hospital Management System<h1><br>
             <p>A new user ${employee.name} has registered on HMS and is awaiting your approval.</p>
             <p>User Details: <br>
             Name: ${employee.name}<br>
             Email: ${employee.email}</p>`
         })
- 
+
         return res.status(201).json({
             message: "User Registered Successfully",
             employee: employee,
@@ -91,23 +91,23 @@ exports.employeeSignup = async (req, res) => {
 }
 
 //verify email
-exports.verifyEmail = async( req, res ) => {
+exports.verifyEmail = async (req, res) => {
     try {
         const { email, verificationToken } = req.query;
         const user = await userModel.findOne({ email });
-        if(!user) {
-            return res.status(404).json({message: "Unable to find user"});
+        if (!user) {
+            return res.status(404).json({ message: "Unable to find user" });
         }
 
-        if(verificationToken != user.verificationToken) {
-            return res.status(400).json({message: "Verification Token is invalid"});
+        if (verificationToken != user.verificationToken) {
+            return res.status(400).json({ message: "Verification Token is invalid" });
         }
         user.isVerified = true;
         await user.save();
-        return res.status(200).json({message: "Email verification successfull"});
-    } catch(err) {
+        return res.status(200).json({ message: "Email verification successfull" });
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "Error during email verification"});
+        return res.status(500).json({ message: "Error during email verification" });
     }
 }
 
@@ -125,12 +125,12 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        if(!user.isVerified) {
-            return res.status(400).json({message:"please verify your Email"});
+        if (!user.isVerified) {
+            return res.status(400).json({ message: "please verify your Email" });
         }
 
-        if(!user.isActivated) {
-            return res.status(400).json({message:"Your account is yet to be activated"});
+        if (!user.isActivated) {
+            return res.status(400).json({ message: "Your account is yet to be activated" });
         }
 
         user.lastLoginAt = Date.now();
@@ -155,26 +155,26 @@ exports.login = async (req, res) => {
 }
 
 //first time password set
-exports.setPassword = async( req, res ) => {
+exports.setPassword = async (req, res) => {
     try {
         const { employeeId, password } = req.body;
         const user = await userModel.findOne({ employeeId });
-        if(!user) {
-            return res.status(404).json({message: "User not found"});
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
 
         const status = user.firstLogin;
-        if(!status) {
-            return res.status(403).json({message: "Password can be set only first time"});
+        if (!status) {
+            return res.status(403).json({ message: "Password can be set only first time" });
         }
 
-        const passwordHash = await bcrypt.hash(password,12);
+        const passwordHash = await bcrypt.hash(password, 12);
         user.passwordHash = passwordHash;
         user.firstLogin = false;
         await user.save();
-        return res.status(200).json({message: "password set successfully"});
-    } catch(err) {
+        return res.status(200).json({ message: "password set successfully" });
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "Error during setpassword"});
+        return res.status(500).json({ message: "Error during setpassword" });
     }
 }

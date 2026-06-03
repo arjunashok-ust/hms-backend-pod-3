@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");
-const {validateCreateAppointment, validateDeleteAppointment} = require("../validations/appointment.validation");
+const { validateCreateAppointment, validateDeleteAppointment } = require("../validations/appointment.validation");
 const { createAppointment, getAllAppointments, getDoctors, deleteAppointment,
     getAppointmentUiData } = require("../controllers/appointment.controller");
 

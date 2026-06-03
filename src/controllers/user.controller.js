@@ -9,7 +9,7 @@ exports.profile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        const employee = await employeeModel.findOne({employeeId:user.employeeId});
+        const employee = await employeeModel.findOne({ employeeId: user.employeeId });
         res.status(200).json({ employee });
     } catch (err) {
         console.error("Profile error:", err);
@@ -18,32 +18,32 @@ exports.profile = async (req, res) => {
 }
 
 //get employee name
-exports.getNameByEmployeeId = async(req, res) => {
+exports.getNameByEmployeeId = async (req, res) => {
     try {
         const employeeId = req.query.employeeId;
-        const employee = await employeeModel.findOne({employeeId: employeeId});
-        if(!employee) {
-            return res.status(404).json({message: "employee not found"});
+        const employee = await employeeModel.findOne({ employeeId: employeeId });
+        if (!employee) {
+            return res.status(404).json({ message: "employee not found" });
         }
         return res.status(200).json(employee.name);
-    } catch(err) {
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "error during getNameByEmployeeId"});
+        return res.status(500).json({ message: "error during getNameByEmployeeId" });
     }
 }
 
 // get name by patient id
-exports.getNameByCustomerId = async(req, res) => {
+exports.getNameByCustomerId = async (req, res) => {
     try {
         const customerId = req.query.customerId;
-        const customer = await customerModel.findOne({uhid: customerId});
-        if(!customer) {
-            return res.status(404).json({message: "Patient/Customer not found"});
+        const customer = await customerModel.findOne({ uhid: customerId });
+        if (!customer) {
+            return res.status(404).json({ message: "Patient/Customer not found" });
         }
         return res.status(200).json(customer.name);
-    } catch(err) {
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "error during getNameByCustomerId"});
+        return res.status(500).json({ message: "error during getNameByCustomerId" });
     }
 }
 
@@ -63,7 +63,7 @@ exports.updateEmployee = async (req, res) => {
             { name, email, phone, consultationFee, availabilitySlots },
             { returnDocument: "after" }
         );
-        res.status(200).json({ message: "Updates successfull" , employee });
+        res.status(200).json({ message: "Updates successfull", employee });
     } catch (err) {
         console.log("updateUSer error: ", err);
         res.status(500).json({ message: err.message });
@@ -122,20 +122,20 @@ exports.getPatients = async (req, res) => {
     }
 }
 
-exports.deletePatient = async (req,res) => {
-    try{
+exports.deletePatient = async (req, res) => {
+    try {
         const patientId = req.body.patientId;
 
-        const patient = await customerModel.findOne({ uhid: patientId});
-        if(!patient){
+        const patient = await customerModel.findOne({ uhid: patientId });
+        if (!patient) {
             return res.status(404).json({ message: 'Patient not found' });
         }
-        
+
         await patient.deleteOne();
 
-        return res.status(200).json({message: 'Patient Deleted Sucessfully'});
+        return res.status(200).json({ message: 'Patient Deleted Sucessfully' });
     }
-    catch(err) {
+    catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'Error During Delete Patient' });
     }

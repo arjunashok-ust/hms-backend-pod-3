@@ -52,8 +52,7 @@ const employeeSchema = new mongoose.Schema({
         trim: true,
     },
     qualification: [{
-        type: String,
-        required: true
+        type: String
     }],
     consultationFee: {
         type: Number,

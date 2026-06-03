@@ -1,5 +1,5 @@
 const { body, query } = require('express-validator');
-const givenRoles = ['OWNER','ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
+const givenRoles = ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
 const givenStatus = ['ACTIVE', 'INACTIVE'];
 
 //validation for signup
@@ -12,23 +12,13 @@ const validateSignUp = [
     body('status').toUpperCase().isIn(givenStatus).withMessage('status is required.'),
     body('joiningDate').notEmpty().withMessage('joining date is required.'),
     body('roles').toUpperCase().notEmpty().isIn(givenRoles).withMessage('roles is required'),
-    body('phone').optional().isNumeric().isLength({min:10, max:10}).withMessage('phone number must have 10 digits')
+    body('phone').optional().isNumeric().isLength({ min: 10, max: 10 }).withMessage('phone number must have 10 digits')
 ];
 
 // validation for login 
 const loginValidation = [
     body("email").isEmail().withMessage("Valid email required"),
     body("password").notEmpty().withMessage("Password is required"),
-];
-
-const validateResetPassword = [
-    body("oldPassword").notEmpty().withMessage("Old password is required."),
-    body("newPassword").notEmpty().withMessage("New password is required."),
-    body("employeeId").notEmpty().withMessage("Employee Id is required.")
-];
-
-const validateRefreshToken = [
-    body("employeeId").notEmpty().withMessage("EmployeeId Is Required")
 ];
 
 const validateSetPassword = [
@@ -41,5 +31,4 @@ const validateVerifyMail = [
     query("verificationToken").notEmpty().withMessage("Verification Token Is Required")
 ];
 
-module.exports = { validateSignUp, loginValidation, validateResetPassword, validateRefreshToken,
-    validateSetPassword, validateVerifyMail };
+module.exports = { validateSignUp, loginValidation, validateSetPassword, validateVerifyMail };

@@ -26,17 +26,18 @@ exports.adminDelete = async (req, res) => {
 }
 
 //dashboard
-exports.getDashboardData = async(req, res) => {
+exports.getDashboardData = async (req, res) => {
     try {
         const employeeCount = await employeeModel.countDocuments();
         const customerCount = await customerModel.countDocuments();
         const appointmentCount = await appointmentModel.countDocuments();
         const departmentCount = await departmentModel.countDocuments();
-        const pendingApprovalCount = await userModel.countDocuments({isActivated: false});
-        const pendingVerifyCount = await userModel.countDocuments({isVerified: false});
-        const activeCount = await employeeModel.countDocuments({status: "ACTIVE"});
+        const pendingApprovalCount = await userModel.countDocuments({ isActivated: false });
+        const pendingVerifyCount = await userModel.countDocuments({ isVerified: false });
+        const activeCount = await employeeModel.countDocuments({ status: "ACTIVE" });
 
-        return res.status(200).json({message: "Dashboard data fetched",
+        return res.status(200).json({
+            message: "Dashboard data fetched",
             employeeCount: employeeCount,
             customerCount: customerCount,
             departmentCount: departmentCount,
@@ -45,31 +46,31 @@ exports.getDashboardData = async(req, res) => {
             pendingVerifyCount: pendingVerifyCount,
             activeCount: activeCount
         })
-    } catch(err) {
+    } catch (err) {
         console.error(err)
-        return res.status(500).json({message: "error during fetching dashboard data"});
+        return res.status(500).json({ message: "error during fetching dashboard data" });
     }
 }
 
 //available employees
-exports.getAllEmployees = async(req, res) => {
+exports.getAllEmployees = async (req, res) => {
     try {
         const employee = await employeeModel.find();
         return res.status(200).json(employee);
-    } catch(err) {
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "error during get all employees"});
+        return res.status(500).json({ message: "error during get all employees" });
     }
 }
 
 //available users
-exports.getAllUsers = async(req, res) => {
+exports.getAllUsers = async (req, res) => {
     try {
         const user = await userModel.find();
         return res.status(200).json(user);
-    } catch(err) {
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({message: "error during get all users"});
+        return res.status(500).json({ message: "error during get all users" });
     }
 }
 
@@ -89,18 +90,18 @@ exports.adminSignup = async (req, res) => {
             qualification,
             consultationFee,
             availabilitySlots, } = req.body;
- 
+
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ message: "User already exists" });
         }
- 
+
         const existingEmployee = await employeeModel.findOne({ email });
         if (existingEmployee) {
             return res.status(409).json({ message: "User already exists" });
         }
- 
-        if ( roles=="DOCTOR" || roles=="PHARMACIST" || roles=="NURSE" || roles=="LAB_TECH" ) {
+
+        if (roles == "DOCTOR" || roles == "PHARMACIST" || roles == "NURSE" || roles == "LAB_TECH") {
             const medicRegNo = await employeeModel.findOne({ medicalRegistrationNo: medicalRegistrationNo });
             if (medicRegNo) {
                 return res.status(409).json({ message: 'medical registration no should be unique.' });
@@ -109,7 +110,7 @@ exports.adminSignup = async (req, res) => {
 
         const tempPassword = crypto.randomBytes(16).toString('hex');
         const verificationToken = crypto.randomBytes(32).toString("hex");
-        const verificationExpiry = Date.now() + 60 * 60 * 24*1000;
+        const verificationExpiry = Date.now() + 60 * 60 * 24 * 1000;
         const password_hash = await bcrypt.hash(tempPassword, 12);
 
         const employee = await employeeModel.create({
@@ -118,7 +119,7 @@ exports.adminSignup = async (req, res) => {
             phone,
             department,
             designation,
-            status:"INACTIVE",
+            status: "INACTIVE",
             joiningDate,
             medicalRegistrationNo,
             specialization,
@@ -129,19 +130,19 @@ exports.adminSignup = async (req, res) => {
 
         const user = await userModel.create({
             email,
-            status:"INACTIVE",
+            status: "INACTIVE",
             passwordHash: password_hash,
             roles,
             employeeId: employee.employeeId,
             verificationToken,
             verificationExpiry
         });
- 
+
         //user mail for temporary password
         await mail.sendEmail({
             to: user.email,
             subject: "HMS system | Temporary password reset",
-            html:`<h1>Hospital Management System</h1><br>
+            html: `<h1>Hospital Management System</h1><br>
             <p>Your account has been registered, Please use the following credentials
             for login and please change password <br>
             Email: ${user.email}</br>
@@ -151,42 +152,42 @@ exports.adminSignup = async (req, res) => {
         //user email verification
         await mail.sendEmail({
             to: user.email,
-            subject:"User mail verification",
-            html:`<h1>Hospital Management System</h1><br>
+            subject: "User mail verification",
+            html: `<h1>Hospital Management System</h1><br>
             <p>Thank you ${employee.name} for successfully registering with HMS,
              You can now verify your email by clicking the below button.</p><br>
             <a href="http://localhost:8080/hms/verifyEmail?email=${user.email}&verificationToken=${user.verificationToken}">
             <input type="Button" value="Verify">
             </a>`
         })
- 
+
         return res.status(201).json({
             message: `Registered user ${employee.name} Successfully`,
             employee: employee,
             user: user
         });
- 
- 
+
+
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message:"Error during adminSignUp"});
+        return res.status(500).json({ message: "Error during adminSignUp" });
     }
 }
 
 //Accept user approval
-exports.acceptApproval = async(req, res) => {
+exports.acceptApproval = async (req, res) => {
     try {
         const employeeId = req.body.employeeId;
-        const user = await userModel.findOne({employeeId: employeeId});
-        if(!user) {
-            return res.status(404).json({message: "Employee Not found"});
+        const user = await userModel.findOne({ employeeId: employeeId });
+        if (!user) {
+            return res.status(404).json({ message: "Employee Not found" });
         }
         user.isActivated = true;
         user.status = "ACTIVE";
         user.save();
 
-        return res.status(200).json({message: "Employee is Approved by admin"});
-    } catch(err) {
+        return res.status(200).json({ message: "Employee is Approved by admin" });
+    } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'error during Approve user' });
     }
@@ -205,7 +206,8 @@ exports.rejectApproval = async (req, res) => {
         user.save();
 
         return res.status(200).json({
-            message: 'Account activation application rejected'});
+            message: 'Account activation application rejected'
+        });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'error during Approve user' });

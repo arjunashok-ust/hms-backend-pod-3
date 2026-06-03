@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
         default: false
     },
     firstLogin: {
-        type:Boolean,
+        type: Boolean,
         default: true
     },
     lastLoginAt: {

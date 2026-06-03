@@ -25,7 +25,7 @@ exports.createAppointment = async (req, res) => {
         }
         const creator = await employeeModel.findOne({ employeeId: createdByEmployeeId });
         if (!creator) {
-             console.log("creator fault")
+            console.log("creator fault")
             return res.status(404).json({ message: "Creator Employee Not Found!" });
         }
 
@@ -72,7 +72,7 @@ exports.getDoctors = async (req, res) => {
             res.status(404).json({ message: "no doctors found" });
         }
         const doctorEmployeeIds = doctor.map(doc => doc.employeeId);
-        const doctorEmployees = await employeeModel.find({employeeId: {$in: doctorEmployeeIds}}).sort({ name: 1 });
+        const doctorEmployees = await employeeModel.find({ employeeId: { $in: doctorEmployeeIds } }).sort({ name: 1 });
         return res.status(200).json(doctorEmployees);
     } catch (err) {
         console.error(err);
@@ -81,16 +81,16 @@ exports.getDoctors = async (req, res) => {
 }
 
 //to get appointment data
-exports.getAppointmentUiData = async(req,res) => {
-    try{
+exports.getAppointmentUiData = async (req, res) => {
+    try {
         const appointmentCount = await appointmentModel.find().countDocuments();
-        if(!appointmentCount){
+        if (!appointmentCount) {
             return res.status(404).json({ message: "No Appointment Found" });
         }
 
-        const bookedCount = await appointmentModel.find({status: 'BOOKED'}).countDocuments();
-        const cancelledCount = await appointmentModel.find({status: 'CANCELLED'}).countDocuments();
-        const completedCount = await appointmentModel.find({status: 'COMPLETED'}).countDocuments();
+        const bookedCount = await appointmentModel.find({ status: 'BOOKED' }).countDocuments();
+        const cancelledCount = await appointmentModel.find({ status: 'CANCELLED' }).countDocuments();
+        const completedCount = await appointmentModel.find({ status: 'COMPLETED' }).countDocuments();
 
         return res.status(200).json({
             appointmentCount: appointmentCount,
@@ -98,23 +98,23 @@ exports.getAppointmentUiData = async(req,res) => {
             cancelledCount: cancelledCount,
             completedCount: completedCount,
         })
-    } catch(err){
+    } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "error during get all appointment data" });
     }
 }
 
 //delete Appointment
-exports.deleteAppointment = async (req,res) => {
+exports.deleteAppointment = async (req, res) => {
     try {
         const appointmentId = req.query.appointmentId;
-        const appointment = await appointmentModel.findOne({ appointmentId: appointmentId});
-        if(!appointment){
-            return res.status(404).json({message: "Appointment Not Found"});
+        const appointment = await appointmentModel.findOne({ appointmentId: appointmentId });
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment Not Found" });
         }
         await appointment.deleteOne();
-        return res.status(200).json({message: 'Appointment Deleted Sucessfully'});
-    } catch(err){
+        return res.status(200).json({ message: 'Appointment Deleted Sucessfully' });
+    } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "error during Delete Appointment" });
     }

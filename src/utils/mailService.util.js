@@ -5,21 +5,21 @@ const apikey = client.authentications["api-key"];
 apikey.apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new brevo.TransactionalEmailsApi();
 
-const sendEmail = async({to, subject, html}) => {
+const sendEmail = async ({ to, subject, html }) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
                 email: process.env.EMAIL_USER,
                 name: "HMS SYSTEM"
             },
-            to : [{ email: to }],
+            to: [{ email: to }],
             subject: subject,
             htmlContent: html
         });
-        console.log("email successfully sent: "+response);
-    } catch(err) {
+        console.log("email successfully sent: " + response);
+    } catch (err) {
         console.error(err);
-        throw(err);
+        throw (err);
     }
 }
 
