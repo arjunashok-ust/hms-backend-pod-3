@@ -129,21 +129,6 @@ const login = async (req, res) => {
     }
 }
 
-const getRoles = async (req, res) => {
-    const roles = await Role.find({}, 'role_name');
-    return res.status(200).json(roles);
-}
 
-const getDepartments = async (req, res) => {
-    const departments = await Department.find({}, 'department_name');
-    return res.status(200).json(departments);
-}
-
-const getSpecializations = async (req,res) => {
-    const specializations = await Specialization.find({},'specialization_name');
-    return res.status(200).json(specializations);
-}
-
-
-module.exports = { signUp, login, getRoles, getDepartments,getSpecializations };
+module.exports = { signUp, login };
 
