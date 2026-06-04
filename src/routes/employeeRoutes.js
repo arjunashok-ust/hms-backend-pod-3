@@ -9,8 +9,6 @@ const {
   signup,
   login,
   currentUser,
-  resetPassword,
-  formSignUp,
 } = require("../controllers/employeeController");
 
 const signUpValidation = [
@@ -50,9 +48,7 @@ const signUpValidation = [
 ];
 
 router.post("/signup",auth,roleValidation('admin'),signUpValidation, validate, signup);
-router.post("/formSignUp",signUpValidation, validate, formSignUp);
 router.post("/login", login);
 router.get("/currentUser", auth, currentUser);
-router.put("/reset-password",auth,resetPassword);
 
 module.exports = router;
