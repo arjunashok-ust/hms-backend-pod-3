@@ -24,14 +24,23 @@ exports.signupValidation = [
     .notEmpty()
     .withMessage("Role is required")
     .toUpperCase()
-    .isIn(['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'])
+    .isIn([
+      "OWNER",
+      "ADMIN",
+      "DOCTOR",
+      "RECEPTIONIST",
+      "CASHIER",
+      "NURSE",
+      "LAB_TECH",
+      "PHARMACIST",
+    ])
     .withMessage("Invalid role"),
 
   body("phone")
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .isMobilePhone('en-IN')
+    .isMobilePhone("en-IN")
     .withMessage("Enter a valid phone number"),
 
   body("department")
@@ -42,17 +51,14 @@ exports.signupValidation = [
     .isIn(["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"])
     .withMessage("Provide valid department"),
 
-  body("designation")
-    .trim()
-    .notEmpty()
-    .withMessage("Designation is required"),
+  body("designation").trim().notEmpty().withMessage("Designation is required"),
 
   body("joiningDate")
     .notEmpty()
     .withMessage("Joining date is required")
     .isISO8601()
     .withMessage("Joining date must be a valid date (YYYY-MM-DD)")
-    .toDate()
+    .toDate(),
 ];
 
 exports.loginValidation = [
@@ -62,7 +68,5 @@ exports.loginValidation = [
     .withMessage("A valid email is required")
     .normalizeEmail(),
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required")
+  body("password").notEmpty().withMessage("Password is required"),
 ];

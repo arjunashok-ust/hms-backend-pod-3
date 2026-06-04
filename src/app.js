@@ -12,7 +12,7 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL,
     credentials: false,
-  })
+  }),
 );
 
 app.use(morgan("dev"));
