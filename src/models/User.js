@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     employeeId: { type: String },
-    isFirstLogin: { type: Boolean, default: true },
+    isFirstLogin: { type: Boolean },
     last_login: { type: Date, default: null },
   },
   {

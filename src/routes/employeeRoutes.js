@@ -45,7 +45,7 @@ const signUpValidation = [
       "receptionist",
       "cashier",
       "nurse",
-      "lab_tech",
+      "lab_Tech",
       "pharmacist",
     ])
     .withMessage("Invalid role"),
@@ -53,15 +53,41 @@ const signUpValidation = [
   body("department").notEmpty().withMessage("Department is required"),
 
   body("designation").notEmpty().withMessage("Designation is required"),
+
+  // MEDICAL REGISTRATION NUMBER
+  body("medicalRegistrationNo")
+    .if((value, { req }) =>
+      ["doctor", "nurse", "lab_Tech", "pharmacist"].includes(req.body.role),
+    )
+    .notEmpty()
+    .withMessage("Medical Registration Number is required"),
+
+  // SPECIALIZATION (DOCTOR ONLY)
+  body("specialization")
+    .if((value, { req }) => req.body.role === "doctor")
+    .notEmpty()
+    .withMessage("Specialization is required"),
+
+  // AVAILABILITY SLOTS (DOCTOR ONLY)
+  body("availabilitySlots")
+    .if((value, { req }) => req.body.role === "doctor")
+    .isArray({ min: 1 })
+    .withMessage("Availability slots are required for doctors"),
 ];
 
 const loginValidation = [
-  body("email").isEmail().withMessage("Valid email required"),
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required.")
+    .trim()
+    .normalizeEmail()
+    .isEmail()
+    .withMessage("Invalid email format"),
   body("password")
     .notEmpty()
-    .withMessage("Password is required")
+    .withMessage("Password is required.")
     .isLength({ min: 8 })
-    .withMessage("Password must be at least 8 characters long"),
+    .withMessage("Password must contain atleast 8 characters."),
 ];
 
 router.post("/signup", signUpValidation, validate, signup);

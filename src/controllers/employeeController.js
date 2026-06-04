@@ -11,6 +11,7 @@ exports.signup = async (req, res) => {
   try {
     const {
       email,
+      password,
       name,
       role,
       phone,
@@ -67,8 +68,8 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // HASH PASSWORD
-    const password_hash = await bcrypt.hash(tempPassword, 12);
+    //Hash Password
+    const password_hash = await bcrypt.hash(password, 12);
 
     // CREATE EMPLOYEE PROFILE
 
