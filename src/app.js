@@ -1,26 +1,25 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const helmet = require('helmet');
+require("dotenv").config();
 
-const db = require('./config/db.config');
+const express = require("express");
+const morgan = require("morgan");
+const helmet = require("helmet");
 
-const app = new express();
+const db = require("./config/db.config");
+
+const app = express();
 
 app.use(helmet());
-app.use(cors({
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-}));
-
-app.use(morgan('dev'));
-
+app.use(morgan("dev"));
 app.use(express.json());
 
-const authRoute = require('./routes/auth.route');
-const userRoute = require('./routes/user.route');
+const authRoute = require("./routes/auth.route");
+const userRoute = require("./routes/user.route");
 
-app.use('/auth', authRoute);
-app.use('/user', userRoute);
+app.use("/auth", authRoute);
+app.use("/user", userRoute);
+
+app.use((req,res)=>{
+  res.status(404).json({message: "Route not found!"})
+});
 
 module.exports = app;

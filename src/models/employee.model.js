@@ -1,13 +1,17 @@
-const mongoose = require('mongoose');
-const Counter = require('./counter.model');
+const mongoose = require("mongoose");
+const Counter = require("./counter.model");
 
 const employeeSchema = new mongoose.Schema({
-    employeeCode: { type: String, unique: true },
+    employeeCode: { type: String, unique: true},
     name: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
-    department: { type: String, enum: ['OPD', 'IPD', 'LAB', 'PHARMACY', 'ADMIN'], required: true },
-    designation: { type: String, enum: ['Doctor', 'Nurse', 'Receptionist', 'Owner', 'Lab_Tech', 'Cashier', 'Pharmacist'], required: true },
-    status: { type: String, enum: ['Active', 'Inactive'], required: true },
+    department: {
+        type: String,
+        enum: ["OPD", "IPD", "ICU", "Pharmacy", "Administration", "Front Office"],
+        required: true,
+    },
+    designation: { type: String, required: true },
+    phone: {type: String},
     joiningDate: { type: Date, required: true },
     medicalRegistrationNo: { type: String },
     specialization: { type: String },
@@ -17,22 +21,21 @@ const employeeSchema = new mongoose.Schema({
 });
 
 // pre hook
-employeeSchema.pre('save', async function () {
+employeeSchema.pre("save", async function () {
     if (this.isNew) {
         try {
             const counter = await Counter.findOneAndUpdate(
-                { name: 'employee' },
+                { name: "employee" },
                 { $inc: { seq: 1 } },
-                { new: true, upsert: true }
+                { new: true, upsert: true },
             );
 
-            this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`;
-        }
-        catch (err) {
+            this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`;
+        } catch (err) {
             console.error("employee model pre hook error : " + err);
-            throw (err);
+            throw err;
         }
     }
 });
 
-module.exports = mongoose.model('Employees', employeeSchema);
+module.exports = mongoose.model("Employees", employeeSchema);

@@ -1,7 +1,11 @@
-const { body,query } = require('express-validator');
+const { query } = require("express-validator");
 
 const validateGetUserProfile = [
-    query('email').isEmail().withMessage('invalid email format'),
+  query("email")
+    .notEmpty()
+    .withMessage("Email is required.")
+    .isEmail()
+    .withMessage("Invalid email format"),
 ];
 
 module.exports = { validateGetUserProfile };

@@ -1,27 +1,20 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Employee = require('../models/employee.model');
-const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
-const Appointment = require('../models/appointment.model');
-const medicalRecord = require('../models/medicalRecord.model');
-const Bill = require('../models/bill.model');
-const Payment = require('../models/payment.model');
-const Role = require('../models/role.model');
-const Department = require('../models/department.model');
-const Specialization = require('../models/specialization.model')
+
+const medicalRoles = new Set(['Doctor', 'Nurse', 'Pharmacist', 'LabTech']);
 
 // SignUp
 const signUp = async (req, res) => {
     try {
         const {
             name,
-            roles,
+            role,
             email,
             password,
             department,
             designation,
-            status,
             joiningDate,
             medicalRegistrationNo,
             specialization,
@@ -30,25 +23,33 @@ const signUp = async (req, res) => {
             availabilitySlots,
         } = req.body;
 
-        const existingUser = await Employee.findOne({ email });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            // 409 conflict
-            return res.status(409).json({ message: 'email is already registered.' });
+            return res.status(409).json({ message: 'Email already exists.' });
         }
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        if (!roles) {
-            return res.status(404).json({ message: 'role is required.' });
+        if (!role) {
+            return res.status(400).json({ message: 'Role is required.' });
         }
 
-        if (roles?.includes('doctor', 'nurse', 'pharmacist', 'lab_tech')) {
-            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
-            if (medicalRegNo) {
-                return res.status(409).json({ message: 'medical registration no should be unique.' });
+        if (medicalRoles.has(role)) {
+            if (!medicalRegistrationNo) {
+                return res.status(400).json({ message: 'Medical registration no is required for this role.' });
+            }
+
+            const existingMedicalRegistrationNo = await Employee.findOne({
+                medicalRegistrationNo: medicalRegistrationNo,
+            });
+
+            if (existingMedicalRegistrationNo) {
+                return res.status(409).json({ message: 'Medical registration no should be unique.' });
             }
         }
+
+        const status = 'Pending';
 
         const profile = await Employee.create({
             name,
@@ -61,74 +62,68 @@ const signUp = async (req, res) => {
             specialization,
             qualification,
             consultationFee,
-            availabilitySlots
+            availabilitySlots,
         });
+
+        if (!profile) {
+            return res.status(500).json({ message: "Failed to create employee profile" });
+        }
 
         const user = await User.create({
             email: email,
             passwordHash: passwordHash,
             status: status,
-            roles: roles,
+            role: role,
             employeeId: profile.employeeCode,
         });
 
-        console.log("account created.");
         // 201 created
         return res.status(201).json({
-            message: "account created sucessfully.",
+            message: 'Account created sucessfully.',
             email: user.email,
-            roles: user.roles,
+            role: user.role,
         });
-    }
-    catch (err) {
+    } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'server error during signup' });
     }
-}
+};
 
 // Login
 const login = async (req, res) => {
     try {
-        const {
-            email,
-            password,
-        } = req.body;
+        const { email, password } = req.body;
 
         const existingUser = await User.findOne({ email });
 
         if (!existingUser) {
-            return res.status(404).json({ message: 'invalid credentials.' })
+            return res.status(404).json({ message: 'User not found.' });
         }
 
         const isMatch = await bcrypt.compare(password, existingUser.passwordHash);
 
         if (!isMatch) {
-            return res.status(401).json({ message: 'invalid credentials.' });
+            return res.status(401).json({ message: 'Invalid password.' });
         }
 
         existingUser.lastLoginAt = Date.now();
         await existingUser.save();
 
-        const token = await jwt.sign(
-            { id: existingUser.employeeId, role: existingUser.roles },
+        const token = jwt.sign(
+            { id: existingUser.employeeId, role: existingUser.role },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            { expiresIn: process.env.JWT_EXPIRES_IN },
         );
 
-        console.log("login sucessfull");
         return res.status(200).json({
             message: 'login sucessfull',
             email: existingUser.email,
-            employeeId: existingUser.employeeId,
-            token: token
+            token: token,
         });
-    }
-    catch (err) {
+    } catch (err) {
         console.error(err);
-        return res.status(500).json({ message: 'server error during login' });
+        return res.status(500).json({ message: 'Server error during login' });
     }
-}
-
+};
 
 module.exports = { signUp, login };
-
