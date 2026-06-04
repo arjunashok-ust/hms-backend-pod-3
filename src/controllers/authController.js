@@ -3,60 +3,92 @@ const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
-const sendRegMailToAdmin = require("../utils/sendformsignupmail");
-const sendMail = require("../utils/sendmail"); 
-
+const sendMail = require("../utils/sendmail");
 
 exports.signupByUser = async (req, res) => {
   try {
     const {
-      name, email, password, status, role, phone,
-      department, designation, joiningDate, medicalRegistrationNo,
-      specialization, qualification, consultationFee, availabilitySlots,
+      name,
+      email,
+      password,
+      role,
+      phone,
+      department,
+      designation,
+      joiningDate,
+      medicalRegistrationNo,
+      specialization,
+      qualification,
+      consultationFee,
+      availabilitySlots,
     } = req.body;
 
-    
-
     const existingUser = await Users.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email already exists" });
+    if (existingUser)
+      return res.status(400).json({ message: "Email already exists" });
 
     if (medicalRegistrationNo) {
       const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
       if (medicalRegNo) {
-        return res.status(409).json({ message: "Medical Registration no. already exists." });
+        return res
+          .status(409)
+          .json({ message: "Medical Registration no. already exists." });
       }
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
 
     const newEmployee = await Employees.create({
-      email, name, status, role: role.toUpperCase(), phone, 
-      department, designation, joiningDate, medicalRegistrationNo,
-      specialization, qualification, consultationFee, availabilitySlots,
+      email,
+      name,
+      phone,
+      department,
+      designation,
+      joiningDate,
+      status: "ADMIN_APPROVAL_PENDING",
+      role: role.toUpperCase(),
+      medicalRegistrationNo,
+      specialization,
+      qualification,
+      consultationFee,
+      availabilitySlots,
     });
 
-    const employeeID = newEmployee.employeeCode
+    const employeeID = newEmployee.employeeCode;
+
+    const verification_token = crypto.randomBytes(32).toString("hex");
+    const verification_expiry = Date.now() + 60 * 60 * 24 * 1000; // 24 hours
 
     const newUser = await Users.create({
       email,
       passwordHash,
       role: role.toUpperCase(),
-      status,
+      status: "ADMIN_APPROVAL_PENDING",
       employeeID,
-
-      isActivated: false,
+      isEmailVerified: false, 
+      verification_token,
+      verification_expiry,
     });
 
-    try {
-      await sendRegMailToAdmin(process.env.ADMIN_EMAIL || "admin@hms.com", employeeID);
-    } catch (mailError) {
-      console.error("Mail Service Error:", mailError.message);
-    }
+    await sendMail({
+      to: newUser.email,
+      subject: "HMS | Please verify your email address",
+      htmlContent: `
+        <h2>Welcome to HMS, ${name}</h2>
+        <p>Before the Admin can approve your account, you must verify your email address.</p>
+        <a href="${process.env.APP_URL || "http://localhost:8080"}/auth/verify-email?email=${newUser.email}&token=${verification_token}">
+          <button style="padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Verify Email
+          </button>
+        </a>
+        <p>This link expires in 24 hours.</p>
+      `,
+    });
 
     res.status(201).json({
-      message: "Registered but Admin approval pending",
+      message:
+        "Registration successful. Please check your email to verify your account.",
       user: { employeeID },
-      newUser
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -64,16 +96,14 @@ exports.signupByUser = async (req, res) => {
   }
 };
 
-
 exports.signUpByAdmin = async (req, res) => {
   try {
     const {
       name,
-      role, 
+      role,
       email,
       department,
       designation,
-      status,
       phone,
       joiningDate,
       medicalRegistrationNo,
@@ -88,13 +118,20 @@ exports.signUpByAdmin = async (req, res) => {
       return res.status(409).json({ message: "Email is already registered." });
     }
 
-    const targetMedicalRoles = new Set(["Doctor", "Nurse", "Pharmacist", "Lab_Tech"]);
+    const targetMedicalRoles = new Set([
+      "Doctor",
+      "Nurse",
+      "Pharmacist",
+      "Lab_Tech",
+    ]);
     const hasMedicalRole = targetMedicalRoles.has(role);
 
     if (hasMedicalRole) {
       const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
       if (medicalRegNo) {
-        return res.status(409).json({ message: "Medical registration no should be unique." });
+        return res
+          .status(409)
+          .json({ message: "Medical registration no should be unique." });
       }
     }
 
@@ -106,7 +143,7 @@ exports.signUpByAdmin = async (req, res) => {
       email,
       department,
       designation,
-      status,
+      status: "PASSWORD_CHANGE_PENDING",
       phone,
       joiningDate,
       medicalRegistrationNo,
@@ -122,14 +159,11 @@ exports.signUpByAdmin = async (req, res) => {
     const user = await Users.create({
       email,
       passwordHash,
-      status,
       role: role,
       employeeID: profile.employeeCode,
       verification_token,
       verification_expiry,
-      isActivated: true,
-      isVerified: false,
-      isFirstLogin: true
+      status: "PASSWORD_CHANGE_PENDING",
     });
 
     await sendMail({
@@ -150,7 +184,7 @@ exports.signUpByAdmin = async (req, res) => {
       htmlContent: `
         <h1>Hospital Management System</h1>
         <p>Thank you ${profile.name} for registering. Verify your account below:</p>
-        <a href="${process.env.APP_URL || 'http://localhost:8080'}/auth/verify-email?email=${user.email}&token=${verification_token}">
+        <a href="${process.env.APP_URL || "http://localhost:8080"}/auth/verify-email?email=${user.email}&token=${verification_token}">
           <button>Verify Email</button>
         </a>
       `,
@@ -171,16 +205,32 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await Users.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+    if (!user)
+      return res.status(401).json({ message: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
 
-    if (user.isFirstLogin) {
+    if (!isMatch)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email address before logging in.",
+      });
+    }
+
+    if (user.status === "ADMIN_APPROVAL_PENDING") {
+      return res.status(403).json({
+        message:
+          "Your account is currently pending Admin approval. Please check back later.",
+      });
+    }
+
+    if (user.status === "PASSWORD_CHANGE_PENDING") {
       return res.status(200).json({
         requiresPasswordChange: true,
         email: user.email,
-        message: 'Security requirement: Please update your default password.'
+        message: "Security requirement: Please update your default password.",
       });
     }
 
@@ -188,16 +238,18 @@ exports.login = async (req, res) => {
     await user.save();
 
     const token = jwt.sign(
-      { 
-        employeeID: user.employeeID, 
+      {
+        employeeID: user.employeeID,
         email: user.email,
-        role: user.role 
+        role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
     );
 
-    const profile = await Employees.findOne({ email: user.email }).select("-__v");
+    const profile = await Employees.findOne({ email: user.email }).select(
+      "-__v",
+    );
 
     res.status(200).json({
       message: "Login successful",
@@ -213,23 +265,40 @@ exports.login = async (req, res) => {
 exports.changeFirstPassword = async (req, res) => {
   try {
     const { email, oldPassword, newPassword } = req.body;
-    
+
     const user = await Users.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
-    if (!isMatch) return res.status(400).json({ message: 'Authentication failed' });
+    if (!isMatch)
+      return res.status(400).json({ message: "Authentication failed" });
 
     const salt = await bcrypt.genSalt(10);
+
     user.passwordHash = await bcrypt.hash(newPassword, salt);
-    user.isFirstLogin = false; 
+    user.status = "ACTIVE";
     await user.save();
 
-    const token = jwt.sign({ employeeID: user.employeeID,email: user.email, role: user.role }, process.env.JWT_SECRET,  { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
-    
-    res.status(200).json({ token, user, message: 'Password updated successfully. Logging in...' });
+    await Employees.findOneAndUpdate(
+      { employeeCode: user.employeeID },
+      { $set: { status: "ACTIVE" } },
+    );
 
+    const token = jwt.sign(
+      { employeeID: user.employeeID, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+    );
+
+    res.status(200).json({
+      token,
+      user,
+      message: "Password updated successfully. Logging in...",
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message});
+    console.error("Change password error:", error);
+    res
+      .status(500)
+      .json({ message: error.message || "Failed to update password" });
   }
 };

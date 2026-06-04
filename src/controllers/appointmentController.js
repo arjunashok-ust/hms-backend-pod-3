@@ -6,9 +6,13 @@ const Appointments = require("../models/Appointments");
 exports.getAppointmentStats = async (req, res) => {
   try {
     const total = await Appointments.countDocuments();
-    const completed = await Appointments.countDocuments({ status: "Completed" });
+    const completed = await Appointments.countDocuments({
+      status: "Completed",
+    });
     const booked = await Appointments.countDocuments({ status: "Scheduled" });
-    const cancelled = await Appointments.countDocuments({ status: "Cancelled" });
+    const cancelled = await Appointments.countDocuments({
+      status: "Cancelled",
+    });
 
     res.status(200).json({ total, completed, booked, cancelled });
   } catch (error) {
@@ -23,11 +27,11 @@ exports.getDoctorsList = async (req, res) => {
       { $match: { role: "DOCTOR" } },
       {
         $lookup: {
-          from: "employees", 
+          from: "employees",
           localField: "employeeID",
           foreignField: "employeeCode",
-          as: "profile"
-        }
+          as: "profile",
+        },
       },
       { $unwind: "$profile" },
       {
@@ -36,8 +40,8 @@ exports.getDoctorsList = async (req, res) => {
           name: "$profile.name",
           department: "$profile.department",
           status: "$profile.status",
-        }
-      }
+        },
+      },
     ]);
 
     res.status(200).json(doctors);
@@ -57,8 +61,8 @@ exports.getRecentAppointments = async (req, res) => {
           from: "employees",
           localField: "doctorEmployeeID",
           foreignField: "employeeCode",
-          as: "doctorInfo"
-        }
+          as: "doctorInfo",
+        },
       },
 
       {
@@ -66,8 +70,8 @@ exports.getRecentAppointments = async (req, res) => {
           from: "employees",
           localField: "createdByEmployeeID",
           foreignField: "employeeCode",
-          as: "creatorInfo"
-        }
+          as: "creatorInfo",
+        },
       },
       {
         $project: {
@@ -79,9 +83,9 @@ exports.getRecentAppointments = async (req, res) => {
           status: 1,
           doctorName: { $arrayElemAt: ["$doctorInfo.name", 0] },
           doctorDept: { $arrayElemAt: ["$doctorInfo.department", 0] },
-          creatorName: { $arrayElemAt: ["$creatorInfo.name", 0] }
-        }
-      }
+          creatorName: { $arrayElemAt: ["$creatorInfo.name", 0] },
+        },
+      },
     ]);
 
     res.status(200).json(appointments);
@@ -93,63 +97,61 @@ exports.getRecentAppointments = async (req, res) => {
 
 exports.getAvailableSlots = async (req, res) => {
   try {
-    console.log("\n--- 🔍 SLOTS API TRIGGERED ---");
     const { doctorId, date } = req.query;
-    console.log(`1. Received Request -> Doctor: ${doctorId}, Date: ${date}`);
 
     if (!doctorId || !date) {
-      console.log("❌ Missing doctorId or date");
-      return res.status(400).json({ message: "Doctor ID and date are required" });
+      return res
+        .status(400)
+        .json({ message: "Doctor ID and date are required" });
     }
+
+    const dateObj = new Date(date);
+    const daysOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const targetDay = daysOfWeek[dateObj.getUTCDay()];
 
     const doctor = await Employees.findOne({ employeeCode: doctorId });
     if (!doctor) {
-      console.log(`❌ Doctor not found in DB: ${doctorId}`);
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-    console.log(`2. Found Doctor: ${doctor.name}`);
-    console.log(`3. Doctor DB Slots:`, doctor.availabilitySlots);
+    const dailySchedule = doctor.weeklySchedule.find(
+      (schedule) => schedule.dayOfWeek === targetDay,
+    );
 
-    if (!doctor.availabilitySlots || doctor.availabilitySlots.length === 0) {
-      console.log("⚠️ Doctor has no availabilitySlots array in DB.");
-      return res.status(200).json([]); 
+    if (!dailySchedule?.slots || dailySchedule.slots.length === 0) {
+      return res.status(200).json([]);
     }
 
-    const queryDate = new Date(date);
-    const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
+    const allPossibleSlots = dailySchedule.slots.map(
+      (slot) => `${slot.startTime} - ${slot.endTime}`,
+    );
 
     const existingAppointments = await Appointments.find({
       doctorEmployeeID: doctorId,
-      date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: "Cancelled" }
+      date: dateObj,
+      status: { $ne: "Cancelled" },
     });
 
-    console.log(`4. Existing Appointments on this day: ${existingAppointments.length}`);
+    const bookedSlots = new Set(
+      existingAppointments.map((apt) => apt.timeSlot),
+    );
 
-    const availableSlots = doctor.availabilitySlots.map(slot => {
-      const timeString = `${slot.startTime} - ${slot.endTime}`;
-      const bookedCount = existingAppointments.filter(apt => apt.timeSlot === timeString).length;
-      
-      const isAvailable = bookedCount < 1;
-      console.log(`   -> Slot [${timeString}] has ${bookedCount}/1 bookings. Available? ${isAvailable}`);
+    const availableSlots = allPossibleSlots.filter(
+      (slot) => !bookedSlots.has(slot),
+    );
 
-      return {
-        timeSlot: timeString,
-        isAvailable: isAvailable
-      };
-    }).filter(slot => slot.isAvailable); 
-
-    const finalArray = availableSlots.map(s => s.timeSlot);
-    console.log(`5. Final Array sent to Frontend:`, finalArray);
-    console.log("------------------------------\n");
-
-    res.status(200).json(finalArray);
-
+    res.status(200).json(availableSlots);
   } catch (error) {
-    console.error("❌ Get Slots CRASH:", error);
-    res.status(500).json({ message: "Error fetching available slots" });
+    console.error("Error fetching available slots:", error);
+    res.status(500).json({ message: "Failed to fetch time slots" });
   }
 };
 
@@ -168,11 +170,13 @@ exports.addAppointment = async (req, res) => {
       doctorEmployeeID,
       timeSlot,
       date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: "Cancelled" }
+      status: { $ne: "Cancelled" },
     });
 
     if (bookedCount > 0) {
-      return res.status(400).json({ message: "This time slot is fully booked (Max 1 appointments)." });
+      return res.status(400).json({
+        message: "This time slot is fully booked (Max 1 appointments).",
+      });
     }
 
     const createdByEmployeeID = req.user.employeeID;
@@ -190,7 +194,6 @@ exports.addAppointment = async (req, res) => {
       message: "Appointment created successfully.",
       newAppointment,
     });
-
   } catch (err) {
     console.error("Add Appointment error: ", err);
     res.status(500).json({ message: err.message });
@@ -205,7 +208,7 @@ exports.updateAppointment = async (req, res) => {
     const updatedApt = await Appointments.findOneAndUpdate(
       { appointmentCode: id },
       { patientID, doctorEmployeeID, date, timeSlot, status },
-      { new: true } 
+      { new: true },
     );
 
     if (!updatedApt) {
@@ -214,7 +217,7 @@ exports.updateAppointment = async (req, res) => {
 
     return res.status(200).json({
       message: "Appointment updated successfully",
-      updatedApt
+      updatedApt,
     });
   } catch (error) {
     console.error("Update Appointment Error:", error);
@@ -225,14 +228,18 @@ exports.updateAppointment = async (req, res) => {
 exports.deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const deletedApt = await Appointments.findOneAndDelete({ appointmentCode: id });
-    
+
+    const deletedApt = await Appointments.findOneAndDelete({
+      appointmentCode: id,
+    });
+
     if (!deletedApt) {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
-    return res.status(200).json({ message: "Appointment deleted successfully" });
+    return res
+      .status(200)
+      .json({ message: "Appointment deleted successfully" });
   } catch (error) {
     console.error("Delete Appointment Error:", error);
     res.status(500).json({ message: "Internal server error during deletion" });

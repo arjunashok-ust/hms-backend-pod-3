@@ -94,11 +94,9 @@ exports.getSidebarMenu = async (req, res) => {
     });
   } catch (error) {
     console.error("Fetch Sidebar Menu Error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Internal server error generating navigation configuration",
-      });
+    res.status(500).json({
+      message: "Internal server error generating navigation configuration",
+    });
   }
 };
 

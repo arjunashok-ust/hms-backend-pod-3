@@ -31,7 +31,9 @@ exports.deleteProfile = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    const user = await Users.findOne({ email:req.user.email }).select("-__v -passwordHash");
+    const user = await Users.findOne({ email: req.user.email }).select(
+      "-__v -passwordHash",
+    );
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

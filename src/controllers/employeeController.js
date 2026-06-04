@@ -4,124 +4,48 @@ const Users = require("../models/Users");
 exports.getAllEmployees = async (req, res) => {
   try {
     const employees = await Employees.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           name: { $exists: true, $ne: "" },
-          employeeCode: { $exists: true, $ne: null }
-        } 
+          employeeCode: { $exists: true, $ne: null },
+        },
       },
       { $sort: { createdAt: -1 } },
-    
+
       {
         $lookup: {
-          from: "users", 
+          from: "users",
           localField: "employeeCode",
           foreignField: "employeeID",
-          as: "userInfo"
-        }
+          as: "userInfo",
+        },
       },
-      
+
       {
         $addFields: {
           role: { $arrayElemAt: ["$userInfo.role", 0] },
-          isActivated: { $arrayElemAt: ["$userInfo.isActivated", 0] }, 
-          status: { $ifNull: ["$status", false] } 
-        }
+          status: { $ifNull: ["$status", "INACTIVE"] },
+        },
       },
-      
+
       {
         $project: {
-          userInfo: 0, 
-          __v: 0 
-        }
-      }
+          userInfo: 0,
+          __v: 0,
+        },
+      },
     ]);
 
     res.status(200).json(employees);
   } catch (error) {
     console.error("Error fetching employees:", error);
     res.status(500).json({ message: "Failed to fetch employee directory" });
-  }
-};
-
-exports.getAllEmployees = async (req, res) => {
-  try {
-    const employees = await Employees.aggregate([
-      { 
-        $match: { 
-          name: { $exists: true, $ne: "" },
-          employeeCode: { $exists: true, $ne: null }
-        } 
-      },
-      { $sort: { createdAt: -1 } },
-    
-      {
-        $lookup: {
-          from: "users", 
-          localField: "employeeCode",
-          foreignField: "employeeID",
-          as: "userInfo"
-        }
-      },
-      
-      {
-        $addFields: {
-          role: { $arrayElemAt: ["$userInfo.role", 0] },
-          isActivated: { $arrayElemAt: ["$userInfo.isActivated", 0] }, 
-          status: { $ifNull: ["$status", false] } 
-        }
-      },
-      
-      {
-        $project: {
-          userInfo: 0, 
-          __v: 0 
-        }
-      }
-    ]);
-
-    res.status(200).json(employees);
-  } catch (error) {
-    console.error("Error fetching employees:", error);
-    res.status(500).json({ message: "Failed to fetch employee directory" });
-  }
-};
-
-exports.updateEmployee = async (req, res) => {
-  try {
-    const { id } = req.params; 
-    const updates = req.body;
-    const updatedProfile = await Employees.findOneAndUpdate(
-      { employeeCode: id },
-      { $set: updates },
-      { new: true } 
-    );
-
-    if (!updatedProfile) return res.status(404).json({ message: "Employee not found" });
-
-    if (updates.role || updates.status !== undefined || updates.email) {
-      await Users.findOneAndUpdate(
-        { employeeID: id },
-        { 
-          $set: { 
-            role: updates.role, 
-            status: updates.status,
-            email: updates.email 
-          } 
-        }
-      );
-    }
-
-    res.status(200).json({ message: "Employee updated successfully", employee: updatedProfile });
-  } catch (error) {
-    console.error("Error updating employee:", error);
-    res.status(500).json({ message: "Failed to update employee" });
   }
 };
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    const { id } = req.params; 
+    const { id } = req.params;
 
     await Employees.findOneAndDelete({ employeeCode: id });
     await Users.findOneAndDelete({ employeeID: id });
@@ -133,26 +57,77 @@ exports.deleteEmployee = async (req, res) => {
   }
 };
 
+exports.updateEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const employeeUpdates = { ...updates };
+    delete employeeUpdates._id;
+    delete employeeUpdates.employeeCode;
+    delete employeeUpdates.role;
+
+    const updatedProfile = await Employees.findOneAndUpdate(
+      { employeeCode: id },
+      { $set: employeeUpdates },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedProfile) {
+      return res
+        .status(404)
+        .json({ message: "Employee not found in directory" });
+    }
+
+    const userUpdates = {};
+    if (updates.role !== undefined) userUpdates.role = updates.role;
+    if (updates.status !== undefined) userUpdates.status = updates.status;
+    if (updates.email !== undefined) userUpdates.email = updates.email;
+
+    if (Object.keys(userUpdates).length > 0) {
+      await Users.findOneAndUpdate(
+        { employeeID: id },
+        { $set: userUpdates },
+        { new: true, runValidators: true },
+      );
+    }
+
+    res.status(200).json({
+      message: "Employee updated successfully",
+      employee: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    res
+      .status(500)
+      .json({ message: error.message || "Failed to update employee" });
+  }
+};
+
 exports.approveEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Employees.findOneAndUpdate(
+    const emp = await Employees.findOneAndUpdate(
       { employeeCode: id },
-      { $set: { status: true } }
+      { $set: { status: "ACTIVE" } },
+      { new: true, runValidators: true },
     );
 
     const user = await Users.findOneAndUpdate(
       { employeeID: id },
-      { $set: { isActivated: true } },
-      { new: true }
+      { $set: { status: "ACTIVE" } },
+      { new: true, runValidators: true },
     );
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!emp || !user) {
+      return res
+        .status(404)
+        .json({ message: "Employee or User account record missing" });
+    }
 
     res.status(200).json({ message: "Employee approved successfully" });
   } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: "Approval failed" });
+    console.error("Error approving employee:", error);
+    res.status(500).json({ message: error.message || "Approval failed" });
   }
 };
