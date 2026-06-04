@@ -47,7 +47,7 @@ const signUpValidation = [
 
 ];
 
-router.post("/signup",auth,roleValidation('admin'),signUpValidation, validate, signup);
+router.post("/signup",signUpValidation, validate, signup);
 router.post("/login", login);
 router.get("/currentUser", auth, currentUser);
 
