@@ -7,54 +7,80 @@ const auth = require("../middleware/authMiddileware");
 const { signup, login, currentUser } = require("../controllers/authController");
 
 const signupValidation = [
-    body("name").trim().notEmpty().withMessage("Name is required").
-    matches(/^[A-Za-z\s]+$/).withMessage("Name should contain only alphabets and spaces"),
-  
-    body("email").trim().isEmail().withMessage("Valid email is required").toLowerCase(),
+  body("name")
+    .trim()
+    .notEmpty()
+    .withMessage("Name is required")
+    .matches(/^[A-Za-z\s]+$/)
+    .withMessage("Name should contain only alphabets and spaces"),
 
-    body("password")
-        .isLength({ min: 8 })
-        .withMessage("Password must be at least 8 characters long")
-        .matches(/[A-Z]/)
-        .withMessage("Password must contain at least one uppercase letter")
-        .matches(/[a-z]/)
-        .withMessage("Password must contain at least one lowercase letter")
-        .matches(/\d/)
-        .withMessage("Password must contain at least one number")
-        .matches(/[\W_]/)
-        .withMessage("Password must contain at least one special character"),
+  body("email")
+    .trim()
+    .isEmail()
+    .withMessage("Valid email is required")
+    .normalizeEmail(),
 
-    body("role").isIn([
-        "ADMIN",
-        "DOCTOR",
-        "RECEPTIONIST",
-        "CASHIER",
-        "NURSE",
-        "LAB_TECH",
-        "PHARMACIST",
-    ]).withMessage("Invalid role"),
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[\W_]/)
+    .withMessage("Password must contain at least one special character"),
 
-    body("phone").notEmpty().withMessage("Phone number is required").matches(/^\d{10}$/)
-    .withMessage("Phone number must be exactly 10 digits"),
+  body("role")
+    .isIn([
+      "ADMIN",
+      "DOCTOR",
+      "RECEPTIONIST",
+      "CASHIER",
+      "NURSE",
+      "LAB_TECH",
+      "PHARMACIST",
+    ])
+    .withMessage("Invalid role"),
 
-    body("department").notEmpty().withMessage("Invalid department"),
-    
-    body("designation").notEmpty().withMessage("Designation is required"),
+  body("phone")
+    .trim()
+    .notEmpty()
+    .withMessage("Phone number is required")
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
+    .isMobilePhone("en-IN")
+    .withMessage("Enter a valid phone number"),
 
-    body("joiningDate").notEmpty().withMessage("Joining date is required"),
+  body("department").notEmpty().withMessage("Invalid department"),
 
-    body("specialization").optional().notEmpty().withMessage("Specialization cannot be empty"),
+  body("designation").notEmpty().withMessage("Designation is required"),
 
-    body("qualification").optional().isArray().withMessage("Qualification must be an array"),
+  body("joiningDate").notEmpty().withMessage("Joining date is required"),
 
-    body("availabilitySlots").optional().isArray().withMessage("Availability slots must be an array"),
+  body("specialization")
+    .optional()
+    .notEmpty()
+    .withMessage("Specialization cannot be empty"),
 
+  body("qualification")
+    .optional()
+    .isArray()
+    .withMessage("Qualification must be an array"),
+
+  body("availabilitySlots")
+    .optional()
+    .isArray()
+    .withMessage("Availability slots must be an array"),
 ];
 
-
 const loginValidation = [
-    body("email").isEmail().withMessage("Valid email required"),
-    body("password").notEmpty().withMessage("Password is required"),
+  body("email")
+    .trim()
+    .isEmail()
+    .withMessage("Valid email required")
+    .normalizeEmail(),
+  body("password").notEmpty().withMessage("Password is required"),
 ];
 
 router.post("/signup", signupValidation, validate, signup);
