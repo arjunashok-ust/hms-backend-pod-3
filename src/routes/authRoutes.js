@@ -56,7 +56,8 @@ const signupValidation = [
 
   body("designation").notEmpty().withMessage("Designation is required"),
 
-  body("joiningDate").notEmpty().withMessage("Joining date is required"),
+  body("joiningDate").notEmpty().withMessage("Joining date is required").isISO8601()
+      .withMessage("Invalid date format"),
 
   body("specialization")
     .optional()
