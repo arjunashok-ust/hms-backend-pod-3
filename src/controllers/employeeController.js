@@ -144,7 +144,9 @@ exports.login = async (req, res) => {
 
     // VERIFY PASSWORD
 
-    const isPasswordValid = Boolean(await bcrypt.compare(password, user.password_hash));
+    const isPasswordValid = Boolean(
+      await bcrypt.compare(password, user.password_hash),
+    );
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -225,10 +227,9 @@ exports.resetPassword = async (req, res) => {
 
     // VERIFY TEMP PASSWORD
 
-    const isOldPasswordValid = Boolean(await bcrypt.compare(
-      oldPassword,
-      user.password_hash,
-    ));
+    const isOldPasswordValid = Boolean(
+      await bcrypt.compare(oldPassword, user.password_hash),
+    );
 
     if (!isOldPasswordValid) {
       return res.status(401).json({

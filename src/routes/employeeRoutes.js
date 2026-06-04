@@ -12,10 +12,11 @@ const {
 } = require("../controllers/employeeController");
 
 const signUpValidation = [
-
-  body("name")
-    .notEmpty()
-    .withMessage("Name is required"),
+  body("name").trim()
+  .notEmpty()
+  .withMessage("Name is required")
+  .matches(/^[A-Za-z\s]+$/)
+  .withMessage("Name should contain only alphabets and spaces"),
 
   body("email")
     .notEmpty()
@@ -24,18 +25,28 @@ const signUpValidation = [
     .withMessage("Valid email required"),
 
   body("password")
-    .notEmpty()
-    .withMessage("Password is required")
-    .isLength(8)
-    .withMessage("Atleast 8 digit password required"), 
+  .notEmpty()
+  .withMessage("Password is required")
+  .isLength({ min: 8 })
+  .withMessage("Password must be at least 8 characters long")
+  .matches(/[A-Z]/)
+  .withMessage("Password must contain at least 1 uppercase letter"), 
 
   body("phone")
-    .notEmpty()
-    .withMessage("Phone number is required"),
+  .notEmpty()
+  .withMessage("Phone number is required")
+  .matches(/^[0-9]{10}$/)
+  .withMessage("Phone number must contain exactly 10 digits"),
 
-  body("role")
-    .notEmpty()
-    .withMessage("Role is required"),
+   body("role").isIn([
+        "admin",
+        "doctor",
+        "receptionist",
+        "cashier",
+        "nurse",
+        "lab_tech",
+        "pharmacist",
+    ]).withMessage("Invalid role"),
 
   body("department")
     .notEmpty()
@@ -47,8 +58,17 @@ const signUpValidation = [
 
 ];
 
+const loginValidation = [
+    body("email").isEmail().withMessage("Valid email required"),
+    body("password")
+  .notEmpty()
+  .withMessage("Password is required")
+  .isLength({ min: 8 })
+  .withMessage("Password must be at least 8 characters long"),
+];
+
 router.post("/signup",signUpValidation, validate, signup);
-router.post("/login", login);
+router.post("/login", loginValidation,validate,login);
 router.get("/currentUser", auth, currentUser);
 
 module.exports = router;
