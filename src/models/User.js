@@ -16,14 +16,14 @@ const userSchema = new mongoose.Schema({
     },
 
     status: {
-        type: String, enum: ["ACTIVE", "INACTIVE"],
-        default: "ACTIVE",
+        type: String, enum: ["ACTIVE", "INACTIVE", "PENDING"],
+        default: "PENDING",
         required: true
     },
 
     role: {
         type: String,
-        enum: ["OWNER", "ADMIN", "DOCTOR", "RECEPTIONIST", "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
+        enum: ["ADMIN", "DOCTOR", "RECEPTIONIST", "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
         required: true
     },
 

@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const crypto = require("node:crypto");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
 
@@ -23,8 +22,12 @@ exports.signup = async (req, res) => {
         } = req.body;
 
         const existingEmployee = await Employee.findOne({ email });
-        if (existingEmployee) {
-            return res.status(409).json({ message: "Email already registered." });
+        const existingUser = await User.findOne({ email });
+
+        if (existingEmployee || existingUser) {
+            return res.status(409).json({
+                message: "Email already registered."
+            });
         }
 
         const medicalRoles = ["DOCTOR", "NURSE", "PHARMACIST", "LAB_TECH"];
@@ -38,7 +41,7 @@ exports.signup = async (req, res) => {
             const existingMedicalRegistrationNo = await Employee.findOne({ medicalRegistrationNo});
  
             if (existingMedicalRegistrationNo) {
-                return res.status(400).json({
+                return res.status(409).json({
                     success: false,
                     message: "Medical Registration Number already exists,provide a different one",
                 });
@@ -135,6 +138,7 @@ exports.currentUser = async (req, res) => {
                 id: user.employeeid,
                 email: user.email,
                 role: user.role,
+                status: user.status,
                 lastLoginAt: user.lastLoginAt,
                 createdAt: user.createdAt
             }
