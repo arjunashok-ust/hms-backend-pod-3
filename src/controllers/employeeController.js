@@ -1,12 +1,7 @@
 const Employee = require("../models/Employee");
 const User = require("../models/User");
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("node:crypto");
-
-const sendEmployeeCredentials = require("../utils/mailService");
-const sendFormSignupMail = require("../utils/formSignupMail");
 
 // ===============================
 // SIGNUP
