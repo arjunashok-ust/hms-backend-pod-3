@@ -49,6 +49,15 @@ const employeeSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
+    status: {
+      type: String,
+      enum: [
+        "ACTIVE",
+        "INACTIVE",
+        "PASSWORD_CHANGE_PENDING",
+        "ADMIN_APPROVAL_PENDING",
+      ],
+    },
     department: {
       type: String,
       enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],

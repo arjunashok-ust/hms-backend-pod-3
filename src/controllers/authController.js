@@ -85,6 +85,8 @@ exports.signupByUser = async (req, res) => {
       `,
     });
 
+    console.log(`${process.env.APP_URL || "http://localhost:8080"}/auth/verify-email?email=${newUser.email}&token=${verification_token}`)
+
     res.status(201).json({
       message:
         "Registration successful. Please check your email to verify your account.",
@@ -135,7 +137,7 @@ exports.signUpByAdmin = async (req, res) => {
       }
     }
 
-    const tempPassword = crypto.randomBytes(12).toString("hex");
+    const tempPassword = crypto.randomBytes(4).toString("hex");
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
     const profile = await Employees.create({
