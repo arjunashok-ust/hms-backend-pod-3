@@ -2,26 +2,33 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const employeeModel = require("../models/Employee");
 const userModel = require("../models/User");
+const medicRoles = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
 
 //SIGNUP
 exports.signUp = async (req, res) => {
     try {
         const {
-            name, email, password, department, designation,
-            status, joiningDate, medicalRegistrationNo,
+            name, email, password, phone, department, designation,
+            joiningDate, medicalRegistrationNo,
             specialization, qualification, consultationFee,
-            availabilitySlots, lastLoginAt
+            availabilitySlots, roles
         } = req.body;
 
-        const existingUser = await employeeModel.findOne({ email });
+        const existingUser = await userModel.findOne({ email });
         if (existingUser) {
-            return res.status(409).json({ message: "The employee is already registered" });
+            return res.status(409).json({
+                success: false,
+                message: "The user is already registered"
+            });
         }
 
-        if (designation.includes("DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST")) {
-            const medicRegNo = await employeeModel.findOne({ medicalRegistrationNo: medicalRegistrationNo });
+        if (medicRoles.has(roles)) {
+            const medicRegNo = await employeeModel.findOne({ medicalRegistrationNo });
             if (medicRegNo) {
-                return res.status(409).json({ message: 'medical registration no should be unique.' });
+                return res.status(409).json({
+                    success: false,
+                    message: 'medical registration no should be unique.'
+                });
             }
         }
 
@@ -30,9 +37,9 @@ exports.signUp = async (req, res) => {
         const employee = await employeeModel.create({
             name,
             email,
+            phone,
             department,
             designation,
-            status,
             joiningDate,
             medicalRegistrationNo,
             specialization,
@@ -43,13 +50,12 @@ exports.signUp = async (req, res) => {
         const user = await userModel.create({
             email,
             passwordHash,
-            status,
-            roles: designation,
-            employeeId: employee.employeeId,
-            lastLoginAt
+            roles,
+            employeeId: employee.employeeId
         });
 
-        res.status(201).json({
+        res.status(200).json({
+            success: true,
             message: "Register Sucessful",
             user: {
                 id: user._id,
@@ -58,8 +64,11 @@ exports.signUp = async (req, res) => {
             },
         });
     } catch (err) {
-        console.log("Signup error: ", err);
-        res.status(500).json({ message: err.message });
+        console.error("Signup error: ", err);
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
     }
 }
 
@@ -70,11 +79,17 @@ exports.login = async (req, res) => {
 
         const user = await userModel.findOne({ email });
         if (!user) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
-        const passwordMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
+        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
         if (!passwordMatch) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
 
         const token = jwt.sign(
@@ -83,7 +98,11 @@ exports.login = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
 
+        user.lastLoginAt = Date.now();
+        await user.save();
+
         res.status(200).json({
+            success: true,
             message: "Login successful",
             token,
             user: {
@@ -93,30 +112,10 @@ exports.login = async (req, res) => {
             }
         });
     } catch (err) {
-        console.log("Login error: ", err);
-        res.status(500).json({ message: err.message });
-    }
-}
-
-//profile
-exports.profile = async (req, res) => {
-    try {
-        const user = await userModel.findById(req.user.id).select("-passwordHash -__v");
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        res.status(200).json({
-            user: {
-                id: user._id,
-                email: user.email,
-                role: user.roles,
-                last_login: user.lastLoginAt,
-                created_at: user.createdAt,
-            }
+        console.error("Login error: ", err);
+        res.status(500).json({
+            success: false,
+            message: err.message
         });
-    } catch (err) {
-        console.error("Profile error:", err);
-        res.status(500).json({ message: err.message });
     }
 }

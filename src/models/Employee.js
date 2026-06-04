@@ -14,8 +14,13 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true,
-        lowercase: true
+        lowercase: true,
+        trim: true
+    },
+    phone: {
+        type: String,
+        required: true,
+        trim: true
     },
     department: {
         type: String,
@@ -24,28 +29,18 @@ const employeeSchema = new mongoose.Schema({
             "IPD",
             "LAB",
             "PHARMACY",
-            "ADMIN"
+            "ADMINISTRATION"
         ],
         required: true
     },
     designation: {
         type: String,
-        enum: [
-            "OWNER",
-            "DOCTOR",
-            "NURSE",
-            "RECEPTIONIST",
-            "CASHIER",
-            "ADMIN",
-            "LAB_TECH",
-            "PHARMACIST"
-        ],
         required: true
     },
     status: {
         type: String,
-        enum: ["ACTIVE", "INACTIVE"],
-        required: true
+        enum: ["ACTIVE", "INACTIVE", "PENDING"],
+        default: "INACTIVE"
     },
     joiningDate: {
         type: Date,
@@ -56,8 +51,6 @@ const employeeSchema = new mongoose.Schema({
     },
     specialization: {
         type: String,
-        trim: true,
-        lowercase: true
     },
     qualification: [{
         type: String,
@@ -77,10 +70,10 @@ employeeSchema.pre('save', async function () {
         try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'employee' },
-                { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
-            this.employeeId = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+            this.employeeId = `EMP-${String(counter.seq).padStart(6, '0')}`; 
         } catch (err) {
             console.log("PreHook error in Employee.js: ", err.message);
         }

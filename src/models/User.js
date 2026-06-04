@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["ACTIVE", "INACTIVE"],
-        required: true
+        enum: ["ACTIVE", "INACTIVE", "PENDING"],
+        default: "INACTIVE"
     },
     roles: {
         type: String,
@@ -38,13 +38,11 @@ const userSchema = new mongoose.Schema({
     },
     lastLoginAt: {
         type: Date,
-        required: true
+        default: null
     }
-}, {
-    timestamps: {
-        createdAt: "createdAt"
-    }
-});
+},
+    { timestamps: true }
+);
 
 const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;

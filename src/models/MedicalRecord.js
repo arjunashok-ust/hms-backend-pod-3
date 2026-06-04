@@ -15,7 +15,7 @@ const medicalRecordSchema = new mongoose.Schema({
     patientId: {
         type: String,
         required: true,
-        ref: "CUstomer"
+        ref: "Customer"
     },
     doctorEmployeeId: {
         type: String,
