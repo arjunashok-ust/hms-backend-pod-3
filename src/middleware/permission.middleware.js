@@ -5,14 +5,14 @@ const permission = (...requiredPermissions) => {
         try{
             const role = await Role.findOne({role_name: req.user.role});
             if(!role){
-                return res.status(403).json({message: "Role not found."});
+                return res.status(400).json({message: "Role not found."});
             }
             const userPermission = role.role_permissions;
             const hasPermission = requiredPermissions.every((permission) => {
                 return userPermission.includes(permission);
             })
             if(!hasPermission){
-                 return res.status(401).json({message: "You are not authorized to perform this action."})
+                 return res.status(403).json({message: "You are not authorized to perform this action."})
             }
             next();
         }
