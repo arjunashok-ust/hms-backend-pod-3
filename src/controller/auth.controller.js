@@ -211,7 +211,7 @@ const setPassword = async (req, res) => {
         const status = user.firstLogin;
 
         if (!status) {
-            return res.status(403).json({ message: "Set password is only allowed for first-time users" });
+            return res.status(400).json({ message: "Set password is only allowed for first-time users" });
         }
 
         const passwordHash = await bcrypt.hash(password, 12);

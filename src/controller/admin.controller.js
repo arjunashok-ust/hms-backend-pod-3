@@ -23,7 +23,7 @@ const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage)
         }
 
         if (user.status == status) {
-            return res.status(403).json({ message: alreadyMessage });
+            return res.status(400).json({ message: alreadyMessage });
         }
 
         user.status = status;
@@ -43,21 +43,21 @@ const deleteUserProfile = async (req, res) => {
         const EmployeeId = req.body.employeeId;
         const existingUser = await findUserByEmployeeId(EmployeeId);
         if (!existingUser) {
-            return res.status(404).json({ message: 'user not found.' });
+            return res.status(404).json({ message: 'User not found.' });
         }
 
         await existingUser.deleteOne();
 
         const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
         if (!existingEmployee) {
-            return res.status(404).json({ message: 'employee not found.' });
+            return res.status(404).json({ message: 'Employee not found.' });
         }
         return res.status(200).json({
             message: 'Account deleted successfully',
             employeeId: EmployeeId,
         });
     } catch (err) {
-        showError(res, err, "server error during delete user profile.");
+        showError(res, err, "Server error during delete user profile.");
     }
 }
 
@@ -91,40 +91,47 @@ const getDashboardData = async (req, res) => {
 
 const getUserEmployee = async (req, res) => {
     try {
-        const employee = await Employee.find();
-        const user = await User.find();
+        const employees = await Employee.find();
+        const users = await User.find();
 
-        const combined = user.map((u) => {
-            const emp = employee.find((emp) => emp.employeeCode == u.employeeId);
+        const employeeMap = new Map(
+            employees.map(emp => [emp.employeeCode, emp])
+        );
+
+        const combined = users.map((u) => {
+            const emp = employeeMap.get(u.employeeId);
+
             return {
-                name: emp.name,
+                name: emp?.name || null,
                 email: u.email,
                 status: u.status,
                 role: u.role,
                 employeeId: u.employeeId,
                 isVerified: u.isVerified,
                 firstLogin: u.firstLogin,
-                department: emp.department,
-                designation: emp.designation,
-                joiningDate: emp.joiningDate,
-                medicalRegistrationNo: emp.medicalRegistrationNo,
-                specialization: emp.specialization,
-                qualification: emp.qualification,
-                consultationFee: emp.consultationFee,
-                availabilitySlots: emp.availabilitySlots,
-            }
-        })
+                department: emp?.department || null,
+                designation: emp?.designation || null,
+                joiningDate: emp?.joiningDate || null,
+                medicalRegistrationNo: emp?.medicalRegistrationNo || null,
+                specialization: emp?.specialization || null,
+                qualification: emp?.qualification || null,
+                consultationFee: emp?.consultationFee || null,
+                availabilitySlots: emp?.availabilitySlots || [],
+            };
+        });
 
         return res.status(200).json(combined);
     } catch (err) {
-        showError(res, err, 'Server Error During Get User Employee')
+        showError(res, err, 'Server Error During Get User Employee');
     }
-}
+};
 
 const getAllUsers = async (req, res) => {
     try {
         const employee = await Employee.find();
-
+        if(!employee){
+            return res.status(400).json({message:"No users found"})
+        }
         return res.status(200).json(employee);
     } catch (err) {
         showError(res, err, 'Server Error During Get All Users');
