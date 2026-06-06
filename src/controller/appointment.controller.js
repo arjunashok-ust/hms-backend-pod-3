@@ -23,7 +23,7 @@ const createAppointment = async (req, res) => {
             return res.status(404).json({ message: "Doctor Not Found" });
         }
 
-        const creator = await User.findOne({ employeeId: createdByEmployeeId });
+        const creator = await User.findOne({ $or: [{ employeeId: createdByEmployeeId }, { patientId: createdByEmployeeId }] });
         if (!creator) {
             return res.status(404).json({ message: "Creator Employee Not Found!" });
         }
@@ -136,5 +136,41 @@ const deleteAppointment = async (req, res) => {
     }
 }
 
-module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment }
+const getAppointmentsByPatientId = async (req, res) => {
+    try {
+        const patientId = req.query.patientId;
+
+        const patient = await Patient.findOne({ uhid: patientId });
+
+        if (!patient) {
+            return res.status(404).json({ message: "Patient Not Found" });
+        }
+
+        const appointments = await Appointment.find({ patientId: patientId });
+
+        return res.status(200).json(appointments);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Get Appointment By Patient Id" });
+    }
+}
+
+const getDoctorByEmployeeId = async (req, res) => {
+    try {
+        const employeeId = req.query.employeeId;
+
+        const doctor = await Employee.findOne({ employeeCode: employeeId });
+
+        if (!doctor) {
+            return res.status(404).json({ message: "Doctor Not Found" });
+        }
+
+        return res.status(200).json(doctor);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Get Doctor By Employee Id" });
+    }
+}
+
+module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment, getAppointmentsByPatientId, getDoctorByEmployeeId }
 
