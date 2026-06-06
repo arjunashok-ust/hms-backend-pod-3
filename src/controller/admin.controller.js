@@ -34,7 +34,7 @@ const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage)
             employeeId: user.employeeId,
         });
     } catch (err) {
-        showError(res, err, 'Server Error During Approve User');
+        return showError(res, err, 'Server Error During Approve User');
     }
 }
 
@@ -57,7 +57,7 @@ const deleteUserProfile = async (req, res) => {
             employeeId: EmployeeId,
         });
     } catch (err) {
-        showError(res, err, "Server error during delete user profile.");
+        return showError(res, err, "Server error during delete user profile.");
     }
 }
 
@@ -85,7 +85,7 @@ const getDashboardData = async (req, res) => {
         });
     }
     catch (err) {
-        showError(res, err, 'Server Error During Get Dashboard Data');
+        return showError(res, err, 'Server Error During Get Dashboard Data');
     }
 }
 
@@ -122,40 +122,40 @@ const getUserEmployee = async (req, res) => {
 
         return res.status(200).json(combined);
     } catch (err) {
-        showError(res, err, 'Server Error During Get User Employee');
+        return showError(res, err, 'Server Error During Get User Employee');
     }
 };
 
 const getAllUsers = async (req, res) => {
     try {
         const employee = await Employee.find();
-        if(!employee){
+        if(employee.length === 0){
             return res.status(400).json({message:"No users found"})
         }
         return res.status(200).json(employee);
     } catch (err) {
-        showError(res, err, 'Server Error During Get All Users');
+        return showError(res, err, 'Server Error During Get All Users');
     }
 }
 
 const getUsers = async (req, res) => {
     try {
         const user = await User.find();
-        if (!user) {
+        if (user.length === 0) {
             return res.status(404).json({ message: 'User not found.' });
         }
         return res.status(200).json(user);
     } catch (err) {
-        showError(res, err, 'Server Error During Get All Users');
+        return showError(res, err, 'Server Error During Get All Users');
     }
 }
 
 const approveUser = async (req, res) => {
-    return changeUserStatus(req, res, 'Active', 'Account is already activated', 'Account activated sucessfully');
+    return changeUserStatus(req, res, 'Active', 'Account is already activated', 'Account activated successfully');
 }
 
 const rejectUser = async (req, res) => {
-    return changeUserStatus(req, res, 'Inactive', 'Account is already not active', 'Account activation request rejected sucessfully');
+    return changeUserStatus(req, res, 'Inactive', 'Account is already not active', 'Account rejected sucessfully');
 }
 
 // Update User Profile

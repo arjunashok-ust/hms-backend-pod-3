@@ -14,16 +14,19 @@ const createAppointment = async (req, res) => {
         } = req.body;
 
         const patient = await Patient.findOne({ uhid: patientId });
+
         if (!patient) {
             return res.status(404).json({ message: "Patient Not Found!" });
         }
 
         const doctor = await User.findOne({ employeeId: doctorEmployeeId, role: 'Doctor', status: 'Active' });
+
         if (!doctor) {
             return res.status(404).json({ message: "Doctor Not Found" });
         }
 
         const creator = await User.findOne({ employeeId: createdByEmployeeId });
+
         if (!creator) {
             return res.status(404).json({ message: "Creator Employee Not Found!" });
         }
@@ -41,14 +44,25 @@ const createAppointment = async (req, res) => {
             });
         }
 
-        const status = "Booked";
+        const existingAppointmentByPatient = await Appointment.findOne({
+            patientId,
+            date,
+            timeSlot,
+            status: { $ne: 'Cancelled' }
+        });
+
+        if (existingAppointmentByPatient) {
+            return res.status(400).json({
+                message: "Patient already has another appointment with a different doctor at the same time."
+            });
+        }
 
         const appointment = await Appointment.create({
             patientId: patientId,
             doctorEmployeeId: doctorEmployeeId,
             date: date,
             timeSlot: timeSlot,
-            status: status,
+            status: "Booked",
             createdByEmployeeId: createdByEmployeeId,
         });
 
@@ -67,7 +81,7 @@ const getAllAppointments = async (req, res) => {
     try {
         const appointment = await Appointment.find();
         if (appointment.length === 0) {
-            return res.status(404).json({ message: "No appointments found" });
+            return res.status(404).json({ message: "No appointments found"});
         }
         return res.status(200).json(appointment);
     }
@@ -80,11 +94,13 @@ const getAllAppointments = async (req, res) => {
 const getDoctors = async (req, res) => {
     try {
         const doctorUser = await User.find({ role: 'Doctor', status: 'Active' });
+
         if (!doctorUser.length) {
-            return res.status(404).json({ message: "No Doctors Found" });
+            return res.status(200).json([]);
         }
 
         const employeeIds = doctorUser.map((user => user.employeeId));
+
         const doctors = await Employee.find({
             employeeCode: {
                 $in: employeeIds
@@ -126,9 +142,11 @@ const deleteAppointment = async (req, res) => {
     try {
         const appointmentId = req.query.appointmentId;
         const deleted = await Appointment.findOneAndDelete({ appointmentId: appointmentId });
+
         if (!deleted) {
             return res.status(404).json({ message: "Appointment Not Found" });
         }
+
         return res.status(200).json({ message: 'Appointment Deleted Sucessfully' });
     } catch (err) {
         console.error(err);
