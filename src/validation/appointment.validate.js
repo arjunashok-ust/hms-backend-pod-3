@@ -21,4 +21,17 @@ const validateGetDoctorByEmployeeId = [
     query("employeeId").notEmpty().withMessage("Doctor Employee Id is required")
 ]
 
-module.exports = { validateCreateAppointment, validateDeleteAppointment, validateGetAppointmentByPatientId, validateGetDoctorByEmployeeId }
+const validateEditAppointment = [
+    body("appointmentId").notEmpty().withMessage("Appointment Id is Required"),
+    body("patientId").notEmpty().withMessage("Patient Id is Required"),
+    body("doctorEmployeeId").notEmpty().withMessage("Doctor Id is Required"),
+    body("date").notEmpty().withMessage("Date is Required"),
+    body("timeSlot").notEmpty().withMessage("Time Slot is Required"),
+]
+
+const validateEditAppointmentStatus = [
+    body("appointmentId").notEmpty().withMessage("Appointment Id is Required"),
+    body("status").notEmpty().withMessage("Status is required"),
+]
+
+module.exports = { validateCreateAppointment, validateDeleteAppointment, validateGetAppointmentByPatientId, validateGetDoctorByEmployeeId, validateEditAppointment, validateEditAppointmentStatus }

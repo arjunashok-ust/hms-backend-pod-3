@@ -158,16 +158,16 @@ const getAvailableTimeSlots = async (req, res) => {
         const inputDate = new Date(req.query.date);
         const today = new Date();
 
-        if (inputDate <= today) return res.status(400).json({ message: 'you cant book appointment in past' });
+        if (inputDate <= today) return res.status(400).json({ message: 'You cant book appointment in past' });
 
         const date = inputDate.toDateString();
 
         const doctor = await Employee.findOne({ employeeCode: employeeId });
-        if (!doctor) return res.status(404).json({ message: 'doctor not found.' });
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
         const appointments = await Appointment.find();
 
         const allSlots = doctor.availabilitySlots;
-        if (!allSlots) return res.status(404).json({ message: 'no slots found for doctor' });
+        if (!allSlots) return res.status(404).json({ message: 'No slots found for doctor' });
 
         const bookedSlots = appointments.filter(
             (appointment) => {
@@ -177,7 +177,7 @@ const getAvailableTimeSlots = async (req, res) => {
         ).map((appointment) => appointment.timeSlot);
 
         const slots = allSlots.filter((slot) => !bookedSlots.includes(slot));
-        if (!slots) return res.status(409).json({ message: 'no available slots found for doctor' });
+        if (!slots) return res.status(409).json({ message: 'No available slots found for doctor' });
 
         return res.status(200).json({
             message: "slots fetched sucessfully",

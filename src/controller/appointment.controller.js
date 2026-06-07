@@ -41,12 +41,24 @@ const createAppointment = async (req, res) => {
             });
         }
 
+        const existingPatientAppointment = await Appointment.findOne({
+            patientId: patientId,
+            date: date,
+            timeSlot: timeSlot,
+        })
+
+        if (existingPatientAppointment) {
+            return res.status(400).json({
+                message: "Patient have another appointment booked for this slot",
+            });
+        }
+
         const status = "Booked";
 
         const appointment = await Appointment.create({
             patientId: patientId,
             doctorEmployeeId: doctorEmployeeId,
-            date: date,
+            date: new Date(date).toISOString(),
             timeSlot: timeSlot,
             status: status,
             createdByEmployeeId: createdByEmployeeId,
@@ -172,5 +184,75 @@ const getDoctorByEmployeeId = async (req, res) => {
     }
 }
 
-module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment, getAppointmentsByPatientId, getDoctorByEmployeeId }
+const editAppointment = async (req, res) => {
+    try {
+        const {
+            appointmentId,
+            patientId,
+            doctorEmployeeId,
+            date,
+            timeSlot,
+        } = req.body;
+
+        const existingAppointment = await Appointment.findOne({
+            doctorEmployeeId,
+            date,
+            timeSlot,
+            status: { $ne: 'Cancelled' }
+        });
+
+        if (existingAppointment) {
+            return res.status(400).json({
+                message: "Time slot already booked"
+            });
+        }
+
+        const appointment = await Appointment.findOneAndUpdate({ appointmentId }, {
+            patientId,
+            doctorEmployeeId,
+            date,
+            timeSlot,
+        }, {
+            new: true,
+            runValidators: true,
+        });
+
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        return res.status(200).json({ message: "Appointment updated successfully" });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Edit Appointment" });
+    }
+}
+
+const editAppointmentStatus = async (req, res) => {
+    try {
+        const {
+            appointmentId,
+            status
+        } = req.body;
+
+        const appointment = await Appointment.findOneAndUpdate({ appointmentId }, {
+            status,
+        }, {
+            new: true,
+            runValidators: true,
+        });
+
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        return res.status(200).json({ message: "Appointment status updated successfully" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server Error During Edit Apponintment Status" });
+    }
+}
+
+module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment, getAppointmentsByPatientId, getDoctorByEmployeeId, editAppointment, editAppointmentStatus }
 
