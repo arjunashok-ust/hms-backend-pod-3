@@ -1,21 +1,65 @@
 const mongoose=require('mongoose');
 
-
-const patientSchema=mongoose.Schema({
-    UHID:{type:String,unique:true,required:true},
-    name:{type:String,required:true},
-    phone:{type:String,unique:true,trim:true},
-    gender:{type:String,required:true},
-    date_of_birth:{type:Date},
-    address: {
-    line1:    { type: String },
-    city:     { type: String },
-    postcode: { type: String }
+const patientSchema = mongoose.Schema({
+  UHID: {
+    type: String,
+    unique: true,
+    required: true,
   },
-    emergencyContact:{type:String,unique:true,trim:true},
-    status:{type:Boolean,required:true}
 
-}) 
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  name: {
+    type: String,
+    required: true,
+  },
+
+  phone: {
+    type: String,
+    unique: true,
+    trim: true,
+  },
+
+  gender: {
+    type: String,
+    required: true,
+  },
+
+  date_of_birth: {
+    type: Date,
+  },
+
+  bloodGroup: {
+    type: String,
+  },
+
+  allergies: [
+    {
+      type: String,
+    },
+  ],
+
+  address: {
+    line1: String,
+    city: String,
+    postcode: String,
+  },
+
+  emergencyContact: {
+    type: String,
+    unique: true,
+    trim: true,
+  },
+
+  status: {
+    type: Boolean,
+    default: true,
+  },
+});
 // Pre-save hook to generate sequential ID
 
 patientSchema.pre('save', async function (next) {

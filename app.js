@@ -27,7 +27,9 @@ app.use(express.json());
 
 const employeeRoutes = require("./src/routes/employeeRoutes");
 const appointmentRoutes=require("./src/routes/appointmentRoutes");
+const patientAppRoutes =require("./src/routes/patientAppRoutes");
 
+app.use("/api/patientApp",patientAppRoutes);
 app.use("/api/emp", employeeRoutes);
 app.use("/api/appointment",appointmentRoutes);
 
