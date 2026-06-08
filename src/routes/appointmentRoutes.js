@@ -39,15 +39,10 @@ router.post(
 );
 
 /* GET ALL */
-
 router.get("/getAllAppointments", auth, getAllAppointments);
-
 /* GET DOCTORS */
-
 router.get("/getDoctors", auth, getDoctors);
-
 /* DELETE */
-
 router.delete(
   "/deleteAppointment/:appointmentId",
   auth,

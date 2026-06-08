@@ -26,9 +26,10 @@ app.use(express.json());
 
 
 const employeeRoutes = require("./src/routes/employeeRoutes");
+const appointmentRoutes=require("./src/routes/appointmentRoutes");
 
 app.use("/api/emp", employeeRoutes);
-
+app.use("/api/appointment",appointmentRoutes);
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 

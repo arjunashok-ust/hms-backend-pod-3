@@ -4,17 +4,15 @@ const Patient = require("../models/Patient");
 const User = require("../models/User");
 /* ================================
    CREATE APPOINTMENT
-================================ */
+   ================================ */
 exports.createAppointment = async (req, res) => {
   try {
     const { patientId, doctorEmployeeId, date, timeSlot, status } = req.body;
-
     /* CHECK PATIENT */
     const patient = await Patient.findOne({ UHID: patientId });
     if (!patient) {
       return res.status(404).json({ message: "Patient Not Found" });
     }
-
     /* CHECK DOCTOR */
     const doctor = await Employee.findOne({
       employeeId: doctorEmployeeId,
@@ -66,27 +64,46 @@ exports.createAppointment = async (req, res) => {
    GET ALL APPOINTMENTS
 ================================ */
 
-
 exports.getAllAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find()
-      .sort({ createdAt: -1 });
+
+    let appointments = [];
+
+    // DOCTOR -> ONLY OWN APPOINTMENTS
+    if (req.user.role === "doctor") {
+
+      const doctorUser = await User.findById(req.user.id);
+
+      appointments = await Appointment.find({
+        doctorEmployeeId: doctorUser.employeeId,
+      }).sort({ createdAt: -1 });
+
+    }
+
+    // ADMIN + RECEPTIONIST -> ALL APPOINTMENTS
+    else {
+
+      appointments = await Appointment.find()
+        .sort({ createdAt: -1 });
+
+    }
 
     const enrichedAppointments = await Promise.all(
       appointments.map(async (appointment) => {
 
         const doctor = await Employee.findOne({
-          employeeId: appointment.doctorEmployeeId
+          employeeId: appointment.doctorEmployeeId,
         });
 
         const patient = await Patient.findOne({
-          patientId: appointment.patientId
+          UHID: appointment.patientId,
         });
 
         return {
           ...appointment.toObject(),
 
-          doctorName: doctor?.name || "Unknown Doctor",
+          doctorName:
+            doctor?.name || "Unknown Doctor",
 
           specialization:
             doctor?.specialization || "N/A",
@@ -104,63 +121,60 @@ exports.getAllAppointments = async (req, res) => {
     });
 
   } catch (err) {
+
     console.error(err);
 
     return res.status(500).json({
       message: "Server Error During Get Appointments",
     });
+
   }
 };
 
-/* ================================
-   GET DOCTORS
-================================ */
-
-exports.getDoctors = async (req, res) => {
-  try {
-    /* GET USERS WITH DOCTOR ROLE */
-    const doctorUsers = await User.find({
-      role: "doctor",
-      status: true,
-    });
-
-    const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
-
-    /* GET EMPLOYEE DETAILS */
-    const doctors = await Employee.find({
-      employeeId: { $in: employeeIds },
-      status: true,
-    }).sort({ name: 1 });
-
-    return res.status(200).json({
-      success: true,
-      count: doctors.length,
-      data: doctors,
-    });
-  } catch (err) {
-    console.error(err);
-
-    return res.status(500).json({
-      message: "Server Error During Get Doctors",
-    });
-  }
-};
 
 /* ================================
    APPOINTMENT UI STATS
 ================================ */
 exports.getAppointmentUI = async (req, res) => {
   try {
-    const totalAppointments = await Appointment.countDocuments();
-    const bookedAppointments = await Appointment.countDocuments({
-      status: "BOOKED",
-    });
-    const cancelledAppointments = await Appointment.countDocuments({
-      status: "CANCELLED",
-    });
-    const completedAppointments = await Appointment.countDocuments({
-      status: "COMPLETED",
-    });
+
+    let filter = {};
+
+    // DOCTOR -> ONLY HIS APPOINTMENTS
+    if (req.user.role === "doctor") {
+
+      const doctorUser = await User.findById(
+        req.user.id
+      );
+
+      filter = {
+        doctorEmployeeId:
+          doctorUser.employeeId,
+      };
+    }
+
+    const totalAppointments =
+      await Appointment.countDocuments(
+        filter
+      );
+
+    const bookedAppointments =
+      await Appointment.countDocuments({
+        ...filter,
+        status: "BOOKED",
+      });
+
+    const cancelledAppointments =
+      await Appointment.countDocuments({
+        ...filter,
+        status: "CANCELLED",
+      });
+
+    const completedAppointments =
+      await Appointment.countDocuments({
+        ...filter,
+        status: "COMPLETED",
+      });
 
     return res.status(200).json({
       totalAppointments,
@@ -168,11 +182,15 @@ exports.getAppointmentUI = async (req, res) => {
       cancelledAppointments,
       completedAppointments,
     });
+
   } catch (err) {
+
     console.error(err);
+
     return res.status(500).json({
       message: "Server Error During Appointment UI",
     });
+
   }
 };
 
@@ -199,6 +217,39 @@ exports.deleteAppointment = async (req, res) => {
     return res.status(500).json({
       message: "Server Error During Delete Appointment",
     });
+  }
+};
+//Get Docotors
+exports.getDoctors = async (req, res) => {
+  try {
+    const doctorUsers = await User.find({
+      role: "doctor",
+      status: true,
+    });
+
+    const employeeIds = doctorUsers.map(
+      (doctor) => doctor.employeeId
+    );
+
+    const doctors = await Employee.find({
+      employeeId: { $in: employeeIds },
+      status: true,
+    }).sort({ name: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: doctors.length,
+      data: doctors,
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      message: "Server Error During Get Doctors",
+    });
+
   }
 };
 

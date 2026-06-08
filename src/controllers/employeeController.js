@@ -1,5 +1,7 @@
 const Employee = require("../models/Employee");
 const User = require("../models/User");
+const Patient=require("../models/Patient");
+const Appointment=require("../models/Appointment");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -46,17 +48,11 @@ exports.dashboardStats = async (req, res) => {
 
     return res.status(200).json({
       totalEmployees,
-
       activeEmployees,
-
       pendingApprovals,
-
       pendingVerifications,
-
       totalPatients,
-
       totalAppointments,
-
       totalDepartments: totalDepartments.length,
     });
   } catch (error) {
@@ -554,6 +550,7 @@ exports.currentUser = async (req, res) => {
                 department: employee.department,
                 medicalRegistrationNo: employee.medicalRegistrationNo,
                 designation: employee.designation,
+                status:employee.status,
             });
         }
 
@@ -565,6 +562,7 @@ exports.currentUser = async (req, res) => {
             phone: employee.phone,
             department: employee.department,
             designation: employee.designation,
+            status:employee.status,
         });
     } catch (error) {
         console.error("Unable to fetch current user", error);
@@ -572,4 +570,69 @@ exports.currentUser = async (req, res) => {
     }
 };
 
+//Get Employees
+exports.getEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find().sort({ createdAt: -1 });
 
+    const employeeData = await Promise.all(
+      employees.map(async (employee) => {
+        const user = await User.findOne({
+          employeeId: employee.employeeId,
+        });
+
+        return {
+          ...employee.toObject(),
+          role: user?.role || "",
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: employeeData.length,
+      data: employeeData,
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      message: "Server error during fetch employees",
+    });
+  }
+};
+
+//Delete Employees
+exports.deleteEmployee = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    const employee = await Employee.findOne({
+      employeeId,
+    });
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    await User.deleteOne({
+      employeeId,
+    });
+
+    await employee.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Employee deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      message: "Server error during delete employee",
+    });
+  }
+};
