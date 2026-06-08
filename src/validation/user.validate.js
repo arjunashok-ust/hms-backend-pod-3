@@ -39,6 +39,10 @@ const validateGetAvailableTimeSlots = [
     query("date").notEmpty().withMessage("date is required"),
 ]
 
+const validateUpdatePatientProfile = [
+    body("patientId").notEmpty().withMessage("Patient Id is required!"),
+]
+
 module.exports = {
-    validateGetUserProfile, validateGetNameByEmployeeId, validateGetNameByPatientId, validateCreatePatient, validateDeletePatient, validateGetPatientProfile, validateGetPatientId, validateGetAvailableTimeSlots
+    validateGetUserProfile, validateGetNameByEmployeeId, validateGetNameByPatientId, validateCreatePatient, validateDeletePatient, validateGetPatientProfile, validateGetPatientId, validateGetAvailableTimeSlots, validateUpdatePatientProfile
 };

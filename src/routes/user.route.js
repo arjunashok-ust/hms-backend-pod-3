@@ -15,5 +15,6 @@ router.post('/deletePatient',userValidate.validateDeletePatient,validate,auth,pe
 router.get('/getPatientProfile',userValidate.validateGetPatientProfile,validate,auth,permission('view:profile'),userController.getPatientProfile);
 router.get('/getPatientId',userValidate.validateGetPatientId,validate,auth,permission('view:profile'),userController.getPatientId);
 router.get('/getAvailableTimeSlots',userValidate.validateGetAvailableTimeSlots,validate,auth,permission('view:profile'),userController.getAvailableTimeSlots);
+router.post('/updatePatientProfile',userValidate.validateUpdatePatientProfile,validate,auth,permission('view:profile'),userController.updatePatientProfile);
 
 module.exports = router;

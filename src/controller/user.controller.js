@@ -189,6 +189,42 @@ const getAvailableTimeSlots = async (req, res) => {
     }
 }
 
+const updatePatientProfile = async (req, res) => {
+    try {
+        const {
+            patientId,
+            name,
+            gender,
+            dob,
+            address,
+            emergencyContact,
+        } = req.body;
+
+        const patient = await Patient.findOneAndUpdate({ uhid: patientId }, {
+            name,
+            gender,
+            dob,
+            address,
+            emergencyContact,
+        },
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found!" });
+        }
+
+        return res.status(200).json({ message: "Patient profile updated successfully." });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'internal server error during get available time slots' });
+    }
+}
 
 
-module.exports = { getUserProfile, createPatient, getPatients, deletePatient, getPatientProfile, getPatientId, getAvailableTimeSlots }
+
+module.exports = { getUserProfile, createPatient, getPatients, deletePatient, getPatientProfile, getPatientId, getAvailableTimeSlots, updatePatientProfile }
