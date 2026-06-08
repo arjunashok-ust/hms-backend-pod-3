@@ -1,6 +1,7 @@
 const Patient = require("../models/Patient");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
+const Appointment = require("../models/Appointment");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -113,13 +114,17 @@ exports.patientLogin = async (req, res) => {
           process.env.JWT_EXPIRES_IN,
       }
     );
-
+console.log(patient);
     return res.status(200).json({
-      message: "Login Successful",
-      token,
-      user,
-      patient,
-    });
+  message: "Login Successful",
+  token,
+  user: {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  },
+  patient,
+});
   } catch (error) {
     console.error(error);
 
@@ -129,39 +134,81 @@ exports.patientLogin = async (req, res) => {
   }
 };
 
+
+//=============================
 //Update Patient Profile
-exports.updatePatientProfile =
-  async (req, res) => {
-    try {
-      const patient =
-        await Patient.findOne({
-          email: req.user.email,
-        });
+//=============================
+exports.updatePatientProfile = async (req, res) => {
+  try {
 
-      if (!patient) {
-        return res.status(404).json({
-          message: "Patient Not Found",
-        });
-      }
+    console.log("REQ USER:", req.user);
 
-      Object.assign(
-        patient,
-        req.body
-      );
+    const patient = await Patient.findOne({
+      email: req.user.email,
+    });
 
-      await patient.save();
+    console.log("PATIENT:", patient);
 
-      return res.status(200).json({
-        message:
-          "Profile Updated Successfully",
-        patient,
-      });
-    } catch (error) {
-      console.error(error);
-
-      return res.status(500).json({
-        message:
-          "Server Error During Update",
+    if (!patient) {
+      return res.status(404).json({
+        message: "Patient Not Found",
       });
     }
-  };
+
+    Object.assign(patient, req.body);
+
+    await patient.save();
+
+    return res.status(200).json({
+      message: "Profile Updated Successfully",
+      patient,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Server Error During Update",
+    });
+  }
+};
+
+  //Get All Doctors
+  exports.getAllDoctors = async (
+  req,
+  res
+) => {
+  try {
+    const doctorUsers =
+      await User.find({
+        role: "doctor",
+        status: true,
+      });
+
+    const employeeIds =
+      doctorUsers.map(
+        (doctor) =>
+          doctor.employeeId
+      );
+
+    const doctors =
+      await Employee.find({
+        employeeId: {
+          $in: employeeIds,
+        },
+        status: true,
+      });
+
+    return res.status(200).json({
+      success: true,
+      doctors,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message:
+        "Server Error During Get Doctors",
+    });
+  }
+};

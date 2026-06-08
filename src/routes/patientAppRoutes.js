@@ -10,9 +10,10 @@ const {
   patientLogin,
   updatePatientProfile,
   getAllDoctors,
-} = require(
-  "../controllers/patientAppAuthController"
-);
+  
+} = require("../controllers/patientAppAuthController");
+
+const{ createPatientAppointment,getPatientAppointments}=require("../controllers/patientAppAppointmentController");
 
 router.post(
   "/signup",
@@ -33,6 +34,16 @@ router.put(
 router.get(
   "/getAllDoctors",
   getAllDoctors
+);
+router.get(
+  "/getAppointments",
+  auth,
+  getPatientAppointments
+);
+router.post(
+  "/createAppointment",
+  auth,
+  createPatientAppointment
 );
 
 module.exports = router;
