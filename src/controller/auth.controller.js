@@ -7,9 +7,6 @@ const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
 const Appointment = require('../models/appointment.model');
-const medicalRecord = require('../models/medicalRecord.model');
-const Bill = require('../models/bill.model');
-const Payment = require('../models/payment.model');
 
 const Role = require('../models/role.model');
 const Department = require('../models/department.model');
@@ -41,10 +38,13 @@ const signUp = async (req, res) => {
             return res.status(409).json({ message: 'Email is already registered.' });
         }
 
-        if (role.includes('Doctor', 'Nurse', 'Pharmacist', 'Lab_Tech')) {
-            const medicalRegNo = await Employee.findOne({ medicalRegistrationNo: medicalRegistrationNo });
-            if (medicalRegNo) {
-                return res.status(409).json({ message: 'Medical registration no should be unique.' });
+        if (['Doctor', 'Nurse', 'Pharmacist', 'LabTech'].includes(role)) {
+            // if it contains any value
+            if (medicalRegistrationNo) {
+                const medicalRegNo = await Employee.findOne({ medicalRegistrationNo });
+                if (medicalRegNo) {
+                    return res.status(409).json({ message: 'Medical registration no should be unique.' });
+                }
             }
         }
 
@@ -63,7 +63,7 @@ const signUp = async (req, res) => {
         });
 
         const verification_token = crypto.randomBytes(32).toString("hex");
-        const verification_expiry = Date.now() + 60 * 60 * 24;
+        const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
 
         if (!profile) {
             throw new Error('Error sending mail, user is not found');
@@ -118,6 +118,8 @@ const signUp = async (req, res) => {
             `
         });
 
+        console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+
         const passwordHash = await bcrypt.hash(userPassword, 12);
 
         await User.create({
@@ -129,7 +131,7 @@ const signUp = async (req, res) => {
             verification_token: verification_token,
             verification_expiry: verification_expiry,
             isVerified: false,
-            firstLogin: false,
+            firstLogin: status === "Active",
         });
 
         // 201 created
@@ -189,6 +191,7 @@ const login = async (req, res) => {
             token: token,
             role: existingUser.role,
             status: existingUser.status,
+            firstLogin: existingUser.firstLogin,
         });
     }
     catch (err) {
@@ -246,7 +249,7 @@ const verifyMail = async (req, res) => {
         }
 
         user.isVerified = true;
-        user.save();
+        await user.save();
 
         return res.status(200).json({ message: "Email Verified Successfully" });
     } catch (err) {

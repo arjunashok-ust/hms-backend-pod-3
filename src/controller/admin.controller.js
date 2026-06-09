@@ -2,8 +2,9 @@ const User = require('../models/user.model');
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const Appointment = require('../models/appointment.model');
-const jwt = require('jsonwebtoken');
 const Department = require('../models/department.model');
+
+const medicalRoles = new  Set(['Doctor','Nurse']);
 
 const showError = (res, err, message) => {
     console.error(err);
@@ -18,6 +19,7 @@ const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage)
     try {
         const employeeId = req.body.employeeId;
         const user = await findUserByEmployeeId(employeeId);
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -41,17 +43,19 @@ const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage)
 const deleteUserProfile = async (req, res) => {
     try {
         const EmployeeId = req.body.employeeId;
+
         const existingUser = await findUserByEmployeeId(EmployeeId);
         if (!existingUser) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        await existingUser.deleteOne();
-
         const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
         if (!existingEmployee) {
             return res.status(404).json({ message: 'Employee not found.' });
         }
+
+        await existingUser.deleteOne();
+
         return res.status(200).json({
             message: 'Account deleted successfully',
             employeeId: EmployeeId,
@@ -129,8 +133,8 @@ const getUserEmployee = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const employee = await Employee.find();
-        if(employee.length === 0){
-            return res.status(400).json({message:"No users found"})
+        if (employee.length === 0) {
+            return res.status(404).json({ message: "No users found" })
         }
         return res.status(200).json(employee);
     } catch (err) {
@@ -142,7 +146,7 @@ const getUsers = async (req, res) => {
     try {
         const user = await User.find();
         if (user.length === 0) {
-            return res.status(404).json({ message: 'User not found.' });
+            return res.status(404).json({ message: 'No users found' });
         }
         return res.status(200).json(user);
     } catch (err) {
@@ -172,14 +176,23 @@ const updateUserProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found!" });
         }
 
+        if(medicalRoles.has(existingUser?.role)){
+            if(!data.medicalRegistrationNo){
+                return res.status(422).json({message: "This role requires medical registration number"});
+            }
+            if(!data.qualification){
+                return res.status(422).json({message: "This role requires qualification"});
+            }
+        }
+
         await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
 
         return res.status(200).json({
-            message: "Profile updated sucessfully!",
+            message: "Profile updated successfully!",
         });
     }
     catch (err) {
-        showError(res, err, `Server error during update profile`);
+        return showError(res, err, `Server error during update profile`);
     }
 }
 

@@ -5,12 +5,13 @@ const Specialization = require('../models/specialization.model');
 // getRoles
 const getRoles = async (req, res) => {
     try {
-        const roles = await Role.find({ role_name: {$ne: 'Admin'}}, 'role_name');
+        const roles = await Role.find({ role_name: {$nin: ['Admin','Patient']}}, 'role_name');
         return res.status(200).json(
             roles
         )
     } catch (err) {
         console.error(err);
+        return res.status(500).json({message: "Server error during get roles"});
     }
 }
 
@@ -23,6 +24,7 @@ const getDepartments = async (req, res) => {
         )
     } catch (err) {
         console.error(err);
+        return res.status(500).json({message: "Server error during get departments"});
     }
 }
 
@@ -36,6 +38,7 @@ const getSpecializations = async (req, res) => {
         )
     } catch (err) {
         console.error(err);
+        return res.status(500).json({message: "Server error during get specialization"});
     }
 }
 
