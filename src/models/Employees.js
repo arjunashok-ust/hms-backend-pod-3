@@ -65,16 +65,7 @@ const employeeSchema = new mongoose.Schema(
     },
 
     designation: { type: String, required: true },
-    status: {
-      type: String,
-      enum: [
-        "ACTIVE",
-        "INACTIVE",
-        "PASSWORD_CHANGE_PENDING",
-        "ADMIN_APPROVAL_PENDING",
-      ],
-    },
-
+ 
     joiningDate: { type: Date, required: true },
 
     medicalRegistrationNo: {

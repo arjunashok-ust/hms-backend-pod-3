@@ -1,4 +1,5 @@
 const sendMail = require("../utils/sendMail");
+const Users = require("../models/Users");
 
 exports.verifyEmail = async (req, res) => {
   try {
