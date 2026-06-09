@@ -32,7 +32,7 @@ exports.dashboardStats = async (req, res) => {
     });
     // PENDING VERIFICATIONS
     const pendingVerifications = await User.countDocuments({
-      isFirstLogin: true,
+      isVerified: false,
     });
     // TOTAL PATIENTS
     const totalPatients = await Patient.countDocuments();
@@ -40,6 +40,7 @@ exports.dashboardStats = async (req, res) => {
     const totalAppointments = await Appointment.countDocuments();
     // DEPARTMENTS COUNT
     const totalDepartments = await Employee.distinct("department");
+
     return res.status(200).json({
       totalEmployees,
       activeEmployees,
@@ -194,6 +195,8 @@ exports.formSignUp = async (req, res) => {
       specialization,
       medicalRegistrationNo,
       qualification,
+      consultationFee,
+      availabilitySlots,
     } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -212,7 +215,15 @@ exports.formSignUp = async (req, res) => {
           success: false,
           message: "Medical Registration Number is required",
         });
-      }
+    }
+
+        if (!availabilitySlots || availabilitySlots.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Please select at least one availability slot",
+          });
+        }
+      
 
       const existingMedicalRegistrationNo = await Employee.findOne({
         medicalRegistrationNo,
@@ -239,6 +250,8 @@ exports.formSignUp = async (req, res) => {
       medicalRegistrationNo,
       specialization,
       qualification,
+      consultationFee: consultationFee || 0,
+      availabilitySlots: availabilitySlots || [],
     });
     const user = await User.create({
       email,
@@ -283,7 +296,6 @@ exports.signup = async (req, res) => {
       phone,
       department,
       designation,
-      status,
       joiningDate,
       specialization,
       medicalRegistrationNo,

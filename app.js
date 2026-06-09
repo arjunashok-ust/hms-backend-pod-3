@@ -5,7 +5,6 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const connectDB = require("../hms-backend-pod-3/src/config/db");
 
-
 const app = express();
 // Used for secure http
 app.use(helmet());
@@ -16,20 +15,18 @@ app.use(
   }),
 );
 
-
-
 //middleware which logs requests
 app.use(morgan("dev"));
 // Read JSON data sent from frontend/Postman and make it available in req.body.
 app.use(express.json());
 
-
-
 const employeeRoutes = require("./src/routes/employeeRoutes");
-const appointmentRoutes=require("./src/routes/appointmentRoutes");
+const appointmentRoutes = require("./src/routes/appointmentRoutes");
+const patientRoutes = require("./src/routes/patientRoutes");
 
 app.use("/api/emp", employeeRoutes);
-app.use("/api/appointment",appointmentRoutes);
+app.use("/api/appointment", appointmentRoutes);
+app.use("/api/patient", patientRoutes);
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 

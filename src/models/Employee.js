@@ -7,7 +7,7 @@ const employeeSchema = mongoose.Schema({
     employeeId: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
-    department: { type: String, required: true },
+    department: { type: String,enum: ["OPD", "IPD", "Lab", "Pharmacy", "Administration","Front Office"], required: true },
     designation: { type: String, required: true },
     status: { type: Boolean, default: true },
     joiningDate: { type: Date },

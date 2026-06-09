@@ -62,14 +62,7 @@ const signUpValidation = [
   body("designation").notEmpty().withMessage("Designation is required"),
 ];
 
-router.post(
-  "/signup",
-  auth,
-  roleValidation("admin"),
-  adminSignUpValidation,
-  validate,
-  signup,
-);
+router.post("/signup",auth,roleValidation("admin"),adminSignUpValidation,validate,signup);
 router.post("/formSignUp", signUpValidation, validate, formSignUp);
 router.post("/login", login);
 router.get("/currentUser", auth, currentUser);
