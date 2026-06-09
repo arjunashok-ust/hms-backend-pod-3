@@ -17,7 +17,6 @@ router.put("/:id", authenticateToken, patientController.updatePatient);
 router.delete("/:id", authenticateToken, patientController.deletePatient);
 router.post(
   "/mobile-register",
-  authenticateToken,
   patientController.createPatientFromMobile,
 );
 
