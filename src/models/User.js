@@ -8,6 +8,7 @@ const userSchema=new mongoose.Schema(
         status:{type:Boolean,default:true},
         role:{type:String,enum:["owner","admin","doctor","receptionist","cashier","nurse","lab_Tech","pharmacist"],required:true},
         employeeId:{type:String},
+        isVerified: {type: Boolean,default: false},
         isFirstLogin: {type: Boolean,default: true},
         last_login: {type: Date,default: null,},
     },
