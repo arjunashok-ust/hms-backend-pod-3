@@ -20,12 +20,12 @@ exports.signupByUser = async (req, res) => {
       specialization,
       qualification,
       consultationFee,
-      availabilitySlots,
+      weeklySchedule,
     } = req.body;
 
     const existingUser = await Users.findOne({ email });
     if (existingUser)
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(409).json({ message: "Email already exists" });
 
     if (medicalRegistrationNo) {
       const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
@@ -51,7 +51,7 @@ exports.signupByUser = async (req, res) => {
       specialization,
       qualification,
       consultationFee,
-      availabilitySlots,
+      weeklySchedule,
     });
 
     const employeeID = newEmployee.employeeCode;
@@ -65,7 +65,7 @@ exports.signupByUser = async (req, res) => {
       role: role.toUpperCase(),
       status: "ADMIN_APPROVAL_PENDING",
       employeeID,
-      isEmailVerified: false, 
+      isEmailVerified: false,
       verification_token,
       verification_expiry,
     });
@@ -76,7 +76,7 @@ exports.signupByUser = async (req, res) => {
       htmlContent: `
         <h2>Welcome to HMS, ${name}</h2>
         <p>Before the Admin can approve your account, you must verify your email address.</p>
-        <a href="${process.env.APP_URL || "http://localhost:8080"}/auth/verify-email?email=${newUser.email}&token=${verification_token}">
+        <a href="${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}">
           <button style="padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer;">
             Verify Email
           </button>
@@ -85,10 +85,14 @@ exports.signupByUser = async (req, res) => {
       `,
     });
 
+    console.log(
+      `${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
+    );
     res.status(201).json({
       message:
         "Registration successful. Please check your email to verify your account.",
       user: { employeeID },
+      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -110,7 +114,7 @@ exports.signUpByAdmin = async (req, res) => {
       specialization,
       qualification,
       consultationFee,
-      availabilitySlots,
+      weeklySchedule,
     } = req.body;
 
     const existingUser = await Employees.findOne({ email });
@@ -150,7 +154,7 @@ exports.signUpByAdmin = async (req, res) => {
       specialization,
       qualification,
       consultationFee,
-      availabilitySlots,
+      weeklySchedule,
     });
 
     const verification_token = crypto.randomBytes(32).toString("hex");
@@ -184,15 +188,20 @@ exports.signUpByAdmin = async (req, res) => {
       htmlContent: `
         <h1>Hospital Management System</h1>
         <p>Thank you ${profile.name} for registering. Verify your account below:</p>
-        <a href="${process.env.APP_URL || "http://localhost:8080"}/auth/verify-email?email=${user.email}&token=${verification_token}">
+        <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}">
           <button>Verify Email</button>
         </a>
       `,
     });
 
+    console.log("temp password:", passwordHash)
+    console.log(
+      `verify url: ${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
+    );
     return res.status(201).json({
       message: "Account created successfully.",
       email,
+      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
     });
   } catch (err) {
     console.error(err);
@@ -250,6 +259,12 @@ exports.login = async (req, res) => {
     const profile = await Employees.findOne({ email: user.email }).select(
       "-__v",
     );
+
+    if (!profile) {
+      return res.status(404).json({
+        message: "Login successful, but employee profile is missing.",
+      });
+    }
 
     res.status(200).json({
       message: "Login successful",

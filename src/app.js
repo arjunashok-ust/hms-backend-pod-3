@@ -41,6 +41,9 @@ app.use("/api/employees", employeeRoutes);
 const patientRoutes = require("./routes/patientRoutes");
 app.use("/api/patients", patientRoutes);
 
+const verifyEmailRoutes = require("./routes/emailVerificationRoutes");
+app.use("/api/email", verifyEmailRoutes)
+
 try {
   mongoose.connect(process.env.MONGO_URI);
   console.log("MongoDB connected");

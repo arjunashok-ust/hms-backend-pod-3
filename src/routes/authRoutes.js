@@ -15,7 +15,7 @@ const {
   changeFirstPassword,
 } = require("../controllers/authController");
 
-router.post("/signUpByAdmin", signupValidation, validate, signUpByAdmin);
+router.post("/signUpByAdmin", signUpByAdmin);
 router.post("/signupByUser", signupValidation, validate, signupByUser);
 router.post("/login", loginValidation, validate, login);
 router.post("/setpassword", changeFirstPassword);

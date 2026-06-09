@@ -47,7 +47,7 @@ const employeeSchema = new mongoose.Schema(
   {
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true, trim: true },
-    phone: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, unique:true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
     department: {
       type: String,

@@ -15,12 +15,14 @@ exports.getAllPatients = async (req, res) => {
 
 exports.createPatient = async (req, res) => {
   try {
+    const existingPatient = await Patient.findOne({email: req.body.email });
+    if (existingPatient)
+      return res.status(409).json({ message: "Patient with this email already exists" });
+
     const newPatient = new Patient(req.body);
     await newPatient.save();
     res.status(201).json(newPatient);
   } catch (err) {
-    res
-      .status(400)
-      .json({ message: "Error creating patient", error: err.message });
+    res.status(400).json({ message: err.message + "Please try again later" });
   }
 };

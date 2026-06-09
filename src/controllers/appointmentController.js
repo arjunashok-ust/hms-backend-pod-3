@@ -158,7 +158,6 @@ exports.getAvailableSlots = async (req, res) => {
 exports.addAppointment = async (req, res) => {
   try {
     const { patientID, doctorEmployeeID, date, timeSlot, status } = req.body;
-
     const doctor = await Employees.findOne({ employeeCode: doctorEmployeeID });
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
