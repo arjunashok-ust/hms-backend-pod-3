@@ -18,6 +18,11 @@ const {
 router.post("/signUpByAdmin", signUpByAdmin);
 router.post("/signupByUser", signupValidation, validate, signupByUser);
 router.post("/login", loginValidation, validate, login);
-router.post("/setpassword", changeFirstPassword);
+router.post(
+  "/setpassword",
+  changePasswordValidation,
+  validate,
+  changeFirstPassword,
+);
 
 module.exports = router;
