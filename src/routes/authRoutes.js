@@ -6,6 +6,7 @@ const authenticateToken = require("../middlewares/authMiddleware");
 const {
   signupValidation,
   loginValidation,
+  changePasswordValidation
 } = require("../validations/authValidation");
 
 const {

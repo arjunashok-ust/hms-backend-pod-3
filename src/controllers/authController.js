@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
+const Patients = require("../models/Patients");
 const sendMail = require("../utils/sendmail");
 
 exports.signupByUser = async (req, res) => {
@@ -139,7 +140,7 @@ exports.signUpByAdmin = async (req, res) => {
       }
     }
 
-    const tempPassword = crypto.randomBytes(12).toString("hex");
+    const tempPassword = crypto.randomBytes(6).toString("hex");
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
     const profile = await Employees.create({
@@ -194,7 +195,7 @@ exports.signUpByAdmin = async (req, res) => {
       `,
     });
 
-    console.log("temp password:", passwordHash)
+    console.log("temp password:", tempPassword);
     console.log(
       `verify url: ${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
     );
@@ -256,13 +257,16 @@ exports.login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
     );
 
-    const profile = await Employees.findOne({ email: user.email }).select(
-      "-__v",
-    );
+    let profile = null;
+    if (user.role == "PATIENT") {
+      profile = await Patients.findOne({ email: user.email }).select("-__v");
+    } else {
+      profile = await Employees.findOne({ email: user.email }).select("-__v");
+    }
 
     if (!profile) {
       return res.status(404).json({
-        message: "Login successful, but employee profile is missing.",
+        message: `Login successful, but ${user.role} profile is missing.`,
       });
     }
 

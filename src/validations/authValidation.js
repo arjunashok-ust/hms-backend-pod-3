@@ -132,7 +132,7 @@ exports.loginValidation = [
 ];
 
 exports.changePasswordValidation = [
-  body("password")
+  body("newPassword")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .matches(/[A-Z]/)
