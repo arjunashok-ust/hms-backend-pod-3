@@ -4,7 +4,7 @@ const Counter = require('./counter.model');
 const employeeSchema = new mongoose.Schema({
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, lowercase: true, trim: true },
+    email: { type: String, required: true, lowercase: true, trim: true,unique: true },
     department: { type: String, enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Admin','ICU'], required: true },
     designation: { type: String, required: true },
     joiningDate: { type: Date, required: true },

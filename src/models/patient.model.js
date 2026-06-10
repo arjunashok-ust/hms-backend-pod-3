@@ -5,7 +5,7 @@ const patientSchema = new mongoose.Schema({
     uhid: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, default: null},
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, lowercase: true, trim: true,unique: true },
     gender: { type: String, enum: ['Male', 'Female'], required: true },
     dob: { type: Date, required: true },
     address: { type: String, required: true },

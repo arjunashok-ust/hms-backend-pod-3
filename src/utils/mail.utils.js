@@ -9,7 +9,7 @@ const apiInstance = new Brevo.TransactionalEmailsApi();
 
 const sendMail = async ({to,subject,html}) => {
     try{
-        const response = await apiInstance.sendTransacEmail({
+        await apiInstance.sendTransacEmail({
             sender: {
                 email: process.env.EMAIL_USER,
                 name: "HMS System",

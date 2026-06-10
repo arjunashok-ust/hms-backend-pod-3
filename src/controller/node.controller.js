@@ -5,7 +5,6 @@ const Role = require('../models/role.model');
 const getNodes = async (req, res) => {
     try {
         const role = req.query.role;
-        console.log(role);
 
         const isRole = await Role.findOne({ role_name: role });
         if (!isRole) {
