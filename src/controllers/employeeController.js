@@ -272,6 +272,9 @@ exports.formSignUp = async (req, res) => {
     } catch (mailError) {
       console.error("Mail Service Error:", mailError.message);
     }
+
+    console.log(`verify url: http://localhost:5000/api/emp/verify/${empId}`);
+    
     return res.status(201).json({
       message: "Registered but Admin approval pending",
       employee: profile,
