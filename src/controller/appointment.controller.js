@@ -49,6 +49,7 @@ const createAppointment = async (req, res) => {
             patientId: patientId,
             date: date,
             timeSlot: timeSlot,
+            status: { $ne: 'Cancelled' }
         })
 
         if (existingPatientAppointment) {

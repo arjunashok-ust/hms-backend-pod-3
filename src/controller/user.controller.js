@@ -57,6 +57,14 @@ const createPatient = async (req, res) => {
             return res.status(401).json({ message: 'Email is already registered.' });
         }
 
+        const existingUser = await User.findOne({
+            email
+        });
+
+        if (!existingUser) {
+            return res.status(401).json({ message: 'Email is already registered.' });
+        }
+
         await Patient.create({
             name: name,
             phone: phone,
@@ -169,15 +177,26 @@ const getAvailableTimeSlots = async (req, res) => {
         const allSlots = doctor.availabilitySlots;
         if (!allSlots) return res.status(404).json({ message: 'No slots found for doctor' });
 
-        const bookedSlots = appointments.filter(
-            (appointment) => {
-                const apt_date = new Date(appointment.date).toDateString();
-                return (appointment.doctorEmployeeId === doctor.employeeCode && date === apt_date && appointment.status != "Cancelled")
-            }
-        ).map((appointment) => appointment.timeSlot);
+        const bookedSlots = new Set(
+            appointments
+                .filter((appointment) => {
+                    const apt_date = new Date(appointment.date).toDateString();
+                    return (
+                        appointment.doctorEmployeeId === doctor.employeeCode &&
+                        date === apt_date &&
+                        appointment.status !== "Cancelled" && appointment.status !== "Completed"
+                    );
+                })
+                .map((appointment) => appointment.timeSlot)
+        );
 
-        const slots = allSlots.filter((slot) => !bookedSlots.includes(slot));
-        if (!slots) return res.status(409).json({ message: 'No available slots found for doctor' });
+        const slots = allSlots.filter((slot) => !bookedSlots.has(slot));
+
+        if (slots.length === 0) {
+            return res.status(409).json({
+                message: "No available slots found for doctor",
+            });
+        }
 
         return res.status(200).json({
             message: "slots fetched sucessfully",

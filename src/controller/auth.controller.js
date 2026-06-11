@@ -170,7 +170,7 @@ const login = async (req, res) => {
             return res.status(400).json({ message: 'User Email Is Not Verified.' });
         }
 
-        if (existingUser.status !== 'Active') {
+        if (existingUser.status != 'Active') {
             return res.status(400).json({ message: 'Your Account Is Not Activated' });
         }
 

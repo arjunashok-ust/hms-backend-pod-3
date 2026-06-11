@@ -14,7 +14,6 @@ const validate = async (req, res, next) => {
             message: mergedMessage
         });
     }
-
     next();
 }
 
