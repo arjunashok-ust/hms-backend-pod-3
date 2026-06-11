@@ -77,7 +77,7 @@ exports.signupByUser = async (req, res) => {
       htmlContent: `
         <h2>Welcome to HMS, ${name}</h2>
         <p>Before the Admin can approve your account, you must verify your email address.</p>
-        <a href="${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}">
+        <a href="${process.env.APP_URL}/auth/verify-email?email=${newUser.email}&token=${verification_token}">
           <button style="padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer;">
             Verify Email
           </button>
@@ -87,13 +87,13 @@ exports.signupByUser = async (req, res) => {
     });
 
     console.log(
-      `${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
+      `${process.env.APP_URL}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
     );
     res.status(201).json({
       message:
         "Registration successful. Please check your email to verify your account.",
       user: { employeeID },
-      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
+      verifyEmailUrl: `${process.env.APP_URL}/auth/verify-email?email=${newUser.email}&token=${verification_token}`,
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -189,7 +189,7 @@ exports.signUpByAdmin = async (req, res) => {
       htmlContent: `
         <h1>Hospital Management System</h1>
         <p>Thank you ${profile.name} for registering. Verify your account below:</p>
-        <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}">
+        <a href="${process.env.APP_URL}/api/email/verify-email?email=${user.email}&token=${verification_token}">
           <button>Verify Email</button>
         </a>
       `,
@@ -197,12 +197,12 @@ exports.signUpByAdmin = async (req, res) => {
 
     console.log("temp password:", tempPassword);
     console.log(
-      `verify url: ${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
+      `verify url: ${process.env.APP_URL}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
     );
     return res.status(201).json({
       message: "Account created successfully.",
       email,
-      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
+      verifyEmailUrl: `${process.env.APP_URL}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
     });
   } catch (err) {
     console.error(err);
@@ -257,6 +257,7 @@ exports.login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
     );
 
+    let profile = null;
     if (user.role == "PATIENT") {
       profile = await Patients.findOne({ email: user.email }).select("-__v");
     } else {

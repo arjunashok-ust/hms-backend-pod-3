@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const medicalRoles = new Set(["DOCTOR", "NURSE", "PHARMACIST", "LAB_TECH"]);
 
 exports.signupValidation = [
   body("email")
@@ -40,36 +41,19 @@ exports.signupValidation = [
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .customSanitizer((value) => value.replace(/\s+/g, ""))
     .isMobilePhone("en-IN")
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
     .withMessage("Enter a valid phone number"),
 
-  body("department").trim().notEmpty().withMessage("Department is required"),
+  body("department")
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("Department is required")
+    .isIn(["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"])
+    .withMessage("Provide valid department"),
 
   body("designation").trim().notEmpty().withMessage("Designation is required"),
-
-  body("qualification")
-    .trim()
-    .notEmpty()
-    .withMessage("qualification is required"),
-
-  body("specialization")
-    .if(body("role").toUpperCase().equals("DOCTOR"))
-    .trim()
-    .notEmpty()
-    .withMessage("Specialization is required for doctors"),
-
-  body("consultationFee")
-    .if(body("role").toUpperCase().equals("DOCTOR"))
-    .notEmpty()
-    .withMessage("Consultation fees is required for doctors")
-    .isNumeric()
-    .withMessage("Consultation fees must be a number"),
-
-  body("availabilitySlots")
-    .if(body("role").toUpperCase().equals("DOCTOR"))
-    .isArray({ min: 1 })
-    .withMessage("Availability slots are required for doctors"),
 
   body("joiningDate")
     .notEmpty()
@@ -77,6 +61,64 @@ exports.signupValidation = [
     .isISO8601()
     .withMessage("Joining date must be a valid date (YYYY-MM-DD)")
     .toDate(),
+
+  body("consultationFee").custom((value, { req }) => {
+    if (req.body.role === "DOCTOR") {
+      if (value === undefined || value === null || value === "") {
+        throw new Error("Consultation fee is required for doctors.");
+      }
+      if (Number.isNaN(Number(value)) || Number(value) < 0) {
+        throw new Error("Consultation fee must be a valid positive number.");
+      }
+    } else if (value !== undefined && value !== "") {
+      throw new Error("Consultation fee must only be provided by doctors.");
+    }
+    return true;
+  }),
+
+  body("weeklySchedule").custom((value, { req }) => {
+    if (req.body.role === "DOCTOR") {
+      if (!Array.isArray(value) || value.length === 0) {
+        throw new Error("Weekly schedule is required for doctors.");
+      }
+    } else if (
+      value !== undefined &&
+      (Array.isArray(value) ? value.length > 0 : value !== "")
+    ) {
+      throw new Error("Weekly schedule must only be provided by doctors.");
+    }
+    return true;
+  }),
+
+  body("medicalRegistrationNo").custom((value, { req }) => {
+    const isMedicalRole = medicalRoles.has(req.body.role);
+    if (isMedicalRole && !value) {
+      throw new Error(
+        `Medical registration number is required for role: ${req.body.role}.`,
+      );
+    }
+    if (!isMedicalRole && value) {
+      throw new Error(
+        "Medical registration number must not be provided for non-medical roles.",
+      );
+    }
+    return true;
+  }),
+
+  body("specialization").custom((value, { req }) => {
+    const isMedicalRole = medicalRoles.has(req.body.role);
+    if (isMedicalRole && !value) {
+      throw new Error(`Specialization is required for role: ${req.body.role}.`);
+    }
+    if (!isMedicalRole && value) {
+      throw new Error(
+        "Specialization must not be provided for non-medical roles.",
+      );
+    }
+    return true;
+  }),
+
+  body("qualification").notEmpty().withMessage("Qualification is required"),
 ];
 
 exports.loginValidation = [
@@ -90,7 +132,7 @@ exports.loginValidation = [
 ];
 
 exports.changePasswordValidation = [
-  body("password")
+  body("newPassword")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .matches(/[A-Z]/)
@@ -102,7 +144,6 @@ exports.changePasswordValidation = [
     .matches(/[\W_]/)
     .withMessage("Password must contain at least one special character"),
 ];
-
 
 exports.patientSignupValidation = [
   body("email")

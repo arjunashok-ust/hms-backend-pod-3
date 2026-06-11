@@ -161,6 +161,18 @@ exports.addAppointment = async (req, res) => {
     const doctor = await Employees.findOne({ employeeCode: doctorEmployeeID });
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
+    const hasAppointment = await Appointments.findOne({
+      date: date,
+      timeSlot: timeSlot,
+    });
+    if (hasAppointment)
+      return res
+        .status(409)
+        .json({
+          message:
+            "You already have an appointment with another doctor at this time",
+        });
+
     const queryDate = new Date(date);
     const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
