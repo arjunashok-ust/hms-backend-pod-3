@@ -21,8 +21,8 @@ const appointmentSchema = mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["BOOKED", "CANCELLED", "COMPLETED"],
-    default: "BOOKED",
+    enum: ["PENDING", "BOOKED", "CANCELLED", "COMPLETED"],
+    default: "PENDING",
   },
   createdByEmployeeId: {
     type: String,
@@ -39,15 +39,11 @@ appointmentSchema.pre("save", async function () {
     const counter = await Counter.findOneAndUpdate(
       { name: "appointment" },
       { $inc: { seq: 1 } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
-    this.appointmentId =
-      `APPT-${String(counter.seq).padStart(6, "0")}`;
+    this.appointmentId = `APPT-${String(counter.seq).padStart(6, "0")}`;
   }
 });
 
-module.exports = mongoose.model(
-  "Appointment",
-  appointmentSchema
-);
+module.exports = mongoose.model("Appointment", appointmentSchema);
