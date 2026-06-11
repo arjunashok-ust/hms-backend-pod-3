@@ -280,6 +280,13 @@ const patientSignUp = async (req, res) => {
             return res.status(409).json({ message: 'Email is already registered.' });
         }
 
+        const existingPhone = await Patient.findOne({ phone });
+
+        if(existingPhone) {
+            // 409 conflict
+            return res.status(409).json({ message: 'Phone number is already registered.' });
+        }
+
         const profile = await Patient.create({
             name,
             email,
@@ -339,6 +346,8 @@ const patientSignUp = async (req, res) => {
             </a>
             `
         });
+
+        console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
         // 201 created
         return res.status(201).json({

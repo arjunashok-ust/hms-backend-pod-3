@@ -8,7 +8,7 @@ const appointmentSchema = new mongoose.Schema({
     doctorEmployeeId: { type: String, ref: 'Employees', required: true },
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true },
-    status: { type: String, enum: ['Booked', 'Cancelled', 'Completed'], required: true },
+    status: { type: String, enum: ['Booked', 'Cancelled', 'Completed','Pending'], required: true },
     createdByEmployeeId: { type: String, ref: 'Employees', required: true },
 });
 

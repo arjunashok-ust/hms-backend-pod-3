@@ -1,4 +1,5 @@
 const { body, query } = require('express-validator');
+const { validate } = require('../models/counter.model');
 
 
 const validateCreateAppointment = [
@@ -34,4 +35,11 @@ const validateEditAppointmentStatus = [
     body("status").notEmpty().withMessage("Status is required"),
 ]
 
-module.exports = { validateCreateAppointment, validateDeleteAppointment, validateGetAppointmentByPatientId, validateGetDoctorByEmployeeId, validateEditAppointment, validateEditAppointmentStatus }
+module.exports = { 
+    validateCreateAppointment, 
+    validateDeleteAppointment, 
+    validateGetAppointmentByPatientId, 
+    validateGetDoctorByEmployeeId, 
+    validateEditAppointment, 
+    validateEditAppointmentStatus, 
+}

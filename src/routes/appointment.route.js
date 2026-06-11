@@ -17,5 +17,4 @@ router.get('/getDoctorByEmployeeId', appointmentValidate.validateGetDoctorByEmpl
 router.post('/editAppointment', appointmentValidate.validateEditAppointment, validate, auth, permission('view:appointment'), appointmentController.editAppointment);
 router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('view:appointment'), appointmentController.editAppointmentStatus);
 
-
 module.exports = router;

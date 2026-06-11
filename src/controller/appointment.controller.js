@@ -9,6 +9,7 @@ const createAppointment = async (req, res) => {
             patientId,
             doctorEmployeeId,
             date,
+            status,
             timeSlot,
             createdByEmployeeId
         } = req.body;
@@ -74,7 +75,7 @@ const createAppointment = async (req, res) => {
             doctorEmployeeId: doctorEmployeeId,
             date: new Date(date).toISOString(),
             timeSlot: timeSlot,
-            status: "Booked",
+            status: status,
             createdByEmployeeId: createdByEmployeeId,
         });
 
@@ -210,6 +211,7 @@ const editAppointment = async (req, res) => {
             doctorEmployeeId,
             date,
             timeSlot,
+            status,
         } = req.body;
 
         const existingAppointment = await Appointment.findOne({
@@ -230,6 +232,7 @@ const editAppointment = async (req, res) => {
             doctorEmployeeId,
             date,
             timeSlot,
+            status,
         }, {
             new: true,
             runValidators: true,
@@ -272,5 +275,15 @@ const editAppointmentStatus = async (req, res) => {
     }
 }
 
-module.exports = { createAppointment, getAllAppointments, getDoctors, getAppointmentUiData, deleteAppointment, getAppointmentsByPatientId, getDoctorByEmployeeId, editAppointment, editAppointmentStatus }
+module.exports = { 
+    createAppointment, 
+    getAllAppointments, 
+    getDoctors, 
+    getAppointmentUiData, 
+    deleteAppointment, 
+    getAppointmentsByPatientId, 
+    getDoctorByEmployeeId, 
+    editAppointment, 
+    editAppointmentStatus 
+}
 
