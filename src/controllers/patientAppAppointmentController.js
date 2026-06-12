@@ -64,6 +64,7 @@ exports.createPatientAppointment = async (req, res) => {
     });
   }
 };
+//Get Appointments
 
 exports.getPatientAppointments = async (req, res) => {
   try {
@@ -154,6 +155,8 @@ exports.cancelAppointment = async (req, res) => {
       message: "Appointment Cancelled Successfully",
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
       message: "Server Error",
     });
@@ -181,6 +184,7 @@ exports.getAvailableSlots = async (req, res) => {
     const selectedDate = new Date(date);
 
     const nextDate = new Date(date);
+
     nextDate.setDate(nextDate.getDate() + 1);
 
     const bookedAppointments = await Appointment.find({
@@ -194,8 +198,8 @@ exports.getAvailableSlots = async (req, res) => {
       },
     });
 
-    const bookedSlots = bookedAppointments.map(
-      (appointment) => appointment.timeSlot,
+    const bookedSlots = new Set(
+      bookedAppointments.map((appointment) => appointment.timeSlot),
     );
 
     const availableSlots = doctor.availabilitySlots.filter(

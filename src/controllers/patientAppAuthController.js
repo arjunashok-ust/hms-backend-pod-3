@@ -22,8 +22,7 @@ exports.patientSignup = async (req, res) => {
       emergencyContact,
     } = req.body;
 
-    const existingUser =
-      await User.findOne({ email });
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(409).json({
@@ -31,22 +30,20 @@ exports.patientSignup = async (req, res) => {
       });
     }
 
-    const password_hash =
-      await bcrypt.hash(password, 12);
+    const password_hash = await bcrypt.hash(password, 12);
 
-    const patient =
-      await Patient.create({
-        email,
-        name,
-        phone,
-        gender,
-        date_of_birth,
-        bloodGroup,
-        allergies,
-        address,
-        emergencyContact,
-        status: true,
-      });
+    const patient = await Patient.create({
+      email,
+      name,
+      phone,
+      gender,
+      date_of_birth,
+      bloodGroup,
+      allergies,
+      address,
+      emergencyContact,
+      status: true,
+    });
 
     await User.create({
       email,
@@ -69,17 +66,18 @@ exports.patientSignup = async (req, res) => {
   }
 };
 
+//=========================
 //Patient Login
+//=========================
+
 exports.patientLogin = async (req, res) => {
   try {
-    const { email, password } =
-      req.body;
+    const { email, password } = req.body;
 
-    const user =
-      await User.findOne({
-        email,
-        role: "patient",
-      });
+    const user = await User.findOne({
+      email,
+      role: "patient",
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -87,20 +85,17 @@ exports.patientLogin = async (req, res) => {
       });
     }
 
-    const isPasswordValid =
-      await bcrypt.compare(
-        password,
-        user.password_hash
-      );
+    const isPasswordValid = Boolean(
+      await bcrypt.compare(password, user.password_hash),
+    );
 
-    if (!isPasswordValid) {
+    if (isPasswordValid === false) {
       return res.status(401).json({
         message: "Invalid Credentials",
       });
     }
 
-    const patient =
-      await Patient.findOne({ email });
+    const patient = await Patient.findOne({ email });
 
     const token = jwt.sign(
       {
@@ -110,21 +105,21 @@ exports.patientLogin = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn:
-          process.env.JWT_EXPIRES_IN,
-      }
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      },
     );
-console.log(patient);
+
+    console.log(patient);
     return res.status(200).json({
-  message: "Login Successful",
-  token,
-  user: {
-    id: user._id,
-    email: user.email,
-    role: user.role,
-  },
-  patient,
-});
+      message: "Login Successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      patient,
+    });
   } catch (error) {
     console.error(error);
 
@@ -134,13 +129,11 @@ console.log(patient);
   }
 };
 
-
 //=============================
 //Update Patient Profile
 //=============================
 exports.updatePatientProfile = async (req, res) => {
   try {
-
     console.log("REQ USER:", req.user);
 
     const patient = await Patient.findOne({
@@ -163,7 +156,6 @@ exports.updatePatientProfile = async (req, res) => {
       message: "Profile Updated Successfully",
       patient,
     });
-
   } catch (error) {
     console.error(error);
 
@@ -173,31 +165,22 @@ exports.updatePatientProfile = async (req, res) => {
   }
 };
 
-  //Get All Doctors
-  exports.getAllDoctors = async (
-  req,
-  res
-) => {
+//Get All Doctors
+exports.getAllDoctors = async (req, res) => {
   try {
-    const doctorUsers =
-      await User.find({
-        role: "doctor",
-        status: true,
-      });
+    const doctorUsers = await User.find({
+      role: "doctor",
+      status: true,
+    });
 
-    const employeeIds =
-      doctorUsers.map(
-        (doctor) =>
-          doctor.employeeId
-      );
+    const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
 
-    const doctors =
-      await Employee.find({
-        employeeId: {
-          $in: employeeIds,
-        },
-        status: true,
-      });
+    const doctors = await Employee.find({
+      employeeId: {
+        $in: employeeIds,
+      },
+      status: true,
+    });
 
     return res.status(200).json({
       success: true,
@@ -207,8 +190,7 @@ exports.updatePatientProfile = async (req, res) => {
     console.error(error);
 
     return res.status(500).json({
-      message:
-        "Server Error During Get Doctors",
+      message: "Server Error During Get Doctors",
     });
   }
 };

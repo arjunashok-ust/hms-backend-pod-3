@@ -51,8 +51,8 @@ const patientSchema = mongoose.Schema({
 
   emergencyContact: {
     type: String,
-    unique: true,
     trim: true,
+    default: null,
   },
 
   status: {
@@ -67,12 +67,13 @@ patientSchema.pre("save", async function () {
       const counter = await Counter.findOneAndUpdate(
         { name: "patient" },
         { $inc: { seq: 1 } },
-        { new: true, upsert: true }
+        { new: true, upsert: true },
       );
 
       this.UHID = `UHID-${String(counter.seq).padStart(6, "0")}`;
     }
   } catch (err) {
+    console.error("Error generating UHID:", err);
     throw err;
   }
 });
