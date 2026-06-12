@@ -14,6 +14,9 @@ const createAppointment = async (req, res) => {
             createdByEmployeeId
         } = req.body;
 
+        const formattedDate = new Date(date);
+        formattedDate.setHours(0,0,0,0);
+
         const patient = await Patient.findOne({ uhid: patientId });
 
         if (!patient) {
@@ -34,7 +37,7 @@ const createAppointment = async (req, res) => {
 
         const existingAppointment = await Appointment.findOne({
             doctorEmployeeId,
-            date,
+            date: formattedDate,
             timeSlot,
             status: { $ne: 'Cancelled' }
         });
@@ -45,9 +48,10 @@ const createAppointment = async (req, res) => {
             });
         }
 
+
         const existingPatientAppointment = await Appointment.findOne({
             patientId: patientId,
-            date: date,
+            date: formattedDate,
             timeSlot: timeSlot,
             status: { $ne: 'Cancelled' }
         })
@@ -58,23 +62,10 @@ const createAppointment = async (req, res) => {
             });
         }
 
-        const existingAppointmentByPatient = await Appointment.findOne({
-            patientId,
-            date,
-            timeSlot,
-            status: { $ne: 'Cancelled' }
-        });
-
-        if (existingAppointmentByPatient) {
-            return res.status(400).json({
-                message: "Patient already has another appointment with a different doctor at the same time."
-            });
-        }
-
         const appointment = await Appointment.create({
             patientId: patientId,
             doctorEmployeeId: doctorEmployeeId,
-            date: new Date(date).toISOString(),
+            date: formattedDate,
             timeSlot: timeSlot,
             status: status,
             createdByEmployeeId: createdByEmployeeId,
