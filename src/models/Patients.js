@@ -18,6 +18,16 @@ const patientSchema = new mongoose.Schema(
     },
     gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
     dob: { type: Date, required: true },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      default: null,
+    },
+    allergies: [
+      {
+        type: String
+      }
+    ],
     emergencyContact: { type: String },
     status: { type: String, default: true },
     address: {

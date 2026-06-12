@@ -29,4 +29,6 @@ router.delete(
   appointmentController.deleteAppointment,
 );
 
+router.get("/my-appointments", authenticateToken, appointmentController.getPatientAppointments);
+
 module.exports = router;

@@ -18,8 +18,8 @@ const appointmentsSchema = new mongoose.Schema(
     timeSlot: { type: String, required: true },
     status: {
       type: String,
-      enum: ["Scheduled", "Completed", "Cancelled"],
-      default: "Scheduled",
+      enum: ["Scheduled", "Completed", "Cancelled", "Pending"],
+      default: "Pending",
     },
     createdByEmployeeID: { type: String, ref: "Employees" },
   },

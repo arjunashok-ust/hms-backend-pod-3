@@ -40,7 +40,7 @@ exports.signupValidation = [
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .customSanitizer((value) => value.replace(/\s+/g, ""))
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
     .isMobilePhone("en-IN")
     .withMessage("Enter a valid phone number"),
 
@@ -66,7 +66,7 @@ exports.signupValidation = [
     .isNumeric()
     .withMessage("Consultation fees must be a number"),
 
-  body("availabilitySlots")
+  body("weeklySchedule")
     .if(body("role").toUpperCase().equals("DOCTOR"))
     .isArray({ min: 1 })
     .withMessage("Availability slots are required for doctors"),
@@ -127,7 +127,7 @@ exports.patientSignupValidation = [
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
-    .customSanitizer((value) => value.replace(/\s+/g, ""))
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
     .isMobilePhone("en-IN")
     .withMessage("Enter a valid phone number"),
 
