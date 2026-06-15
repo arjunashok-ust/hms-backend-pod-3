@@ -108,6 +108,14 @@ const deletePatient = async (req, res) => {
 
         await patient.deleteOne();
 
+        const userPatient = await User.findOne({patientId: patientId});
+
+        if (!userPatient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+
+        await userPatient.deleteOne();
+
         return res.status(200).json({ message: 'Patient Deleted Sucessfully' });
     }
     catch (err) {

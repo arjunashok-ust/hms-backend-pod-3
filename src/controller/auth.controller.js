@@ -152,6 +152,7 @@ const login = async (req, res) => {
         const {
             email,
             password,
+            isClientApp,
         } = req.body;
 
         const existingUser = await User.findOne({ email });
@@ -163,7 +164,7 @@ const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, existingUser.passwordHash);
 
         if (!isMatch) {
-            return res.status(401).json({ message: 'invalid credentials.' });
+            return res.status(401).json({ message: 'Invalid Credentials.' });
         }
 
         if (!existingUser.isVerified) {
@@ -172,6 +173,12 @@ const login = async (req, res) => {
 
         if (existingUser.status != 'Active') {
             return res.status(400).json({ message: 'Your Account Is Not Activated' });
+        }
+
+        if (isClientApp){
+            if(existingUser.role != 'Patient'){
+                return res.status(403).json({ message: 'Only patients are allowed to sign in using the mobile app.'});
+            }
         }
 
         existingUser.lastLoginAt = Date.now();
