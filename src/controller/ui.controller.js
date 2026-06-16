@@ -2,44 +2,32 @@ const Role = require('../models/role.model');
 const Department = require('../models/department.model');
 const Specialization = require('../models/specialization.model');
 
+const ERR = require('../utils/errors.utils');
+const asyncHandler = require('../utils/asyncHandler.utils');
+
 // getRoles
-const getRoles = async (req, res) => {
-    try {
-        const roles = await Role.find({ role_name: {$nin: ['Admin','Patient']}}, 'role_name');
-        return res.status(200).json(
-            roles
-        )
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({message: "Server error during get roles"});
-    }
-}
+const getRoles = asyncHandler(async (req, res) => {
+    const roles = await Role.find({ role_name: { $nin: ['Admin', 'Patient'] } }, 'role_name');
+    return res.status(200).json(
+        roles
+    );
+});
 
 // getDepartments
-const getDepartments = async (req, res) => {
-    try {
-        const departments = await Department.find({}, 'department_name');
-        return res.status(200).json(
-            departments
-        )
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({message: "Server error during get departments"});
-    }
-}
+const getDepartments = asyncHandler(async (req, res) => {
+    const departments = await Department.find({}, 'department_name');
+    return res.status(200).json(
+        departments
+    );
+});
 
 
 // getSpecializations
-const getSpecializations = async (req, res) => {
-    try {
-        const specializations = await Specialization.find({}, 'specialization_name');
+const getSpecializations = asyncHandler(async (req, res) => {
+        const specializations = await Specialization.find();
         return res.status(200).json(
             specializations
-        )
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({message: "Server error during get specialization"});
-    }
-}
+        );
+});
 
 module.exports = { getRoles, getDepartments, getSpecializations }

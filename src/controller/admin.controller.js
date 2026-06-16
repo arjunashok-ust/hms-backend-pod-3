@@ -4,197 +4,172 @@ const Patient = require('../models/patient.model');
 const Appointment = require('../models/appointment.model');
 const Department = require('../models/department.model');
 
-const medicalRoles = new  Set(['Doctor','Nurse']);
+const ERR = require('../utils/errors.utils');
+const asyncHandler = require('../utils/asyncHandler.utils');
 
-const showError = (res, err, message) => {
-    console.error(err);
-    return res.status(500).json({ message: message });
-}
+const medicalRoles = new Set(['Doctor', 'Nurse']);
 
-const findUserByEmployeeId = async (employeeId) => {
+const findUserByEmployeeId = asyncHandler(async (employeeId) => {
     return await User.findOne({ employeeId });
-}
+});
 
-const changeUserStatus = async (req, res, status, alreadyMessage, sucessMessage) => {
-    try {
-        const employeeId = req.body.employeeId;
-        const user = await findUserByEmployeeId(employeeId);
+const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) => {
+    const employeeId = req.body.employeeId;
+    const user = await findUserByEmployeeId(employeeId);
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+        throw ERR.userNotFound();
+    }
+
+    if (user.status === "Active") {
+        if (user.status === status) {
+            throw ERR.alreadyActivated();
         }
-
-        if (user.status == status) {
-            return res.status(400).json({ message: alreadyMessage });
+    }
+    else {
+        if (user.status === status) {
+            throw ERR.alreadyNotActivated();
         }
-
-        user.status = status;
-        await user.save();
-
-        return res.status(200).json({
-            message: sucessMessage,
-            employeeId: user.employeeId,
-        });
-    } catch (err) {
-        return showError(res, err, 'Server Error During Approve User');
     }
-}
 
-const deleteUserProfile = async (req, res) => {
-    try {
-        const EmployeeId = req.body.employeeId;
+    user.status = status;
+    await user.save();
 
-        const existingUser = await findUserByEmployeeId(EmployeeId);
-        if (!existingUser) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
+    return res.status(200).json({
+        message: sucessMessage,
+        employeeId: user.employeeId,
+    });
+});
 
-        const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
-        if (!existingEmployee) {
-            return res.status(404).json({ message: 'Employee not found.' });
-        }
+const deleteUserProfile = asyncHandler(async (req, res) => {
+    const EmployeeId = req.body.employeeId;
 
-        await existingUser.deleteOne();
-
-        return res.status(200).json({
-            message: 'Account deleted successfully',
-            employeeId: EmployeeId,
-        });
-    } catch (err) {
-        return showError(res, err, "Server error during delete user profile.");
+    const existingUser = await findUserByEmployeeId(EmployeeId);
+    if (!existingUser) {
+        throw ERR.userNotFound();
     }
-}
 
-const getDashboardData = async (req, res) => {
-    try {
-        const [employeeCount, activeCount, pendingApprovalCount, pendingVerifyCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
-            Employee.countDocuments(),
-            Employee.countDocuments({ status: 'Active' }),
-            User.countDocuments({ status: 'Pending' }),
-            User.countDocuments({ isVerified: false }),
-            Patient.countDocuments(),
-            Appointment.countDocuments(),
-            Department.countDocuments(),
-        ]);
-
-        return res.status(200).json({
-            message: 'Dashboard Data Fetched',
-            employeeCount: employeeCount,
-            activeCount: activeCount,
-            pendingApprovalCount: pendingApprovalCount,
-            pendingVerifyCount: pendingVerifyCount,
-            patientCount: patientCount,
-            departmentCount: departmentCount,
-            appointmentCount: appointmentCount,
-        });
+    const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
+    if (!existingEmployee) {
+        throw ERR.employeeNotFound();
     }
-    catch (err) {
-        return showError(res, err, 'Server Error During Get Dashboard Data');
+
+    await existingUser.deleteOne();
+
+    return res.status(200).json({
+        message: 'Account deleted successfully',
+        employeeId: EmployeeId,
+    });
+});
+
+const getDashboardData = asyncHandler(async (req, res) => {
+    const [employeeCount, activeCount, pendingApprovalCount, pendingVerifyCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
+        Employee.countDocuments(),
+        Employee.countDocuments({ status: 'Active' }),
+        User.countDocuments({ status: 'Pending' }),
+        User.countDocuments({ isVerified: false }),
+        Patient.countDocuments(),
+        Appointment.countDocuments(),
+        Department.countDocuments(),
+    ]);
+
+    return res.status(200).json({
+        message: 'Dashboard Data Fetched',
+        employeeCount: employeeCount,
+        activeCount: activeCount,
+        pendingApprovalCount: pendingApprovalCount,
+        pendingVerifyCount: pendingVerifyCount,
+        patientCount: patientCount,
+        departmentCount: departmentCount,
+        appointmentCount: appointmentCount,
+    });
+});
+
+const getUserEmployee = asyncHandler(async (req, res) => {
+    const employees = await Employee.find();
+    const users = await User.find();
+
+    const employeeMap = new Map(
+        employees.map(emp => [emp.employeeCode, emp])
+    );
+
+    const combined = users.map((u) => {
+        const emp = employeeMap.get(u.employeeId);
+
+        return {
+            name: emp?.name || null,
+            email: u.email,
+            status: u.status,
+            role: u.role,
+            employeeId: u.employeeId,
+            isVerified: u.isVerified,
+            firstLogin: u.firstLogin,
+            department: emp?.department || null,
+            designation: emp?.designation || null,
+            joiningDate: emp?.joiningDate || null,
+            medicalRegistrationNo: emp?.medicalRegistrationNo || null,
+            specialization: emp?.specialization || null,
+            qualification: emp?.qualification || null,
+            consultationFee: emp?.consultationFee || null,
+            availabilitySlots: emp?.availabilitySlots || [],
+        };
+    });
+
+    return res.status(200).json(combined);
+});
+
+const getAllUsers = asyncHandler(async (req, res) => {
+    const employee = await Employee.find();
+    if (employee.length === 0) {
+        throw ERR.noUsersFound();
     }
-}
+    return res.status(200).json(employee);
+});
 
-const getUserEmployee = async (req, res) => {
-    try {
-        const employees = await Employee.find();
-        const users = await User.find();
-
-        const employeeMap = new Map(
-            employees.map(emp => [emp.employeeCode, emp])
-        );
-
-        const combined = users.map((u) => {
-            const emp = employeeMap.get(u.employeeId);
-
-            return {
-                name: emp?.name || null,
-                email: u.email,
-                status: u.status,
-                role: u.role,
-                employeeId: u.employeeId,
-                isVerified: u.isVerified,
-                firstLogin: u.firstLogin,
-                department: emp?.department || null,
-                designation: emp?.designation || null,
-                joiningDate: emp?.joiningDate || null,
-                medicalRegistrationNo: emp?.medicalRegistrationNo || null,
-                specialization: emp?.specialization || null,
-                qualification: emp?.qualification || null,
-                consultationFee: emp?.consultationFee || null,
-                availabilitySlots: emp?.availabilitySlots || [],
-            };
-        });
-
-        return res.status(200).json(combined);
-    } catch (err) {
-        return showError(res, err, 'Server Error During Get User Employee');
+const getUsers = asyncHandler(async (req, res) => {
+    const user = await User.find();
+    if (user.length === 0) {
+        throw ERR.noUsersFound();
     }
-};
+    return res.status(200).json(user);
+});
 
-const getAllUsers = async (req, res) => {
-    try {
-        const employee = await Employee.find();
-        if (employee.length === 0) {
-            return res.status(404).json({ message: "No users found" })
-        }
-        return res.status(200).json(employee);
-    } catch (err) {
-        return showError(res, err, 'Server Error During Get All Users');
-    }
-}
+const approveUser = asyncHandler(async (req, res) => {
+    return changeUserStatus(req, res, 'Active', 'Account activated successfully');
+});
 
-const getUsers = async (req, res) => {
-    try {
-        const user = await User.find();
-        if (user.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
-        }
-        return res.status(200).json(user);
-    } catch (err) {
-        return showError(res, err, 'Server Error During Get All Users');
-    }
-}
-
-const approveUser = async (req, res) => {
-    return changeUserStatus(req, res, 'Active', 'Account is already activated', 'Account activated successfully');
-}
-
-const rejectUser = async (req, res) => {
-    return changeUserStatus(req, res, 'Inactive', 'Account is already not active', 'Account rejected sucessfully');
-}
+const rejectUser = asyncHandler(async (req, res) => {
+    return changeUserStatus(req, res, 'Inactive', 'Account rejected sucessfully');
+});
 
 // Update User Profile
-const updateUserProfile = async (req, res) => {
-    try {
-        const {
-            employeeId,
-            data,
-        } = req.body;
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const {
+        employeeId,
+        data,
+    } = req.body;
 
-        const existingUser = await findUserByEmployeeId(employeeId);
+    const existingUser = await findUserByEmployeeId(employeeId);
 
-        if (!existingUser) {
-            return res.status(404).json({ message: "User not found!" });
-        }
-
-        if(medicalRoles.has(existingUser?.role)){
-            if(!data.medicalRegistrationNo){
-                return res.status(422).json({message: "This role requires medical registration number"});
-            }
-            if(!data.qualification){
-                return res.status(422).json({message: "This role requires qualification"});
-            }
-        }
-
-        await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
-
-        return res.status(200).json({
-            message: "Profile updated successfully!",
-        });
+    if (!existingUser) {
+        throw ERR.userNotFound();
     }
-    catch (err) {
-        return showError(res, err, `Server error during update profile`);
+
+    if (medicalRoles.has(existingUser?.role)) {
+        if (!data.medicalRegistrationNo) {
+            throw ERR.medRoleRequired();
+        }
+        if (!data.qualification) {
+            throw ERR.qualificationRequired();
+        }
     }
-}
+
+    await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
+
+    return res.status(200).json({
+        message: "Profile updated successfully!",
+    });
+});
 
 module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile, getUserEmployee };
 
