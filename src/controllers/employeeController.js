@@ -131,3 +131,32 @@ exports.approveEmployee = async (req, res) => {
     res.status(500).json({ message: error.message || "Approval failed" });
   }
 };
+
+exports.rejectEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const emp = await Employees.findOneAndUpdate(
+      { employeeCode: id },
+      { $set: { status: "INACTIVE" } },
+      { new: true, runValidators: true },
+    );
+
+    const user = await Users.findOneAndUpdate(
+      { employeeID: id },
+      { $set: { status: "INACTIVE" } },
+      { new: true, runValidators: true },
+    );
+
+    if (!emp || !user) {
+      return res
+        .status(404)
+        .json({ message: "Employee or User account record missing" });
+    }
+
+    res.status(200).json({ message: "Employee rejected successfully" });
+  } catch (error) {
+    console.error("Error rejecting employee:", error);
+    res.status(500).json({ message: error.message || "Approval rejection failed" });
+  }
+};

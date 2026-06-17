@@ -26,4 +26,11 @@ router.patch(
   employeeController.approveEmployee,
 );
 
+router.patch(
+  "/reject/:id",
+  authenticateToken,
+  requirePermission("REJECT_EMPLOYEE"),
+  employeeController.rejectEmployee,
+);
+
 module.exports = router;
