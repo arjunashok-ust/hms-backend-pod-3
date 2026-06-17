@@ -10,7 +10,6 @@ const {
 } = require("../validations/authValidation");
 
 const {
-  signUpByAdmin,
   signupByUser,
   login,
   changeFirstPassword,

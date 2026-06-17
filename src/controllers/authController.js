@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 const Patients = require("../models/Patients");
+const Roles = require("../models/Roles")
 const sendMail = require("../utils/sendmail");
 
 exports.signupByUser = async (req, res) => {
@@ -265,6 +266,9 @@ exports.login = async (req, res) => {
       });
     }
 
+    const roleExists = await Roles.findOne({ roleName: user.role });
+    const permissions = roleExists ? roleExists.rolePermissions : [];
+
     user.lastLogin = new Date();
     await user.save();
 
@@ -273,6 +277,7 @@ exports.login = async (req, res) => {
         employeeID: user.employeeID,
         email: user.email,
         role: user.role,
+        permissions: permissions
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
