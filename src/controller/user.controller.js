@@ -109,7 +109,7 @@ const getPatientProfile = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
     const patient = await Patient.findOne({ email });
 
-    if (!user) throw ERR.userNotFound();;
+    if (!user) throw ERR.userNotFound();
 
     return res.status(200).json({
         message: 'Sucessfully obtained user information',

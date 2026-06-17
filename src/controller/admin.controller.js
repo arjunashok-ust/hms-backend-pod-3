@@ -9,9 +9,9 @@ const asyncHandler = require('../utils/asyncHandler.utils');
 
 const medicalRoles = new Set(['Doctor', 'Nurse']);
 
-const findUserByEmployeeId = asyncHandler(async (employeeId) => {
+const findUserByEmployeeId = async (employeeId) => {
     return await User.findOne({ employeeId });
-});
+};
 
 const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) => {
     const employeeId = req.body.employeeId;
@@ -21,15 +21,13 @@ const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) =>
         throw ERR.userNotFound();
     }
 
-    if (user.status === "Active") {
+    if (user.status == "Active") {
         if (user.status === status) {
             throw ERR.alreadyActivated();
         }
     }
-    else {
-        if (user.status === status) {
-            throw ERR.alreadyNotActivated();
-        }
+    else if (user.status === status) {
+        throw ERR.alreadyNotActivated();
     }
 
     user.status = status;

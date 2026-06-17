@@ -290,33 +290,42 @@ const patientSignUp = asyncHandler(async (req, res) => {
         throw ERR.userNotFound();
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    let userPassword = "";
+
+    if (status == 'Active') {
+        userPassword = password;
+    } else {
+        const tempPassword = crypto.randomBytes(12).toString('hex');
+        userPassword = tempPassword;
+
+        // user credentials
+        await mail.sendMail({
+            to: profile.email,
+            subject: 'HMS App | Patient Credentials',
+            html: `
+            <h1>HMS App</h1><br>
+            <p> Your profile has been registered,you can now login using the credentials below.<br>
+            Email : <b>${profile.email}</b><br>
+            Password : <b>${userPassword}</b><br>
+            </p>
+            `
+        });
+    }
+
+    console.log(`Patient Password : ${userPassword}`);
+
+    const passwordHash = await bcrypt.hash(userPassword, 12);
 
     await User.create({
         email: email,
         passwordHash: passwordHash,
-        status: status,
+        status: 'Active',
         role: role,
         patientId: profile.uhid,
         verification_token: verification_token,
         verification_expiry: verification_expiry,
         isVerified: false,
         firstLogin: false,
-    });
-
-    // admin notification mail
-    await mail.sendMail({
-        to: process.env.ADMIN_MAIL,
-        subject: 'HMS Notification | Patient Approval',
-        html: `
-            <h1>Hospital Management System</h1><br>
-            <p> A new patient has registered on the <b>HMS</b> platform and is awaiting your approval.</p>
-            <p>
-            <b>Patient Details:</b><br>
-            Name: ${profile.name}<br>
-            Email: ${profile.email}<br>
-            </p>
-            `
     });
 
     // user email verification
@@ -341,5 +350,16 @@ const patientSignUp = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { signUp, login, setPassword, verifyMail, patientSignUp };
+const getPermissions = asyncHandler(async (req, res) => {
+    const role = req.query.role;
+
+    const roleData = await Role.findOne({ role_name: role });
+    if (!roleData) {
+        ERR.unknownRole();
+    }
+
+    return res.status(200).json(roleData);
+});
+
+module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions };
 
