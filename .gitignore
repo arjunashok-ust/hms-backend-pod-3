@@ -9,3 +9,5 @@ sonar-project.properties
 .vscode/
 # sonar config
 sonar-project.properties
+.idea
+.vscode

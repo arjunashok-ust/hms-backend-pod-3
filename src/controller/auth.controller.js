@@ -112,13 +112,13 @@ const signUp = async (req, res) => {
             html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="http://localhost:5000/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
         });
 
-        console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+        console.log(`verify url: http://localhost:5000/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
         const passwordHash = await bcrypt.hash(userPassword, 12);
 
@@ -348,13 +348,13 @@ const patientSignUp = async (req, res) => {
             html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="http://localhost:5000/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
         });
 
-        console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+        console.log(`verify url: http://localhost:5000/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
         // 201 created
         return res.status(201).json({
