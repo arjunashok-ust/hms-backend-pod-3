@@ -35,46 +35,6 @@ const getUserProfile = asyncHandler(async (req, res) => {
     });
 });
 
-const createPatient = asyncHandler(async (req, res) => {
-    const {
-        name,
-        phone,
-        email,
-        gender,
-        dob,
-        address,
-        emergencyContact,
-        status,
-    } = req.body;
-
-    const existingPatient = await Patient.findOne({ email: email });
-
-    if (existingPatient) {
-        throw ERR.emailExists();
-    }
-
-    const existingUser = await User.findOne({
-        email
-    });
-
-    if (!existingUser) {
-        throw ERR.emailExists();
-    }
-
-    await Patient.create({
-        name: name,
-        phone: phone,
-        email: email,
-        gender: gender,
-        dob: dob,
-        address: address,
-        emergencyContact: emergencyContact,
-        status: status
-    });
-
-    return res.status(200).json({ message: "Patient created sucessfully." });
-});
-
 const getPatients = asyncHandler(async (req, res) => {
     const patients = await Patient.find();
     if (!patients) {
@@ -121,6 +81,8 @@ const getPatientProfile = asyncHandler(async (req, res) => {
         name: patient.name,
         gender: patient.gender,
         dob: patient.dob,
+        allergies: patient.allergies,
+        bloodGroup: patient.bloodGroup,
         address: patient.address,
         phone: patient.phone,
         emergencyContact: patient.emergencyContact,
@@ -185,6 +147,8 @@ const updatePatientProfile = asyncHandler(async (req, res) => {
         gender,
         dob,
         address,
+        bloodGroup,
+        allergies,
         emergencyContact,
     } = req.body;
 
@@ -193,6 +157,8 @@ const updatePatientProfile = asyncHandler(async (req, res) => {
         gender,
         dob,
         address,
+        bloodGroup,
+        allergies,
         emergencyContact,
     },
         {
@@ -210,4 +176,4 @@ const updatePatientProfile = asyncHandler(async (req, res) => {
 
 
 
-module.exports = { getUserProfile, createPatient, getPatients, deletePatient, getPatientProfile, getPatientId, getAvailableTimeSlots, updatePatientProfile }
+module.exports = { getUserProfile, getPatients, deletePatient, getPatientProfile, getPatientId, getAvailableTimeSlots, updatePatientProfile }

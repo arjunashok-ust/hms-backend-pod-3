@@ -4,10 +4,12 @@ const Counter = require('./counter.model');
 const patientSchema = new mongoose.Schema({
     uhid: { type: String, unique: true },
     name: { type: String, required: true },
-    phone: { type: String, default: null},
-    email: { type: String, required: true, lowercase: true, trim: true,unique: true },
+    phone: { type: String, default: null },
+    email: { type: String, required: true, lowercase: true, trim: true, unique: true },
     gender: { type: String, enum: ['Male', 'Female'], required: true },
     dob: { type: Date, required: true },
+    bloodGroup: { type: String, required: true, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
+    allergies: { type: String },
     address: { type: String, required: true },
     emergencyContact: { type: String, default: null },
 });
@@ -24,7 +26,7 @@ patientSchema.pre('save', async function () {
             this.uhid = `PAT-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-             console.error("patient model pre hook error : "+err);
+            console.error("patient model pre hook error : " + err);
             throw (err);
         }
     }

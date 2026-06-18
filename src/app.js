@@ -26,6 +26,7 @@ const adminRoute = require('./routes/admin.route');
 const nodeRoute = require('./routes/node.route');
 const uiRoute = require('./routes/ui.route');
 const appointmentRoute = require('./routes/appointment.route');
+const medicalRecordRoute = require('./routes/medical-record.route');
 
 app.use('/auth', authRoute);
 app.use('/user', userRoute);
@@ -33,6 +34,7 @@ app.use('/admin', adminRoute);
 app.use('/ui',uiRoute);
 app.use('/node',nodeRoute);
 app.use('/appointment',appointmentRoute);
+app.use('/medicalRecord',medicalRecordRoute);
 
 app.use(errorHandler);
 

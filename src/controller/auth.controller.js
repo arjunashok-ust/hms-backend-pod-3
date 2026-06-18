@@ -255,6 +255,8 @@ const patientSignUp = asyncHandler(async (req, res) => {
         gender,
         dob,
         address,
+        bloodGroup,
+        allergies,
         emergencyContact
     } = req.body;
 
@@ -280,6 +282,8 @@ const patientSignUp = asyncHandler(async (req, res) => {
         gender,
         dob,
         address,
+        bloodGroup,
+        allergies,
         emergencyContact
     });
 
