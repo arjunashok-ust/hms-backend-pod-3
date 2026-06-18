@@ -12,9 +12,9 @@ router.post('/deleteUserProfile', validateAdmin.validateDeleteUserProfile, valid
 router.get('/getDashBoardData', auth, permission('view:dashboard'), adminController.getDashboardData);
 router.get('/getAllUsers', auth, permission('view:dashboard'), adminController.getAllUsers);
 router.get('/getUsers', auth, permission('view:dashboard'), adminController.getUsers);
-router.get('/getUserEmployee', auth, permission('view:dashboard'), adminController.getUserEmployee);
+router.get('/getUserEmployee', auth, permission('view:dashboard','edit:profile'), adminController.getUserEmployee);
 router.post('/approveUser', validateAdmin.validateApproveUser, validate, auth, permission('view:approval'), adminController.approveUser);
 router.post('/rejectUser', validateAdmin.validateRejectUser, validate, auth, permission('view:approval'), adminController.rejectUser);
-router.post('/updateUserProfile', validateAdmin.validateUpdateProfile, validate, auth, permission('view:employee'), adminController.updateUserProfile);
+router.post('/updateUserProfile', validateAdmin.validateUpdateProfile, validate, auth, permission('edit:employee','edit:profile'), adminController.updateUserProfile);
 
 module.exports = router;

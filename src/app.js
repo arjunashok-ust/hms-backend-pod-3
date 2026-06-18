@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const errorHandler = require('./middleware/errorHandler.middleware');
 
 const db = require('./config/db.config');
 
@@ -32,5 +33,7 @@ app.use('/admin', adminRoute);
 app.use('/ui',uiRoute);
 app.use('/node',nodeRoute);
 app.use('/appointment',appointmentRoute);
+
+app.use(errorHandler);
 
 module.exports = app;
