@@ -18,7 +18,7 @@ const MedicalRecordSchema = new mongoose.Schema(
                 duration: { type: String },
             },
         ],
-        medicalObservation: [
+        medicalObservations: [
             {
                 metricName: { type: String },
                 metricValue: { type: String },
@@ -29,7 +29,7 @@ const MedicalRecordSchema = new mongoose.Schema(
         createdBy: { type: String, required: true },
         updatedBy: { type: String },
         updatedAt: { type: Date },
-        status: { type: String , enum: ['Draft','Final','Deleted']},
+        status: { type: String , enum: ['Draft','Completed','Deleted']},
     },
     { timestamps: { createdAt: "created_at" } },
 );

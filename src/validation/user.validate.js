@@ -41,6 +41,14 @@ const validateGetDoctorsBySearch = [
     query("searchText").notEmpty().withMessage("Search text is required"),
 ]
 
+const validateGetPatientById = [
+    query("patientId").notEmpty().withMessage("Patient Id is required."),
+]
+
+const validateGetDoctorById = [
+    query("doctorId").notEmpty().withMessage("Doctor Id is required."),
+]
+
 module.exports = {
     validateGetUserProfile,
     validateGetNameByEmployeeId,
@@ -51,5 +59,7 @@ module.exports = {
     validateGetAvailableTimeSlots,
     validateUpdatePatientProfile,
     validateGetPatientsBySearch,
-    validateGetDoctorsBySearch
+    validateGetDoctorsBySearch,
+    validateGetPatientById,
+    validateGetDoctorById,
 };

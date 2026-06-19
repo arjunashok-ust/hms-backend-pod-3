@@ -82,4 +82,34 @@ const getMedicalRecordStats = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { createMedicalRecord, getMedicalRecordStats }
+const getMedicalRecords = asyncHandler(async (req, res) => {
+    const page = Number.parseInt(req.query.page);
+    const limit = Number.parseInt(req.query.limit);
+
+    const skip = (page - 1) * limit;
+
+    const total = await MedicalRecord.countDocuments();
+
+    const medicalRecordData = await MedicalRecord.find().sort({ created_at: -1 }).skip(skip).limit(limit);
+
+    return res.status(200).json({
+        data: medicalRecordData,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+    });
+});
+
+const getMedicalRecordById = asyncHandler(async (req,res) => {
+    const medicalRecordId = req.query.medicalRecordId;
+
+    const medicalRecord = await MedicalRecord.findOne({medicalRecordId});
+
+    if(!medicalRecord){
+        ERR.medicalRecordNotFound();
+    }
+
+    return res.status(200).json(medicalRecord);
+})
+
+module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById }

@@ -223,17 +223,36 @@ const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
         appointmentId,
     } = req.query;
 
+    let filters = [{ status: 'Completed' }];
+
+    let conditions = [];
+
+    if (patientId || doctorId) {
+        if (doctorId) {
+            conditions.push({ doctorId: { $regex: escapeRegex(doctorId) } });
+        }
+
+        if (patientId) {
+            conditions.push({ patientId: { $regex: escapeRegex(patientId) } });
+        }
+    } else if (appointmentId) {
+        conditions.push({ appointmentId: { $regex: escapeRegex(appointmentId) } });
+    }
+
+    if (conditions.length > 0) {
+        filters.push({ $or: conditions });
+    }
+
     const appointments = await Appointment.find({
-        status: 'Completed',
-        $or: [
-            { appointmentId: { $regex: appointmentId } },
-            { doctorId: { $regex: doctorId } },
-            { patientId: { $regex: patientId } },
-        ]
+        $and: filters,
     });
 
     return res.status(200).json(appointments);
 });
+
+
+const escapeRegex = (text) => text?.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
+
 
 module.exports = {
     createAppointment,

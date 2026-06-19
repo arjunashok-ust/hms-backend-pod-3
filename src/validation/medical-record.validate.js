@@ -1,4 +1,4 @@
-const { body } = require("express-validator");
+const { body, query } = require("express-validator");
 
 const validateCreateMedicalRecord = [
     body("medicalRecordId")
@@ -100,4 +100,13 @@ const validateCreateMedicalRecord = [
         .isString()
 ];
 
-module.exports = { validateCreateMedicalRecord }
+const validateGetMedicalRecords = [
+    query("page").notEmpty().withMessage("Page is required."),
+    query("limit").notEmpty().withMessage("Limit is required.")
+]
+
+const validateGetMedicalRecordById = [
+    query("medicalRecordId").notEmpty().withMessage("Medical Record Id is required."),
+]
+
+module.exports = { validateCreateMedicalRecord, validateGetMedicalRecords, validateGetMedicalRecordById }

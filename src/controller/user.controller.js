@@ -5,6 +5,7 @@ const Appointment = require('../models/appointment.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
+const { json } = require('express');
 
 // Get User
 const getUserProfile = asyncHandler(async (req, res) => {
@@ -193,7 +194,7 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
     const {
         searchText,
     } = req.query;
-    
+
     const doctors = await Employee.find({
         $or: [
             { employeeCode: { $regex: searchText, $options: "i" } },
@@ -203,6 +204,24 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(doctors);
+});
+
+const getPatientById = asyncHandler(async (req, res) => {
+    const patientId = req.query.patientId;
+
+    const patient = await Patient.findOne({ uhid: patientId });
+    if (!patient) return ERR.patientNotFound();
+
+    return res.status(200).json(patient);
+});
+
+const getDoctorById = asyncHandler(async (req, res) => {
+    const doctorId = req.query.doctorId;
+
+    const doctor = await Employee.findOne({ employeeCode: doctorId });
+    if (!doctor) return ERR.doctorNotFound();
+
+    return res.status(200).json(doctor);
 });
 
 
@@ -217,4 +236,6 @@ module.exports = {
     updatePatientProfile,
     getPatientsBySearch,
     getDoctorsBySearch,
+    getPatientById,
+    getDoctorById,
 }

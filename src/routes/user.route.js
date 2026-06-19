@@ -17,5 +17,7 @@ router.get('/getAvailableTimeSlots', userValidate.validateGetAvailableTimeSlots,
 router.post('/updatePatientProfile', userValidate.validateUpdatePatientProfile, validate, auth, permission('edit:profile'), userController.updatePatientProfile);
 router.get('/getPatientsBySearch', userValidate.validateGetPatientsBySearch, validate, auth, permission('view:patient'), userController.getPatientsBySearch);
 router.get('/getDoctorsBySearch', userValidate.validateGetDoctorsBySearch, validate, auth, permission('view:profile'), userController.getDoctorsBySearch);
+router.get('/getPatientById', userValidate.validateGetPatientById, validate, auth, permission('view:profile'), userController.getPatientById);
+router.get('/getDoctorById', userValidate.validateGetDoctorById, validate, auth, permission('view:profile'), userController.getDoctorById);
 
 module.exports = router;
