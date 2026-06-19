@@ -3,43 +3,51 @@ const generateId = require("../utils/generateID");
 
 const medicalRecordSchema = new mongoose.Schema(
   {
-    recordCode: { type: String, unique: true },
-    appointmentID: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointments",
-      required: true,
-      unique: true,
-    },
-    patientID: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Patients",
-      required: true,
-    },
-    doctorEmployeeID: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employees",
-      required: true,
-    },
-    symptoms: { type: String, required: true },
-    diagnosis: { type: String, required: true },
-    prescriptionItems: [
+    recordCode: { type: String },
+    doctorEmployeeId: { type: String, required: true },
+    appointmentId: { type: String, required: true },
+    patientId: { type: String, required: true },
+    visitDate: { type: Date, default: Date.now },
+    diagnosis: { type: String },
+    complaint: { type: String },
+    symptoms: { type: String },
+    medications: [
       {
-        medicineName: String,
-        dosage: String,
-        duration: String,
+        name: { type: String },
+        dosage: { type: String },
+        frequency: { type: String },
+        duration: { type: String },
+        deliveryMethod: { type: String },
+      },
+    ],
+    medicalObservations: [
+      {
+        metricName: { type: String },
+        metricValue: { type: String },
+        recordedTime: { type: Date, default: Date.now },
       },
     ],
     notes: { type: String },
+    createdBy: { type: String },
+    updatedBy: { type: String },
+    status: {
+      type: String,
+      enum: ["FINAL", "DRAFT", "DELETED"],
+      default: "DRAFT",
+    },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 medicalRecordSchema.pre("save", async function () {
   if (this.isNew) {
-    this.recordCode = await generateId("medicalRecord", "MR");
+    this.recordCode = await generateId("medicalRecord", "REC");
   }
 });
 
-module.exports = mongoose.model("MedicalRecords", medicalRecordSchema);
+medicalRecordSchema.index({ recordCode: 1 }, { unique: true });
+medicalRecordSchema.index({ appointmentId: 1 });
+medicalRecordSchema.index({ patientId: 1, visitDate: -1 });
+medicalRecordSchema.index({ doctorEmployeeId: 1, visitDate: -1 });
+
+module.exports = mongoose.model("MedicalRecord", medicalRecordSchema);

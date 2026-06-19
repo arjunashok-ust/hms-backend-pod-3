@@ -47,6 +47,9 @@ app.use("/api/email", verifyEmailRoutes);
 const roleRoutes = require("./routes/roleRoutes");
 app.use("/api/roles", roleRoutes);
 
+const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
+app.use("/api/records", medicalRecordRoutes);
+
 try {
   mongoose.connect(process.env.MONGO_URI);
   console.log("MongoDB connected");
