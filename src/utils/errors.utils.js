@@ -31,11 +31,12 @@ const ERR = {
     clientMobileApp: () => new AppError("Only patients are allowed to sign in using the mobile app", 403),
     setPassword: () => new AppError("Set password is only allowed for first time users", 400),
 
-    unknownRole: () => AppError("Unknown role", 400),
+    unknownRole: () => new AppError("Unknown role", 400),
 
-    appointmentPastTime: () => AppError("You cant book appointment in the past", 400),
-    doctorNoSlot: () => AppError("No slots find for doctor", 404),
+    appointmentPastTime: () => new AppError("You cant book appointment in the past", 400),
+    doctorNoSlot: () => new AppError("No slots find for doctor", 404),
 
+    medicalRecordExists: () => new AppError("Medical record already exists", 409),
 }
 
 module.exports = ERR;

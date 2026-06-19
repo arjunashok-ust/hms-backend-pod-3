@@ -174,6 +174,47 @@ const updatePatientProfile = asyncHandler(async (req, res) => {
     return res.status(200).json({ message: "Patient profile updated successfully." });
 });
 
+const getPatientsBySearch = asyncHandler(async (req, res) => {
+    const {
+        searchText,
+    } = req.query;
+
+    const patients = await Patient.find({
+        $or: [
+            { uhid: { $regex: searchText, $options: "i" } },
+            { name: { $regex: searchText, $options: "i" } },
+        ]
+    });
+
+    return res.status(200).json(patients);
+});
+
+const getDoctorsBySearch = asyncHandler(async (req, res) => {
+    const {
+        searchText,
+    } = req.query;
+    
+    const doctors = await Employee.find({
+        $or: [
+            { employeeCode: { $regex: searchText, $options: "i" } },
+            { name: { $regex: searchText, $options: "i" } },
+            { specialization: { $regex: searchText, $options: "i" } }
+        ]
+    });
+
+    return res.status(200).json(doctors);
+});
 
 
-module.exports = { getUserProfile, getPatients, deletePatient, getPatientProfile, getPatientId, getAvailableTimeSlots, updatePatientProfile }
+
+module.exports = {
+    getUserProfile,
+    getPatients,
+    deletePatient,
+    getPatientProfile,
+    getPatientId,
+    getAvailableTimeSlots,
+    updatePatientProfile,
+    getPatientsBySearch,
+    getDoctorsBySearch,
+}

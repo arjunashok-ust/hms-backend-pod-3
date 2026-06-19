@@ -216,6 +216,25 @@ const editAppointmentStatus = asyncHandler(async (req, res) => {
     return res.status(200).json({ message: "Appointment status updated successfully" });
 });
 
+const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
+    const {
+        doctorId,
+        patientId,
+        appointmentId,
+    } = req.query;
+
+    const appointments = await Appointment.find({
+        status: 'Completed',
+        $or: [
+            { appointmentId: { $regex: appointmentId } },
+            { doctorId: { $regex: doctorId } },
+            { patientId: { $regex: patientId } },
+        ]
+    });
+
+    return res.status(200).json(appointments);
+});
+
 module.exports = {
     createAppointment,
     getAllAppointments,
@@ -225,6 +244,7 @@ module.exports = {
     getAppointmentsByPatientId,
     getDoctorByEmployeeId,
     editAppointment,
-    editAppointmentStatus
+    editAppointmentStatus,
+    getAppointmentByDoctorIdOrPatientId,
 }
 

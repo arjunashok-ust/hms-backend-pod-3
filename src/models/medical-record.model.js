@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Counter = require("./counter.model");
 
 const MedicalRecordSchema = new mongoose.Schema(
     {
@@ -28,7 +29,7 @@ const MedicalRecordSchema = new mongoose.Schema(
         createdBy: { type: String, required: true },
         updatedBy: { type: String },
         updatedAt: { type: Date },
-        status: { type: String },
+        status: { type: String , enum: ['Draft','Final','Deleted']},
     },
     { timestamps: { createdAt: "created_at" } },
 );

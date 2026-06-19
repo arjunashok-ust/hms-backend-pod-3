@@ -16,5 +16,7 @@ router.get('/getAppointmentsByPatientId', appointmentValidate.validateGetAppoint
 router.get('/getDoctorByEmployeeId', appointmentValidate.validateGetDoctorByEmployeeId, validate, auth, permission('view:appointment'), appointmentController.getDoctorByEmployeeId);
 router.post('/editAppointment', appointmentValidate.validateEditAppointment, validate, auth, permission('view:appointment'), appointmentController.editAppointment);
 router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('view:appointment'), appointmentController.editAppointmentStatus);
+router.get('/getAppointmentByDoctorIdOrPatientId', auth, permission('view:patient'), appointmentController.getAppointmentByDoctorIdOrPatientId);
+
 
 module.exports = router;

@@ -8,6 +8,7 @@ const medicalRecordValidate = require('../validation/medical-record.validate');
 
 const medicalRecordController = require('../controller/medical-record.controller');
 
-router.post('/createMedicalRecord',medicalRecordValidate.validateCreateMedicalRecord,validate,auth,medicalRecordController.createMedicalRecord);
+router.post('/createMedicalRecord', medicalRecordValidate.validateCreateMedicalRecord, validate, auth, medicalRecordController.createMedicalRecord);
+router.get('/getMedicalRecordStats', auth, permission(['view:medical-record']), medicalRecordController.getMedicalRecordStats);
 
 module.exports = router;
