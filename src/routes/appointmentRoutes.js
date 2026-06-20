@@ -56,4 +56,16 @@ router.get(
   appointmentController.getPatientAppointments,
 );
 
+router.get(
+  "/all",
+  authenticateToken,
+  requirePermission([
+    "VIEW_ALL_APPOINTMENTS",
+    "VIEW_MY_APPOINTMENTS",
+    "CREATE_RECORD_FOR_ANYONE",
+    "CREATE_MY_RECORD",
+  ]),
+  appointmentController.getAllAppointments,
+);
+
 module.exports = router;

@@ -56,9 +56,23 @@ exports.getDoctorsList = async (req, res) => {
 
 exports.getRecentAppointments = async (req, res) => {
   try {
+    const userRole = req.user?.role?.toUpperCase();
+    const employeeID = req.user?.employeeID;
+
+    // 1. Build the dynamic match stage based on who is asking
+    let matchStage = {};
+    if (userRole === "DOCTOR") {
+      matchStage = { doctorEmployeeID: employeeID };
+    } else if (userRole === "PATIENT") {
+      // Assuming you have patientID in req.user for patients
+      matchStage = { patientID: req.user.UHID };
+    }
+    // Admin sees everything, so matchStage remains empty {}
+
     const appointments = await Appointments.aggregate([
+      { $match: matchStage }, // Filter FIRST
       { $sort: { createdAt: -1 } },
-      { $limit: 10 },
+      { $limit: 10 }, // Then limit to 10
       {
         $lookup: {
           from: "employees",
@@ -67,7 +81,6 @@ exports.getRecentAppointments = async (req, res) => {
           as: "doctorInfo",
         },
       },
-
       {
         $lookup: {
           from: "employees",
@@ -325,5 +338,34 @@ exports.getPatientAppointments = async (req, res) => {
   } catch (error) {
     console.error("Get Patient Appointments Error:", error);
     res.status(500).json({ message: "Error fetching your appointments" });
+  }  
+};
+
+// ... existing imports and methods ...
+
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const userRole = req.user?.role?.toUpperCase();
+    const employeeID = req.user?.employeeID;
+
+    // 1. Build the dynamic match stage based on who is asking
+    let matchStage = {};
+    if (userRole === "DOCTOR") {
+      matchStage = { doctorEmployeeID: employeeID };
+    } else if (userRole === "PATIENT") {
+      matchStage = { patientID: req.user.UHID };
+    }
+    // Admin/Receptionist sees everything, so matchStage remains empty {}
+
+    // 2. Fetch the appointments. We select only the fields needed for the dropdowns
+    // to keep the payload size small and fast.
+    const appointments = await Appointments.find(matchStage)
+      .select("appointmentCode patientID doctorEmployeeID date timeSlot status")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error("Get All Appointments Error:", error);
+    res.status(500).json({ message: "Error fetching all appointments" });
   }
 };

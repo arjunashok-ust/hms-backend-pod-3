@@ -3,11 +3,9 @@ const router = express.Router();
 const validate = require("../middlewares/validate");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const requirePermission = require("../middlewares/permissionMiddleware");
-
 const {
   validateMedicalRecord,
 } = require("../validations/medicalRecordValidation");
-
 const medicalRecordController = require("../controllers/medicalRecordController");
 
 router.post(
@@ -18,7 +16,6 @@ router.post(
   validate,
   medicalRecordController.createMedicalRecord,
 );
-
 router.put(
   "/updateRecord/:id",
   authenticateToken,
@@ -27,7 +24,6 @@ router.put(
   validate,
   medicalRecordController.updateMedicalRecord,
 );
-
 router.delete(
   "/deleteRecord/:id",
   authenticateToken,
@@ -35,15 +31,13 @@ router.delete(
   medicalRecordController.deleteMedicalRecord,
 );
 
-// FETCH ALL / FILTER
+// FETCH ALL (Controller automatically enforces isolation)
 router.get(
   "/getAllRecords",
   authenticateToken,
-  requirePermission("VIEW_HEALTH_RECORDS"),
-  medicalRecordController.getMedicalRecords,
+  requirePermission(["VIEW_ALL_RECORDS", "VIEW_MY_RECORDS"]),
+  medicalRecordController.getAllMedicalRecords,
 );
-
-// FETCH SINGLE BY ID
 router.get(
   "/getRecord/:id",
   authenticateToken,
