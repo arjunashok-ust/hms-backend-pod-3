@@ -153,9 +153,9 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const total = await MedicalRecord.countDocuments();
+    const total = await MedicalRecord.countDocuments({ isDeleted: false });
 
-    const medicalRecordData = await MedicalRecord.find().sort({ created_at: -1 }).skip(skip).limit(limit);
+    const medicalRecordData = await MedicalRecord.find({ isDeleted: false }).sort({ created_at: -1 }).skip(skip).limit(limit);
 
     return res.status(200).json({
         data: medicalRecordData,
@@ -171,10 +171,29 @@ const getMedicalRecordById = asyncHandler(async (req, res) => {
     const medicalRecord = await MedicalRecord.findOne({ medicalRecordId });
 
     if (!medicalRecord) {
-        ERR.medicalRecordNotFound();
+        throw ERR.medicalRecordNotFound();
     }
 
     return res.status(200).json(medicalRecord);
 })
 
-module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById, updateMedicalRecord }
+const deleteMedicalRecord = asyncHandler(async (req, res) => {
+
+    const medicalRecordId = req.body.medicalRecordId;
+
+    const deletedBy = req.user.userId;
+
+    const deletedMedicalRecord = await MedicalRecord.findOneAndUpdate(
+        { medicalRecordId },
+        { isDeleted: true, deletedBy: deletedBy, deletedAt: new Date() },
+        { new: true, }
+    );
+
+    if (!deletedMedicalRecord) {
+        throw ERR.medicalRecordNotFound();
+    }
+
+    return res.status(200).json({ message: "Medical record deleted sucessfully" });
+})
+
+module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById, updateMedicalRecord, deleteMedicalRecord }

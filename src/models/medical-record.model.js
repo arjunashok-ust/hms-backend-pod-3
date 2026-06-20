@@ -29,7 +29,10 @@ const MedicalRecordSchema = new mongoose.Schema(
         createdBy: { type: String, required: true },
         updatedBy: { type: String },
         updatedAt: { type: Date },
-        status: { type: String , enum: ['Draft','Completed','Deleted']},
+        isDeleted: { type: Boolean, default: false },
+        deletedAt: { type: Date },
+        deletedBy: { type: String },
+        status: { type: String, enum: ['Draft', 'Completed'] },
     },
     { timestamps: { createdAt: "created_at" } },
 );

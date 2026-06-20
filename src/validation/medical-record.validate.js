@@ -112,4 +112,8 @@ const validateGetMedicalRecordById = [
     query("medicalRecordId").notEmpty().withMessage("Medical Record Id is required."),
 ]
 
-module.exports = { validateCreateMedicalRecord, validateGetMedicalRecords, validateGetMedicalRecordById }
+const validateDeleteMedicalRecord = [
+    body("medicalRecordId").notEmpty().withMessage("Medical Record Id is required."),
+]
+
+module.exports = { validateCreateMedicalRecord, validateGetMedicalRecords, validateGetMedicalRecordById, validateDeleteMedicalRecord }
