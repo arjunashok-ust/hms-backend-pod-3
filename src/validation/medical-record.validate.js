@@ -23,16 +23,19 @@ const validateCreateMedicalRecord = [
         .isString(),
 
     body("complaint")
+        .if(body("status").not().equals("Drafted"))
         .notEmpty()
         .withMessage("complaint is required")
         .isString(),
 
     body("symptoms")
+        .if(body("status").not().equals("Drafted"))
         .notEmpty()
         .withMessage("symptoms are required")
         .isString(),
 
     body("diagnosis")
+        .if(body("status").not().equals("Drafted"))
         .notEmpty()
         .withMessage("diagnosis is required")
         .isString(),

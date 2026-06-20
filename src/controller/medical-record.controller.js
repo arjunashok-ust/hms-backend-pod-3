@@ -24,28 +24,28 @@ const createMedicalRecord = asyncHandler(async (req, res) => {
 
     const existingDoctor = await User.findOne({ role: 'Doctor', employeeId: doctorId });
     if (!existingDoctor) {
-        ERR.doctorNotFound();
+        throw ERR.doctorNotFound();
     }
 
     const existingPatient = await Patient.findOne({ uhid: patientId });
     if (!existingPatient) {
-        ERR.patientNotFound();
+        throw ERR.patientNotFound();
     }
 
     const existingAppointment = await Appointment.findOne({ appointmentId: appointmentId });
     if (!existingAppointment) {
-        ERR.appointmentNotFound();
+        throw ERR.appointmentNotFound();
     }
 
     const existingMedicalRecord = await MedicalRecord.findOne({ appointmentId: appointmentId, patientId: patientId, doctorId: doctorId });
 
     if (existingMedicalRecord) {
-        ERR.medicalRecordExists();
+        throw ERR.medicalRecordExists();
     }
 
     const existingCreator = await User.findOne({ employeeId: createdBy });
     if (!existingCreator) {
-        ERR.employeeNotFound();
+        throw ERR.employeeNotFound();
     }
 
     await MedicalRecord.create({
@@ -58,11 +58,76 @@ const createMedicalRecord = asyncHandler(async (req, res) => {
         medications,
         medicalObservations,
         notes,
-        status: status,
+        status,
         createdBy,
     });
 
     return res.status(200).json({ message: "Medical record created successfully." });
+});
+
+const updateMedicalRecord = asyncHandler(async (req, res) => {
+    const {
+        medicalRecordId,
+        doctorId,
+        appointmentId,
+        patientId,
+        diagnosis,
+        complaint,
+        symptoms,
+        medications,
+        medicalObservations,
+        notes,
+        status,
+        createdBy,
+        updatedBy,
+        updatedAt,
+    } = req.body;
+
+    const existingPatient = await Patient.findOne({ uhid: patientId });
+    if (!existingPatient) {
+        throw ERR.patientNotFound();
+    }
+
+    const existingDoctor = await User.findOne({ role: 'Doctor', employeeId: doctorId });
+    if (!existingDoctor) {
+        throw ERR.doctorNotFound();
+    }
+
+    const existingAppointment = await Appointment.findOne({ appointmentId: appointmentId });
+    if (!existingAppointment) {
+        throw ERR.appointmentNotFound();
+    }
+
+    const existingCreator = await User.findOne({ employeeId: createdBy });
+    if (!existingCreator) {
+        throw ERR.employeeNotFound();
+    }
+
+    const updatedRecord = await MedicalRecord.findOneAndUpdate({ medicalRecordId }, {
+        doctorId,
+        appointmentId,
+        patientId,
+        diagnosis,
+        complaint,
+        symptoms,
+        medications,
+        medicalObservations,
+        notes,
+        status,
+        createdBy,
+        updatedAt,
+        updatedBy,
+    },
+        {
+            new: true,
+        }
+    );
+
+    if (!updatedRecord) {
+        throw ERR.medicalRecordNotFound();
+    }
+
+    return res.status(200).json({ message: "Medical record updated successfully." });
 });
 
 const getMedicalRecordStats = asyncHandler(async (req, res) => {
@@ -100,16 +165,16 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
     });
 });
 
-const getMedicalRecordById = asyncHandler(async (req,res) => {
+const getMedicalRecordById = asyncHandler(async (req, res) => {
     const medicalRecordId = req.query.medicalRecordId;
 
-    const medicalRecord = await MedicalRecord.findOne({medicalRecordId});
+    const medicalRecord = await MedicalRecord.findOne({ medicalRecordId });
 
-    if(!medicalRecord){
+    if (!medicalRecord) {
         ERR.medicalRecordNotFound();
     }
 
     return res.status(200).json(medicalRecord);
 })
 
-module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById }
+module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById, updateMedicalRecord }
