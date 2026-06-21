@@ -150,12 +150,24 @@ const getMedicalRecordStats = asyncHandler(async (req, res) => {
 const getMedicalRecords = asyncHandler(async (req, res) => {
     const page = Number.parseInt(req.query.page);
     const limit = Number.parseInt(req.query.limit);
+    const patientId = req.query.patientId;
 
     const skip = (page - 1) * limit;
+    const filter = {
+        isDeleted: false,
+    }
 
-    const total = await MedicalRecord.countDocuments({ isDeleted: false });
+    if (patientId) {
+        filter.patientId = patientId;
+    }
 
-    const medicalRecordData = await MedicalRecord.find({ isDeleted: false }).sort({ created_at: -1 }).skip(skip).limit(limit);
+    const total = await MedicalRecord.countDocuments(filter);
+
+    const medicalRecordData = await MedicalRecord.find(filter).sort({ created_at: -1 }).skip(skip).limit(limit);
+
+    if(!medicalRecordData){
+        throw ERR.medicalRecordNotFound();
+    }
 
     return res.status(200).json({
         data: medicalRecordData,
