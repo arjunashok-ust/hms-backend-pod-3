@@ -241,6 +241,39 @@ const getDoctorById = asyncHandler(async (req, res) => {
 });
 
 
+const getSingleUser = asyncHandler(async (req, res) => {
+    const email = req.query.email;
+
+    const employee = await Employee.findOne({ email });
+    if (!employee) {
+        throw ERR.employeeNotFound();
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw ERR.userNotFound();
+    }
+
+    return res.status(200).json({
+        name: employee?.name || null,
+        email: user.email,
+        status: user.status,
+        role: user.role,
+        employeeId: user.employeeId,
+        isVerified: user.isVerified,
+        firstLogin: user.firstLogin,
+        department: employee?.department || null,
+        designation: employee?.designation || null,
+        joiningDate: employee?.joiningDate || null,
+        medicalRegistrationNo: employee?.medicalRegistrationNo || null,
+        specialization: employee?.specialization || null,
+        qualification: employee?.qualification || null,
+        consultationFee: employee?.consultationFee || null,
+        availabilitySlots: employee?.availabilitySlots || [],
+    })
+})
+
+
 
 module.exports = {
     getUserProfile,
@@ -254,4 +287,5 @@ module.exports = {
     getDoctorsBySearch,
     getPatientById,
     getDoctorById,
+    getSingleUser
 }

@@ -2,6 +2,7 @@ const { body } = require('express-validator');
 
 const allowedRoleTypes = [
     "Admin",
+    "Super Admin",
     "Doctor",
     "Receptionist",
     "Cashier",

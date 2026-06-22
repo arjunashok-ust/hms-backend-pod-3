@@ -7,7 +7,7 @@ const asyncHandler = require('../utils/asyncHandler.utils');
 
 // getRoles
 const getRoles = asyncHandler(async (req, res) => {
-    const roles = await Role.find({ role_name: { $nin: ['Admin', 'Patient'] } }, 'role_name');
+    const roles = await Role.find({ role_name: { $nin: ['Super Admin', 'Patient'] } }, 'role_name');
     return res.status(200).json(
         roles
     );

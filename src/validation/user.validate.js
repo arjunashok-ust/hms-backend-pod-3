@@ -49,6 +49,10 @@ const validateGetDoctorById = [
     query("doctorId").notEmpty().withMessage("Doctor Id is required."),
 ]
 
+const validateGetSingleUser = [
+    query("email").notEmpty().withMessage("Email is required"),
+]
+
 module.exports = {
     validateGetUserProfile,
     validateGetNameByEmployeeId,
@@ -62,4 +66,5 @@ module.exports = {
     validateGetDoctorsBySearch,
     validateGetPatientById,
     validateGetDoctorById,
+    validateGetSingleUser,
 };
