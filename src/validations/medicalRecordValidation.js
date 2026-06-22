@@ -22,7 +22,6 @@ const validateMedicalRecord = [
     .isString()
     .withMessage("Patient ID must be a valid string."),
 
-  // Status Validation
   body("status")
     .optional()
     .trim()
@@ -30,7 +29,6 @@ const validateMedicalRecord = [
     .isIn(["DRAFT", "FINAL"])
     .withMessage("Status must be either 'DRAFT' or 'FINAL'."),
 
-  // Text Fields (Optional)
   body("diagnosis")
     .optional()
     .isString()
@@ -51,7 +49,6 @@ const validateMedicalRecord = [
     .isString()
     .withMessage("Notes must be a text string."),
 
-  // Medications Array Validation
   body("medications")
     .optional()
     .isArray()
@@ -65,7 +62,6 @@ const validateMedicalRecord = [
   body("medications.*.duration").optional().isString(),
   body("medications.*.deliveryMethod").optional().isString(),
 
-  // Medical Observations Array Validation
   body("medicalObservations")
     .optional()
     .isArray()

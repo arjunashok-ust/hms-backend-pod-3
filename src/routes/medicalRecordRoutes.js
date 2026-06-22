@@ -31,7 +31,6 @@ router.delete(
   medicalRecordController.deleteMedicalRecord,
 );
 
-// --- SEPARATED PAGINATION ROUTES ---
 router.get(
   "/getAllRecords",
   authenticateToken,

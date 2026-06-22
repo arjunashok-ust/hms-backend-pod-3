@@ -3,11 +3,10 @@ const Users = require("../models/Users");
 
 exports.getAllEmployees = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // 1. Build dynamic match stage for filters
     let matchStage = {
       name: { $exists: true, $ne: "" },
       employeeCode: { $exists: true, $ne: null },
@@ -28,23 +27,39 @@ exports.getAllEmployees = async (req, res) => {
       ];
     }
 
-    // 2. Fetch Global Stats for the Dashboard Cards
-    // (This ignores current pagination/filters so dashboard numbers are absolute)
     const totalStats = await Employees.aggregate([
-      { $match: { name: { $exists: true, $ne: "" }, employeeCode: { $exists: true, $ne: null } } },
+      {
+        $match: {
+          name: { $exists: true, $ne: "" },
+          employeeCode: { $exists: true, $ne: null },
+        },
+      },
       {
         $group: {
           _id: null,
           total: { $sum: 1 },
-          pending: { $sum: { $cond: [{ $eq: ["$status", "ADMIN_APPROVAL_PENDING"] }, 1, 0] } },
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "ADMIN_APPROVAL_PENDING"] }, 1, 0],
+            },
+          },
           verified: { $sum: { $cond: [{ $eq: ["$status", "ACTIVE"] }, 1, 0] } },
-          inactive: { $sum: { $cond: [{ $eq: ["$status", "INACTIVE"] }, 1, 0] } },
-          firstLogin: { $sum: { $cond: [{ $eq: ["$status", "PASSWORD_CHANGE_PENDING"] }, 1, 0] } }
-        }
-      }
+          inactive: {
+            $sum: { $cond: [{ $eq: ["$status", "INACTIVE"] }, 1, 0] },
+          },
+          firstLogin: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "PASSWORD_CHANGE_PENDING"] }, 1, 0],
+            },
+          },
+        },
+      },
     ]);
 
-    const stats = totalStats.length > 0 ? totalStats[0] : { total: 0, pending: 0, verified: 0, inactive: 0, firstLogin: 0 };
+    const stats =
+      totalStats.length > 0
+        ? totalStats[0]
+        : { total: 0, pending: 0, verified: 0, inactive: 0, firstLogin: 0 };
 
     const employees = await Employees.aggregate([
       { $match: matchStage },
@@ -100,11 +115,20 @@ exports.getAllEmployees = async (req, res) => {
   }
 };
 
-// ... keep your existing update/delete/approve/reject functions below
-
 exports.deleteEmployee = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const targetUser = await Users.findOne({ employeeID: id });
+    if (targetUser?.role === "ADMIN") {
+      const userPermissions = req.user?.permissions || [];
+      if (!userPermissions.includes("DELETE_ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access Denied: You lack the DELETE_ADMIN permission required to remove an Administrator.",
+        });
+      }
+    }
 
     await Employees.findOneAndDelete({ employeeCode: id });
     await Users.findOneAndDelete({ employeeID: id });
@@ -120,10 +144,22 @@ exports.updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    const targetUser = await Users.findOne({ employeeID: id });
+    if (targetUser?.role === "ADMIN") {
+      const userPermissions = req.user?.permissions || [];
+      if (!userPermissions.includes("UPDATE_ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access Denied: You lack the UPDATE_ADMIN permission required to modify an Administrator.",
+        });
+      }
+    }
+
     const employeeUpdates = { ...updates };
     delete employeeUpdates._id;
     delete employeeUpdates.employeeCode;
-    delete employeeUpdates.role;
+    delete employeeUpdates.role; 
 
     const updatedProfile = await Employees.findOneAndUpdate(
       { employeeCode: id },
@@ -216,6 +252,8 @@ exports.rejectEmployee = async (req, res) => {
     res.status(200).json({ message: "Employee rejected successfully" });
   } catch (error) {
     console.error("Error rejecting employee:", error);
-    res.status(500).json({ message: error.message || "Approval rejection failed" });
+    res
+      .status(500)
+      .json({ message: error.message || "Approval rejection failed" });
   }
 };

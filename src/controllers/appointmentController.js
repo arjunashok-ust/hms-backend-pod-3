@@ -4,8 +4,6 @@ const Users = require("../models/Users");
 const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
 
-// Replace these two functions at the top of your controller:
-
 exports.getAppointmentStats = async (req, res) => {
   try {
     const userRole = req.user?.role?.toUpperCase();
@@ -20,12 +18,23 @@ exports.getAppointmentStats = async (req, res) => {
     }
 
     const total = await Appointments.countDocuments(matchStage);
-    const completed = await Appointments.countDocuments({ ...matchStage, status: "Completed" });
-    const booked = await Appointments.countDocuments({ ...matchStage, status: "Scheduled" });
-    const cancelled = await Appointments.countDocuments({ ...matchStage, status: "Cancelled" });
-    
-    // Using regex for case-insensitive matching (Pending vs PENDING)
-    const pending = await Appointments.countDocuments({ ...matchStage, status: { $regex: /^pending$/i } });
+    const completed = await Appointments.countDocuments({
+      ...matchStage,
+      status: "Completed",
+    });
+    const booked = await Appointments.countDocuments({
+      ...matchStage,
+      status: "Scheduled",
+    });
+    const cancelled = await Appointments.countDocuments({
+      ...matchStage,
+      status: "Cancelled",
+    });
+
+    const pending = await Appointments.countDocuments({
+      ...matchStage,
+      status: { $regex: /^pending$/i },
+    });
 
     res.status(200).json({ total, completed, booked, cancelled, pending });
   } catch (error) {
@@ -38,10 +47,9 @@ exports.getRecentAppointments = async (req, res) => {
   try {
     const userRole = req.user?.role?.toUpperCase();
     const employeeID = req.user?.employeeID;
-    
-    // Pagination parameters
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     let matchStage = {};
@@ -94,7 +102,9 @@ exports.getRecentAppointments = async (req, res) => {
       },
     ]);
 
-    const total = appointments[0].metadata[0] ? appointments[0].metadata[0].total : 0;
+    const total = appointments[0].metadata[0]
+      ? appointments[0].metadata[0].total
+      : 0;
     const data = appointments[0].data;
 
     res.status(200).json({
@@ -104,8 +114,8 @@ exports.getRecentAppointments = async (req, res) => {
         total,
         page,
         pages: Math.ceil(total / limit),
-        limit
-      }
+        limit,
+      },
     });
   } catch (error) {
     console.error("Get Recent Appointments Error:", error);
@@ -144,7 +154,6 @@ exports.getDoctorsList = async (req, res) => {
     res.status(500).json({ message: "Error fetching doctors list" });
   }
 };
-
 
 const normalizeToUTCWithoutTime = (dateInput) => {
   const d = new Date(dateInput);
@@ -375,24 +384,17 @@ exports.getPatientAppointments = async (req, res) => {
   }
 };
 
-// ... existing imports and methods ...
-
 exports.getAllAppointments = async (req, res) => {
   try {
     const userRole = req.user?.role?.toUpperCase();
     const employeeID = req.user?.employeeID;
 
-    // 1. Build the dynamic match stage based on who is asking
     let matchStage = {};
     if (userRole === "DOCTOR") {
       matchStage = { doctorEmployeeID: employeeID };
     } else if (userRole === "PATIENT") {
       matchStage = { patientId: req.user.UHID };
     }
-    // Admin/Receptionist sees everything, so matchStage remains empty {}
-
-    // 2. Fetch the appointments. We select only the fields needed for the dropdowns
-    // to keep the payload size small and fast.
     const appointments = await Appointments.find(matchStage)
       .select("appointmentCode patientId doctorEmployeeID date timeSlot status")
       .sort({ createdAt: -1 });

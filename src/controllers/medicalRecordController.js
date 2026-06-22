@@ -3,9 +3,6 @@ const Employees = require("../models/Employees");
 const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
 
-// ==========================================
-// 1. CREATE RECORD
-// ==========================================
 exports.createMedicalRecord = async (req, res) => {
   try {
     const {
@@ -80,9 +77,6 @@ exports.createMedicalRecord = async (req, res) => {
   }
 };
 
-// ==========================================
-// 2. UPDATE RECORD
-// ==========================================
 const validateUpdatePermissions = (record, userPermissions) => {
   if (record.status === "DELETED")
     return { status: 400, message: "Cannot update a deleted record." };
@@ -134,12 +128,10 @@ exports.updateMedicalRecord = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Medical record not found." });
 
-    if (record.status === 'FINAL'){
+    if (record.status === "FINAL") {
       return res
-      .status(409)
-      .json({success: false,
-        message: "Cannot edit finalized record"
-      })
+        .status(409)
+        .json({ success: false, message: "Cannot edit finalized record" });
     }
 
     const permissionError = validateUpdatePermissions(record, userPermissions);
@@ -181,9 +173,6 @@ exports.updateMedicalRecord = async (req, res) => {
   }
 };
 
-// ==========================================
-// 3. DELETE RECORD
-// ==========================================
 exports.deleteMedicalRecord = async (req, res) => {
   try {
     const { id } = req.params;
@@ -216,17 +205,14 @@ exports.deleteMedicalRecord = async (req, res) => {
   }
 };
 
-// --- Helper function for server-side filtering & pagination ---
 const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // 1. Build dynamic filter
     let filter = { status: { $ne: "DELETED" }, ...baseFilter };
 
-    // Explicitly check for exact matches if query params exist
     if (req.query.patientId) {
       filter.patientId = req.query.patientId;
     }
@@ -241,15 +227,13 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
       const endDate = new Date(req.query.date);
       endDate.setHours(23, 59, 59, 999);
 
-      // Target the default visitDate field from your schema
       filter.visitDate = { $gte: startDate, $lte: endDate };
     }
 
-    // 2. Execute Count and Find concurrently
     const [total, records] = await Promise.all([
       MedicalRecord.countDocuments(filter),
       MedicalRecord.find(filter)
-        .sort({ visitDate: -1, createdAt: -1 }) // Primary sort by visit date
+        .sort({ visitDate: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit),
     ]);
@@ -272,16 +256,10 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   }
 };
 
-// ==========================================
-// 4. FETCH ALL RECORDS (Admin / Reception)
-// ==========================================
 exports.getAllMedicalRecords = (req, res) => {
   return getPaginatedRecords(req, res, {});
 };
 
-// ==========================================
-// 5. FETCH DOCTOR'S RECORDS (Doctors)
-// ==========================================
 exports.getMyMedicalRecords = (req, res) => {
   const employeeID = req.user?.employeeID;
   if (!employeeID) {
@@ -289,7 +267,6 @@ exports.getMyMedicalRecords = (req, res) => {
       .status(400)
       .json({ success: false, message: "No employee ID found in token." });
   }
-  // Hard-lock the query to this doctor's ID
   return getPaginatedRecords(req, res, { doctorEmployeeId: employeeID });
 };
 

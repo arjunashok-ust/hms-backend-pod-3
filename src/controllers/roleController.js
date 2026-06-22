@@ -1,6 +1,5 @@
 const Role = require("../models/Roles");
 
-
 exports.createRole = async (req, res) => {
   try {
     const { roleName, rolePermissions } = req.body;
@@ -25,13 +24,11 @@ exports.createRole = async (req, res) => {
       rolePermissions: rolePermissions || [],
     });
 
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message: "Role created successfully",
-        data: newRole,
-      });
+    return res.status(201).json({
+      success: true,
+      message: "Role created successfully",
+      data: newRole,
+    });
   } catch (error) {
     console.error("Create Role Error:", error);
     return res
@@ -40,7 +37,6 @@ exports.createRole = async (req, res) => {
   }
 };
 
-// GET all roles
 exports.getAllRoles = async (req, res) => {
   try {
     const roles = await Role.find({});
@@ -53,7 +49,6 @@ exports.getAllRoles = async (req, res) => {
   }
 };
 
-// UPDATE a role by Mongo _id
 exports.updateRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,13 +66,11 @@ exports.updateRole = async (req, res) => {
 
     await role.save();
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Role updated successfully",
-        data: role,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Role updated successfully",
+      data: role,
+    });
   } catch (error) {
     console.error("Update Role Error:", error);
     return res
@@ -86,11 +79,9 @@ exports.updateRole = async (req, res) => {
   }
 };
 
-// DELETE a role by Mongo _id
 exports.deleteRole = async (req, res) => {
   try {
     const { id } = req.params;
-
     const deletedRole = await Role.findByIdAndDelete(id);
     if (!deletedRole) {
       return res

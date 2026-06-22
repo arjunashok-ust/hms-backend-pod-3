@@ -4,7 +4,7 @@ const crypto = require("node:crypto");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 const Patients = require("../models/Patients");
-const Roles = require("../models/Roles")
+const Roles = require("../models/Roles");
 const sendMail = require("../utils/sendmail");
 
 exports.signupByUser = async (req, res) => {
@@ -119,6 +119,17 @@ exports.signUpByAdmin = async (req, res) => {
       weeklySchedule,
     } = req.body;
 
+    // 1. ADD SECURITY CHECK: Block unauthorized Admin creation
+    if (role.toUpperCase() === "ADMIN") {
+      const userPermissions = req.user?.permissions || [];
+      if (!userPermissions.includes("CREATE_ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access Denied: You do not have permission to create an Admin account.",
+        });
+      }
+    }
+
     const existingUser = await Employees.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "Email is already registered." });
@@ -130,7 +141,12 @@ exports.signUpByAdmin = async (req, res) => {
       "Pharmacist",
       "Lab_Tech",
     ]);
-    const hasMedicalRole = targetMedicalRoles.has(role);
+    // Standardize role to uppercase for checking
+    const hasMedicalRole =
+      targetMedicalRoles.has(role) ||
+      targetMedicalRoles.has(
+        role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+      );
 
     if (hasMedicalRole) {
       const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
@@ -165,7 +181,7 @@ exports.signUpByAdmin = async (req, res) => {
     const user = await Users.create({
       email,
       passwordHash,
-      role: role,
+      role: role.toUpperCase(), // Ensure role is saved cleanly
       employeeID: profile.employeeCode,
       verification_token,
       verification_expiry,
@@ -220,11 +236,9 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
     if (!clientType) {
-      return res
-        .status(400)
-        .json({
-          message: "Client type (MOBILE or WEB) is required for login.",
-        });
+      return res.status(400).json({
+        message: "Client type (MOBILE or WEB) is required for login.",
+      });
     }
 
     if (clientType === "MOBILE" && user.role !== "PATIENT") {
@@ -277,7 +291,7 @@ exports.login = async (req, res) => {
         employeeID: user.employeeID,
         email: user.email,
         role: user.role,
-        permissions: permissions
+        permissions: permissions,
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
@@ -309,7 +323,6 @@ exports.login = async (req, res) => {
 
 exports.changeFirstPassword = async (req, res) => {
   try {
-    // 1. Update the destructured variable here
     const { email, oldPassword, password } = req.body;
 
     const user = await Users.findOne({ email });
@@ -321,7 +334,6 @@ exports.changeFirstPassword = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
 
-    // 2. Pass 'password' into the bcrypt hash
     user.passwordHash = await bcrypt.hash(password, salt);
     user.status = "ACTIVE";
     await user.save();

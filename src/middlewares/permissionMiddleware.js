@@ -1,4 +1,3 @@
-
 const requirePermission = (requiredPermissions, requireAll = false) => {
   return (req, res, next) => {
     const userPermissions = req.user.permissions || [];
@@ -8,8 +7,8 @@ const requirePermission = (requiredPermissions, requireAll = false) => {
       : [requiredPermissions];
 
     const hasAccess = requireAll
-      ? permsToCheck.every((p) => userPermissions.includes(p)) // AND logic
-      : permsToCheck.some((p) => userPermissions.includes(p)); // OR logic (Default)
+      ? permsToCheck.every((p) => userPermissions.includes(p))
+      : permsToCheck.some((p) => userPermissions.includes(p));
 
     if (hasAccess) {
       return next();
