@@ -309,7 +309,8 @@ exports.login = async (req, res) => {
 
 exports.changeFirstPassword = async (req, res) => {
   try {
-    const { email, oldPassword, newPassword } = req.body;
+    // 1. Update the destructured variable here
+    const { email, oldPassword, password } = req.body;
 
     const user = await Users.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -320,7 +321,8 @@ exports.changeFirstPassword = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
 
-    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    // 2. Pass 'password' into the bcrypt hash
+    user.passwordHash = await bcrypt.hash(password, salt);
     user.status = "ACTIVE";
     await user.save();
 
@@ -329,8 +331,16 @@ exports.changeFirstPassword = async (req, res) => {
       { $set: { status: "ACTIVE" } },
     );
 
+    const roleExists = await Roles.findOne({ roleName: user.role });
+    const permissions = roleExists ? roleExists.rolePermissions : [];
+
     const token = jwt.sign(
-      { employeeID: user.employeeID, email: user.email, role: user.role },
+      {
+        employeeID: user.employeeID,
+        email: user.email,
+        role: user.role,
+        permissions: permissions,
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
     );

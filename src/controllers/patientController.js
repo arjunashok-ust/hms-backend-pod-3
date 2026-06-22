@@ -4,8 +4,39 @@ const bcrypt = require("bcryptjs");
 
 exports.getAllPatients = async (req, res) => {
   try {
-    const patients = await Patient.find().sort({ createdAt: -1 });
-    res.status(200).json(patients);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    let matchStage = {};
+
+    // Apply search filter if provided
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, "i");
+      matchStage.$or = [
+        { name: searchRegex },
+        { email: searchRegex },
+        { UHID: searchRegex },
+        { phone: searchRegex },
+      ];
+    }
+
+    // Run Count and Find concurrently for performance
+    const [total, patients] = await Promise.all([
+      Patient.countDocuments(matchStage),
+      Patient.find(matchStage).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: patients,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit,
+      },
+    });
   } catch (err) {
     res
       .status(500)
@@ -13,6 +44,7 @@ exports.getAllPatients = async (req, res) => {
   }
 };
 
+// ... keep all other functions (createPatient, updatePatient, etc.) exactly the same below
 exports.createPatient = async (req, res) => {
   try {
     const newPatient = new Patient(req.body);
