@@ -14,6 +14,13 @@ const patientSchema = new mongoose.Schema({
     emergencyContact: { type: String, default: null },
 });
 
+patientSchema.index({
+    name: "text",
+    email: "text",
+    phone: "text",
+    uhid: "text",
+})
+
 // pre hook
 patientSchema.pre('save', async function () {
     if (this.isNew) {

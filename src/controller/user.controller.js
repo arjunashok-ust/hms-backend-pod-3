@@ -37,11 +37,27 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 const getPatients = asyncHandler(async (req, res) => {
-    const patients = await Patient.find();
-    if (!patients) {
-        throw ERR.patientNotFound();
+    const selectedText = req.query.selectedText?.trim();
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const filter = {}
+
+    if (selectedText) {
+        filter.$text = { $search: selectedText }
     }
-    return res.status(200).json(patients);
+
+    const patients = await Patient.find(filter).skip(skip).limit(limit);
+
+    const total = await Patient.countDocuments();
+
+    return res.status(200).json({
+        data: patients,
+        total: total,
+        page: page,
+        totalPages: Math.ceil(total / limit),
+    })
 });
 
 const deletePatient = asyncHandler(async (req, res) => {

@@ -23,65 +23,65 @@ const validateCreateMedicalRecord = [
         .isString(),
 
     body("complaint")
-        .if(body("status").not().equals("Drafted"))
+        .if(body("status").not().equals("Draft"))
         .notEmpty()
         .withMessage("complaint is required")
         .isString(),
 
     body("symptoms")
-        .if(body("status").not().equals("Drafted"))
+        .if(body("status").not().equals("Draft"))
         .notEmpty()
         .withMessage("symptoms are required")
         .isString(),
 
     body("diagnosis")
-        .if(body("status").not().equals("Drafted"))
+        .if(body("status").not().equals("Draft"))
         .notEmpty()
         .withMessage("diagnosis is required")
         .isString(),
 
     body("medications")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isArray()
         .withMessage("medications must be an array"),
 
     body("medications.*.name")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString()
         .withMessage("medication name must be string"),
 
     body("medications.*.dosage")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("medications.*.frequency")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("medications.*.duration")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("medicalObservation")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isArray()
         .withMessage("medicalObservation must be an array"),
 
     body("medicalObservation.*.metricName")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("medicalObservation.*.metricValue")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("medicalObservation.*.recordedTime")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isISO8601()
         .withMessage("recordedTime must be a valid date"),
 
     body("notes")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("createdBy")
@@ -90,11 +90,11 @@ const validateCreateMedicalRecord = [
         .isString(),
 
     body("updatedBy")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isString(),
 
     body("updatedAt")
-        .optional()
+        .optional({ nullable: true, checkFalsy: true })
         .isISO8601()
         .withMessage("updatedAt must be a valid date"),
 

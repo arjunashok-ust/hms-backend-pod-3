@@ -6,6 +6,7 @@ const Department = require('../models/department.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
+const { trusted } = require('mongoose');
 
 const medicalRoles = new Set(['Doctor', 'Nurse']);
 
@@ -61,11 +62,14 @@ const deleteUserProfile = asyncHandler(async (req, res) => {
 });
 
 const getDashboardData = asyncHandler(async (req, res) => {
-    const [employeeCount, activeCount, pendingApprovalCount, pendingVerifyCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
+    const [employeeCount, activeCount, inactiveCount, verifiedCount, pendingApprovalCount, pendingVerifyCount, pendingFirstLoginCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
         Employee.countDocuments(),
         Employee.countDocuments({ status: 'Active' }),
+        Employee.countDocuments({ status: 'Inactive' }),
+        User.countDocuments({ isVerified: true }),
         User.countDocuments({ status: 'Pending' }),
         User.countDocuments({ isVerified: false }),
+        User.countDocuments({ firstLogin: true }),
         Patient.countDocuments(),
         Appointment.countDocuments(),
         Department.countDocuments(),
@@ -75,8 +79,11 @@ const getDashboardData = asyncHandler(async (req, res) => {
         message: 'Dashboard Data Fetched',
         employeeCount: employeeCount,
         activeCount: activeCount,
+        inactiveCount: inactiveCount,
+        verifiedCount: verifiedCount,
         pendingApprovalCount: pendingApprovalCount,
         pendingVerifyCount: pendingVerifyCount,
+        pendingFirstLoginCount: pendingFirstLoginCount,
         patientCount: patientCount,
         departmentCount: departmentCount,
         appointmentCount: appointmentCount,
@@ -84,16 +91,47 @@ const getDashboardData = asyncHandler(async (req, res) => {
 });
 
 const getUserEmployee = asyncHandler(async (req, res) => {
-    const employees = await Employee.find();
-    const users = await User.find();
+    const selectedText = req.query.selectedText?.trim();
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 5;
+
+    const skip = (page - 1) * limit;
+    const employeeFilter = {}
+
+    if (selectedText) {
+        employeeFilter.$text = { $search: selectedText };
+    }
+
+    const employees = await Employee.find(employeeFilter);
 
     const employeeMap = new Map(
         employees.map(emp => [emp.employeeCode, emp])
     );
 
+    // for filtering
+    const employeeCodes = employees.map(emp => emp.employeeCode);
+
+    const userFilter = {
+        role: { $ne: "Admin" }
+    }
+
+    if (employeeCodes.length > 0) {
+        userFilter.employeeId = { $in: employeeCodes }
+    } else {
+        return res.status(200).json({
+            data: [],
+            total: 0,
+            page,
+            totalPages: 0,
+        });
+    }
+
+    const total = await User.countDocuments(userFilter);
+    const users = await User.find(userFilter).skip(skip).limit(limit);
+
+
     const combined = users.map((u) => {
         const emp = employeeMap.get(u.employeeId);
-
         return {
             name: emp?.name || null,
             email: u.email,
@@ -113,15 +151,41 @@ const getUserEmployee = asyncHandler(async (req, res) => {
         };
     });
 
-    return res.status(200).json(combined);
+    return res.status(200).json({
+        data: combined,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+    });
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-    const employee = await Employee.find();
-    if (employee.length === 0) {
-        throw ERR.noUsersFound();
+    const selectedText = req.query.selectedText?.trim();
+    const selectedDepartment = req.query.selectedDepartment;
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 5;
+
+    const skip = (page - 1) * limit;
+    const filter = {}
+
+    if (selectedDepartment) {
+        filter.department = selectedDepartment;
     }
-    return res.status(200).json(employee);
+
+    if (selectedText) {
+        filter.$text = { $search: selectedText }
+    }
+
+    const total = await Employee.countDocuments(filter);
+
+    const employees = await Employee.find(filter).sort({ created_at: -1 }).skip(skip).limit(limit);
+
+    return res.status(200).json({
+        data: employees,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+    });
 });
 
 const getUsers = asyncHandler(async (req, res) => {
@@ -168,6 +232,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         message: "Profile updated successfully!",
     });
 });
+
 
 module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile, getUserEmployee };
 

@@ -77,11 +77,27 @@ const createAppointment = asyncHandler(async (req, res) => {
 });
 
 const getAllAppointments = asyncHandler(async (req, res) => {
-    const appointment = await Appointment.find();
-    if (appointment.length === 0) {
-        throw ERR.appointmentNotFound();
+    const selectedText = req.query.selectedText?.trim();
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const filter = {};
+
+    if(selectedText){
+        filter.$text = {$search: selectedText};
     }
-    return res.status(200).json(appointment);
+
+    const appointments = await Appointment.find(filter).skip(skip).limit(limit);
+
+    const total = await Appointment.countDocuments(filter);
+    
+    return res.status(200).json({
+        data: appointments,
+        total: total,
+        page: page,
+        totalPages: Math.ceil(total/limit),
+    });
 });
 
 const getDoctors = asyncHandler(async (req, res) => {

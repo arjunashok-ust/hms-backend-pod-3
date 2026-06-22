@@ -7,9 +7,9 @@ const MedicalRecordSchema = new mongoose.Schema(
         doctorId: { type: String, required: true },
         appointmentId: { type: String, required: true },
         patientId: { type: String, required: true },
-        complaint: { type: String, required: true },
-        symptoms: { type: String, required: true },
-        diagnosis: { type: String, required: true },
+        complaint: { type: String },
+        symptoms: { type: String },
+        diagnosis: { type: String },
         medications: [
             {
                 name: { type: String },
