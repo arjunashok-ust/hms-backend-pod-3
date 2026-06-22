@@ -31,12 +31,18 @@ router.delete(
   medicalRecordController.deleteMedicalRecord,
 );
 
-// FETCH ALL (Controller automatically enforces isolation)
+// --- SEPARATED PAGINATION ROUTES ---
 router.get(
   "/getAllRecords",
   authenticateToken,
-  requirePermission(["VIEW_ALL_RECORDS", "VIEW_MY_RECORDS"]),
+  requirePermission("VIEW_ALL_RECORDS"),
   medicalRecordController.getAllMedicalRecords,
+);
+router.get(
+  "/getMyRecords",
+  authenticateToken,
+  requirePermission("VIEW_MY_RECORDS"),
+  medicalRecordController.getMyMedicalRecords,
 );
 router.get(
   "/getRecord/:id",

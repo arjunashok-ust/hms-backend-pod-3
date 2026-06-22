@@ -9,7 +9,7 @@ const requirePermission = require("../middlewares/permissionMiddleware");
 router.post(
   "/create",
   authenticateToken,
-  requirePermission("CREATE_APPOINTMENT"),
+  requirePermission("CREATE_APPOINTMENT_FOR_ANY_DOCTOR"),
   appointmentController.addAppointment,
 );
 router.get(
@@ -39,7 +39,7 @@ router.put(
 router.get(
   "/slots",
   authenticateToken,
-  requirePermission("['VIEW_MY_APPOINTMENTS','VIEW_ALL_APPOINTMENTS']"),
+  requirePermission(['VIEW_MY_APPOINTMENTS','VIEW_ALL_APPOINTMENTS']),
   appointmentController.getAvailableSlots,
 );
 router.delete(
@@ -52,7 +52,7 @@ router.delete(
 router.get(
   "/my-appointments",
   authenticateToken,
-  requirePermission("['VIEW_MY_APPOINTMENTS','VIEW_ALL_APPOINTMENTS']"),
+  requirePermission(['VIEW_MY_APPOINTMENTS','VIEW_ALL_APPOINTMENTS']),
   appointmentController.getPatientAppointments,
 );
 

@@ -4,7 +4,7 @@ const generateId = require("../utils/generateID");
 const billSchema = new mongoose.Schema(
   {
     billCode: { type: String, unique: true },
-    patientID: {
+    patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patients",
       required: true,

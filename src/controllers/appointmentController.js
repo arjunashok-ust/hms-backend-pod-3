@@ -64,8 +64,8 @@ exports.getRecentAppointments = async (req, res) => {
     if (userRole === "DOCTOR") {
       matchStage = { doctorEmployeeID: employeeID };
     } else if (userRole === "PATIENT") {
-      // Assuming you have patientID in req.user for patients
-      matchStage = { patientID: req.user.UHID };
+      // Assuming you have patientId in req.user for patients
+      matchStage = { patientId: req.user.UHID };
     }
     // Admin sees everything, so matchStage remains empty {}
 
@@ -92,7 +92,7 @@ exports.getRecentAppointments = async (req, res) => {
       {
         $project: {
           appointmentCode: 1,
-          patientID: 1,
+          patientId: 1,
           doctorEmployeeID: 1,
           date: 1,
           timeSlot: 1,
@@ -158,7 +158,7 @@ exports.getAvailableSlots = async (req, res) => {
 
     const existingAppointments = await Appointments.find({
       doctorEmployeeID: doctorId,
-      date: dateObj, 
+      date: dateObj,
       status: { $in: ["Scheduled", "Pending"] },
     });
 
@@ -178,10 +178,10 @@ exports.getAvailableSlots = async (req, res) => {
 
 exports.addAppointment = async (req, res) => {
   try {
-    const { patientID, doctorEmployeeID, date, timeSlot } = req.body;
+    const { patientId, doctorEmployeeID, date, timeSlot } = req.body;
     const userRole = req.user?.role;
 
-    if (!patientID || !doctorEmployeeID || !date || !timeSlot) {
+    if (!patientId || !doctorEmployeeID || !date || !timeSlot) {
       return res
         .status(400)
         .json({ message: "Missing required appointment fields" });
@@ -195,7 +195,7 @@ exports.addAppointment = async (req, res) => {
     const exactDate = normalizeToUTCWithoutTime(date);
 
     const patientConflict = await Appointments.findOne({
-      patientID: patientID,
+      patientId: patientId,
       date: exactDate,
       timeSlot: timeSlot,
       status: { $in: ["Scheduled", "Pending"] },
@@ -207,8 +207,7 @@ exports.addAppointment = async (req, res) => {
           message:
             "You already have an active appointment booked for this exact time slot.",
         });
-      }
-      else{
+      } else {
         return res.status(409).json({
           message:
             "This patient already have an active appointment booked for this exact time slot with another doctor.",
@@ -235,7 +234,7 @@ exports.addAppointment = async (req, res) => {
       userRole === "PATIENT" ? null : req.user.employeeID;
 
     const newAppointment = await Appointments.create({
-      patientID,
+      patientId,
       doctorEmployeeID,
       date: exactDate,
       timeSlot,
@@ -255,11 +254,11 @@ exports.addAppointment = async (req, res) => {
 exports.updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { patientID, doctorEmployeeID, date, timeSlot, status } = req.body;
+    const { patientId, doctorEmployeeID, date, timeSlot, status } = req.body;
 
     const updatedApt = await Appointments.findOneAndUpdate(
       { appointmentCode: id },
-      { patientID, doctorEmployeeID, date, timeSlot, status },
+      { patientId, doctorEmployeeID, date, timeSlot, status },
       { new: true },
     );
 
@@ -307,7 +306,7 @@ exports.getPatientAppointments = async (req, res) => {
     }
 
     const appointments = await Appointments.aggregate([
-      { $match: { patientID: patient.UHID } },
+      { $match: { patientId: patient.UHID } },
 
       { $sort: { date: 1 } },
 
@@ -338,7 +337,7 @@ exports.getPatientAppointments = async (req, res) => {
   } catch (error) {
     console.error("Get Patient Appointments Error:", error);
     res.status(500).json({ message: "Error fetching your appointments" });
-  }  
+  }
 };
 
 // ... existing imports and methods ...
@@ -353,14 +352,14 @@ exports.getAllAppointments = async (req, res) => {
     if (userRole === "DOCTOR") {
       matchStage = { doctorEmployeeID: employeeID };
     } else if (userRole === "PATIENT") {
-      matchStage = { patientID: req.user.UHID };
+      matchStage = { patientId: req.user.UHID };
     }
     // Admin/Receptionist sees everything, so matchStage remains empty {}
 
     // 2. Fetch the appointments. We select only the fields needed for the dropdowns
     // to keep the payload size small and fast.
     const appointments = await Appointments.find(matchStage)
-      .select("appointmentCode patientID doctorEmployeeID date timeSlot status")
+      .select("appointmentCode patientId doctorEmployeeID date timeSlot status")
       .sort({ createdAt: -1 });
 
     res.status(200).json(appointments);

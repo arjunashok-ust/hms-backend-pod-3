@@ -4,7 +4,7 @@ const generateId = require("../utils/generateID");
 const appointmentsSchema = new mongoose.Schema(
   {
     appointmentCode: { type: String, unique: true },
-    patientID: {
+    patientId: {
       type: String,
       ref: "Patients",
       required: true,

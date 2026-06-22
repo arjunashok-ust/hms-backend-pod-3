@@ -43,11 +43,12 @@ const buildPatientUpdatePayload = (body, currentAddress) => {
   if (dob) payload.dob = dob;
   if (bloodGroup !== undefined) payload.bloodGroup = bloodGroup;
   if (allergies !== undefined) payload.allergies = allergies;
-  
+
   if (emergencyContact !== undefined) {
-    payload.emergencyContact = typeof emergencyContact === 'string' 
-      ? emergencyContact.trim() 
-      : emergencyContact;
+    payload.emergencyContact =
+      typeof emergencyContact === "string"
+        ? emergencyContact.trim()
+        : emergencyContact;
   }
 
   if (address) {
@@ -83,7 +84,8 @@ exports.updatePatient = async (req, res) => {
 
     if (isPatientRole && targetPatient.email !== email) {
       return res.status(403).json({
-        message: "Access Denied: You are not authorized to mutate this profile record.",
+        message:
+          "Access Denied: You are not authorized to mutate this profile record.",
       });
     }
 
@@ -167,12 +169,12 @@ exports.createPatientFromMobile = async (req, res) => {
       passwordHash,
       role: "PATIENT",
       status: "ACTIVE",
-      patientID: newPatient.UHID,
+      patientId: newPatient.UHID,
     });
 
     return res.status(201).json({
       message: "Patient registered successfully",
-      patientUHID: newUser.patientID,
+      patientUHID: newUser.patientId,
     });
   } catch (err) {
     console.error("Critical Registration Error:", err);
