@@ -63,8 +63,8 @@ exports.createMedicalRecord = async (req, res) => {
       medicalObservations: medicalObservations || [],
       notes,
       status: recordStatus,
-      createdBy: req.user.id,
-      updatedBy: req.user.id,
+      createdBy: req.user.employeeID,
+      updatedBy: req.user.employeeID,
     });
 
     return res.status(201).json({
@@ -133,6 +133,14 @@ exports.updateMedicalRecord = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Medical record not found." });
+
+    if (record.status === 'FINAL'){
+      return res
+      .status(409)
+      .json({success: false,
+        message: "Cannot edit finalized record"
+      })
+    }
 
     const permissionError = validateUpdatePermissions(record, userPermissions);
     if (permissionError)

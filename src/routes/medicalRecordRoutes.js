@@ -11,7 +11,7 @@ const medicalRecordController = require("../controllers/medicalRecordController"
 router.post(
   "/createRecord",
   authenticateToken,
-  requirePermission("CREATE_HEALTH_RECORD"),
+  requirePermission(["CREATE_RECORD", "CREATE_RECORD_FOR_ANYONE"]),
   validateMedicalRecord,
   validate,
   medicalRecordController.createMedicalRecord,
@@ -19,7 +19,7 @@ router.post(
 router.put(
   "/updateRecord/:id",
   authenticateToken,
-  requirePermission("UPDATE_HEALTH_RECORD"),
+  requirePermission("UPDATE_RECORD"),
   validateMedicalRecord,
   validate,
   medicalRecordController.updateMedicalRecord,
