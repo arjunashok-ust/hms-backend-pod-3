@@ -6,191 +6,167 @@ const Appointment = require("../models/Appointment");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
+const { getPagination, buildPaginationMeta } = require("../utils/pagination");
+
 //Patient SignUp
-exports.patientSignup = async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-      name,
-      phone,
-      gender,
-      date_of_birth,
-      bloodGroup,
-      allergies,
-      address,
-      emergencyContact,
-    } = req.body;
+exports.patientSignup = asyncHandler(async (req, res) => {
+  const {
+    email,
+    password,
+    name,
+    phone,
+    gender,
+    date_of_birth,
+    bloodGroup,
+    allergies,
+    address,
+    emergencyContact,
+  } = req.body;
 
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res.status(409).json({
-        message: "Email already registered",
-      });
-    }
-
-    const password_hash = await bcrypt.hash(password, 12);
-
-    const patient = await Patient.create({
-      email,
-      name,
-      phone,
-      gender,
-      date_of_birth,
-      bloodGroup,
-      allergies,
-      address,
-      emergencyContact,
-      status: true,
-    });
-
-    await User.create({
-      email,
-      password_hash,
-      role: "patient",
-      status: true,
-      isFirstLogin: false,
-    });
-
-    return res.status(201).json({
-      message: "Patient Registered Successfully",
-      patient,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Server Error During Signup",
-    });
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(409, "Email already registered", "EMAIL_EXISTS");
   }
-};
+
+  const password_hash = await bcrypt.hash(password, 12);
+
+  const patient = await Patient.create({
+    email,
+    name,
+    phone,
+    gender,
+    date_of_birth,
+    bloodGroup,
+    allergies,
+    address,
+    emergencyContact,
+    status: true,
+  });
+
+  await User.create({
+    email,
+    password_hash,
+    role: "patient",
+    status: true,
+    isFirstLogin: false,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Patient Registered Successfully", { patient }));
+});
 
 //=========================
 //Patient Login
 //=========================
 
-exports.patientLogin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+exports.patientLogin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-    const user = await User.findOne({
-      email,
-      role: "patient",
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        message: "Patient Not Found",
-      });
-    }
-
-    const isPasswordValid = Boolean(
-      await bcrypt.compare(password, user.password_hash),
-    );
-
-    if (isPasswordValid === false) {
-      return res.status(401).json({
-        message: "Invalid Credentials",
-      });
-    }
-
-    const patient = await Patient.findOne({ email });
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-      },
-    );
-
-    console.log(patient);
-    return res.status(200).json({
-      message: "Login Successful",
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      patient,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Server Error During Login",
-    });
+  const user = await User.findOne({ email, role: "patient" });
+  if (!user) {
+    throw new ApiError(404, "Patient Not Found", "PATIENT_NOT_FOUND");
   }
-};
+
+  const isPasswordValid = Boolean(
+    await bcrypt.compare(password, user.password_hash)
+  );
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid Credentials", "INVALID_CREDENTIALS");
+  }
+
+  const patient = await Patient.findOne({ email });
+
+  const token = jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    }
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, "Login Successful", {
+      token,
+      user: { id: user._id, email: user.email, role: user.role },
+      patient,
+    })
+  );
+});
 
 //=============================
 //Update Patient Profile
 //=============================
-exports.updatePatientProfile = async (req, res) => {
-  try {
-    console.log("REQ USER:", req.user);
+exports.updatePatientProfile = asyncHandler(async (req, res) => {
+  const patient = await Patient.findOne({ email: req.user.email });
 
-    const patient = await Patient.findOne({
-      email: req.user.email,
-    });
-
-    console.log("PATIENT:", patient);
-
-    if (!patient) {
-      return res.status(404).json({
-        message: "Patient Not Found",
-      });
-    }
-
-    Object.assign(patient, req.body);
-
-    await patient.save();
-
-    return res.status(200).json({
-      message: "Profile Updated Successfully",
-      patient,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Server Error During Update",
-    });
+  if (!patient) {
+    throw new ApiError(404, "Patient Not Found", "PATIENT_NOT_FOUND");
   }
-};
 
-//Get All Doctors
-exports.getAllDoctors = async (req, res) => {
-  try {
-    const doctorUsers = await User.find({
-      role: "doctor",
-      status: true,
-    });
+  Object.assign(patient, req.body);
+  await patient.save();
 
-    const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Profile Updated Successfully", { patient }));
+});
 
-    const doctors = await Employee.find({
-      employeeId: {
-        $in: employeeIds,
-      },
-      status: true,
-    });
+//=============================
+//Get All Patients (PAGINATED)
+//=============================
+exports.getAllPatients = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
 
-    return res.status(200).json({
-      success: true,
-      doctors,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Server Error During Get Doctors",
-    });
+  const filter = {};
+  if (req.query.status !== undefined) {
+    filter.status = req.query.status === "true";
   }
-};
+
+  const totalCount = await Patient.countDocuments(filter);
+
+  const patients = await Patient.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const meta = buildPaginationMeta(page, limit, totalCount);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Patients fetched successfully", patients, meta));
+});
+
+//Get All Doctors (PAGINATED)
+exports.getAllDoctors = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+
+  const doctorUsers = await User.find({ role: "doctor", status: true });
+  const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
+
+  const totalCount = await Employee.countDocuments({
+    employeeId: { $in: employeeIds },
+    status: true,
+  });
+
+  const doctors = await Employee.find({
+    employeeId: { $in: employeeIds },
+    status: true,
+  })
+    .skip(skip)
+    .limit(limit);
+
+  const meta = buildPaginationMeta(page, limit, totalCount);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Doctors fetched successfully", doctors, meta));
+});

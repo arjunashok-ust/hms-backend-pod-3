@@ -3,11 +3,11 @@ const Counter = require('./Counter');
 
 const employeeSchema = mongoose.Schema({
 
-    email: { type: String, unique: true, required: true },
+    email: { type: String, required: true, lowercase: true, trim: true,unique: true },
     employeeId: { type: String, unique: true },
     name: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
-    department: { type: String, required: true },
+    department: { type: String,enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Administration','ICU','Front Office'], required: true },
     designation: { type: String, required: true },
     status: { type: Boolean, default: true },
     joiningDate: { type: Date },

@@ -1,7 +1,8 @@
 const Employee = require("../models/Employee");
 const User = require("../models/User");
-const Patient=require("../models/Patient");
-const Appointment=require("../models/Appointment");
+const Patient = require("../models/Patient");
+const Appointment = require("../models/Appointment");
+const Role = require("../models/Role");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -10,43 +11,22 @@ const crypto = require("node:crypto");
 const sendEmployeeCredentials = require("../utils/mailService");
 const sendFormSignupMail = require("../utils/formSignupMail");
 
-exports.dashboardStats = async (req, res) => {
-  try {
-    // TOTAL EMPLOYEES
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
+const { getPagination, buildPaginationMeta } = require("../utils/pagination");
 
-    const totalEmployees = await Employee.countDocuments();
+exports.dashboardStats = asyncHandler(async (req, res) => {
+  const totalEmployees = await Employee.countDocuments();
+  const activeEmployees = await Employee.countDocuments({ status: true });
+  const pendingApprovals = await Employee.countDocuments({ status: false });
+  const pendingVerifications = await User.countDocuments({ isFirstLogin: true });
+  const totalPatients = await Patient.countDocuments();
+  const totalAppointments = await Appointment.countDocuments();
+  const totalDepartments = await Employee.distinct("department");
 
-    // ACTIVE EMPLOYEES
-
-    const activeEmployees = await Employee.countDocuments({
-      status: true,
-    });
-
-    // PENDING APPROVALS
-
-    const pendingApprovals = await Employee.countDocuments({
-      status: false,
-    });
-
-    // PENDING VERIFICATIONS
-
-    const pendingVerifications = await User.countDocuments({
-      isFirstLogin: true,
-    });
-
-    // TOTAL PATIENTS
-
-    const totalPatients = await Patient.countDocuments();
-
-    // TOTAL APPOINTMENTS
-
-    const totalAppointments = await Appointment.countDocuments();
-
-    // DEPARTMENTS COUNT
-
-    const totalDepartments = await Employee.distinct("department");
-
-    return res.status(200).json({
+  return res.status(200).json(
+    new ApiResponse(200, "Dashboard stats fetched successfully", {
       totalEmployees,
       activeEmployees,
       pendingApprovals,
@@ -54,585 +34,546 @@ exports.dashboardStats = async (req, res) => {
       totalPatients,
       totalAppointments,
       totalDepartments: totalDepartments.length,
-    });
-  } catch (error) {
-    console.error("Dashboard Error:", error);
-
-    return res.status(500).json({
-      message: "Unable to fetch dashboard stats",
-    });
-  }
-};
+    })
+  );
+});
 
 //Form Based SignUp
-exports.formSignUp = async (req, res) => {
-    try {
-        const {
-            email,
-            name,
-            password,
-            role,
-            phone,
-            department,
-            designation,
-            joiningDate,
-            specialization,
-            medicalRegistrationNo,
-            qualification,} = req.body;
+exports.formSignUp = asyncHandler(async (req, res) => {
+  const {
+    email,
+    name,
+    password,
+    role,
+    phone,
+    department,
+    designation,
+    joiningDate,
+    specialization,
+    medicalRegistrationNo,
+    qualification,
+  } = req.body;
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(401).json({ message: "User already exists" });
-        }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(401, "User already exists", "USER_EXISTS");
+  }
 
-        const existingEmployee = await Employee.findOne({ email });
-        if (existingEmployee) {
-            return res.status(401).json({ message: "User already exists" });
-        }
+  const existingEmployee = await Employee.findOne({ email });
+  if (existingEmployee) {
+    throw new ApiError(401, "User already exists", "USER_EXISTS");
+  }
 
-        if (role === "doctor") {
-            if (!medicalRegistrationNo) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Medical Registration Number is required",
-                });
-            }
-
-            const existingMedicalRegistrationNo = await Employee.findOne({ medicalRegistrationNo });
-
-            if (existingMedicalRegistrationNo) {
-                return res.status(400).json({
-                    success: false,
-                    message:"Medical Registration Number already exists, provide a different one",
-                });
-            }
-        }
-
-        const password_hash = await bcrypt.hash(password, 12);
-        const profile = await Employee.create({
-            email,
-            name,
-            phone,
-            department,
-            designation,
-            status:false,
-            joiningDate,
-            medicalRegistrationNo,
-            specialization,
-            qualification,
-        });
-        const user = await User.create({
-            email,
-            status:false,
-            password_hash,
-            role,
-            employeeId: profile.employeeId,
-            isFirstLogin: false,
-        });
-
-        const empId=await profile.employeeId;
-        try {
-            await sendFormSignupMail("hmsadmin1235@gmail.com", empId);
-            console.log("Email sent successfully");
-        } catch (mailError) {
-            console.error("Mail Service Error:", mailError.message);
-        }
-        return res.status(201).json({
-            message: "Registered but Admin approval pending",
-            employee: profile,
-            user: user,
-        });
-    } catch (error) {
-        console.error("Unable to fetch current user", error);
-        return res.status(500).json({ message: error.message });
+  if (role === "doctor") {
+    if (!medicalRegistrationNo) {
+      throw new ApiError(
+        400,
+        "Medical Registration Number is required",
+        "VALIDATION_ERROR"
+      );
     }
-}
 
+    const existingMedicalRegistrationNo = await Employee.findOne({
+      medicalRegistrationNo,
+    });
+
+    if (existingMedicalRegistrationNo) {
+      throw new ApiError(
+        400,
+        "Medical Registration Number already exists, provide a different one",
+        "DUPLICATE_REGISTRATION_NO"
+      );
+    }
+  }
+
+  const password_hash = await bcrypt.hash(password, 12);
+  const profile = await Employee.create({
+    email,
+    name,
+    phone,
+    department,
+    designation,
+    status: false,
+    joiningDate,
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+  });
+
+  const user = await User.create({
+    email,
+    status: false,
+    password_hash,
+    role,
+    employeeId: profile.employeeId,
+    isFirstLogin: false,
+  });
+
+  const empId = profile.employeeId;
+  try {
+    await sendFormSignupMail("hmsadmin1235@gmail.com", empId);
+    console.log("Email sent successfully");
+  } catch (mailError) {
+    console.error("Mail Service Error:", mailError.message);
+  }
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Registered but Admin approval pending", { employee: profile, user }));
+});
 
 // ===============================
 // ADMIN SIGNUP
 // ===============================
 
-exports.signup = async (req, res) => {
-    try {
-        const {
-            email,
-            name,
-            role,
-            phone,
-            department,
-            designation,
-            status,
-            joiningDate,
-            specialization,
-            medicalRegistrationNo,
-            qualification,
-            consultationFee,
-            availabilitySlots,
-        } = req.body;
+exports.signup = asyncHandler(async (req, res) => {
+  const {
+    email,
+    name,
+    role,
+    phone,
+    department,
+    designation,
+    status,
+    joiningDate,
+    specialization,
+    medicalRegistrationNo,
+    qualification,
+    consultationFee,
+    availabilitySlots,
+  } = req.body;
 
-        // BLOCK ADMIN
-        if (["admin", "owner"].includes(role)) {
-            return res.status(403).json({
-                message: "Cannot create this role",
-            });
-        }
+  // BLOCK ADMIN
+  if (["admin", "owner"].includes(role)) {
+    throw new ApiError(403, "Cannot create this role", "FORBIDDEN_ROLE");
+  }
 
-        // VALIDATE DOCTOR REGISTRATION NUMBER
-
-        if (role === "doctor") {
-            if (!medicalRegistrationNo) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Medical Registration Number is required",
-                });
-            }
-
-            const existingMedicalRegistrationNo = await Employee.findOne({ medicalRegistrationNo });
-
-            if (existingMedicalRegistrationNo) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Medical Registration Number already exists, provide a different one",
-                });
-            }
-        }
-
-        // CHECK EXISTING EMPLOYEE
-
-        const existEmployee = await Employee.findOne({ email });
-
-        if (existEmployee) {
-            return res.status(409).json({
-                message: "Email Id Already Registered",
-            });
-        }
-
-        // CHECK EXISTING USER
-
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return res.status(409).json({
-                message: "User already exists",
-            });
-        }
-
-        // GENERATE TEMP PASSWORD
-
-        const tempPassword = crypto.randomBytes(4).toString("hex");
-
-        // HASH PASSWORD
-
-        const password_hash = await bcrypt.hash(tempPassword, 12);
-
-        // CREATE EMPLOYEE PROFILE
-
-        const profile = await Employee.create({
-            email,
-            name,
-            phone,
-            department,
-            designation,
-            status,
-            joiningDate,
-            medicalRegistrationNo,
-            specialization,
-            qualification,
-            consultationFee,
-            availabilitySlots,
-        });
-
-        // CREATE USER
-
-        const user = await User.create({
-            email,
-            status,
-            password_hash,
-            role,
-            employeeId: profile.employeeId,
-            isFirstLogin: true,
-        });
-
-        // SEND MAIL
-
-        try {
-            await sendEmployeeCredentials(email, tempPassword);
-            console.log("Email sent successfully");
-        } catch (mailError) {
-            console.error("Mail Service Error:", mailError.message);
-        }
-
-        console.log("Temporary Password:", tempPassword);
-
-        return res.status(201).json({
-            message: "Employee Registered Successfully",
-            employee: profile,
-            user: user,
-        });
-    } catch (err) {
-        console.error("Signup error:", err);
-
-        return res.status(500).json({
-            message: "Server error during signup",
-        });
+  // VALIDATE DOCTOR REGISTRATION NUMBER
+  if (role === "doctor") {
+    if (!medicalRegistrationNo) {
+      throw new ApiError(
+        400,
+        "Medical Registration Number is required",
+        "VALIDATION_ERROR"
+      );
     }
-};
+
+    if (consultationFee === undefined || consultationFee === null || consultationFee === "") {
+      throw new ApiError(
+        400,
+        "Consultation Fee is required",
+        "VALIDATION_ERROR"
+      );
+    }
+
+    const existingMedicalRegistrationNo = await Employee.findOne({
+      medicalRegistrationNo,
+    });
+
+    if (existingMedicalRegistrationNo) {
+      throw new ApiError(
+        400,
+        "Medical Registration Number already exists, provide a different one",
+        "DUPLICATE_REGISTRATION_NO"
+      );
+    }
+  }
+
+  // CHECK EXISTING EMPLOYEE
+  const existEmployee = await Employee.findOne({ email });
+  if (existEmployee) {
+    throw new ApiError(409, "Email Id Already Registered", "EMAIL_EXISTS");
+  }
+
+  // CHECK EXISTING USER
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(409, "User already exists", "USER_EXISTS");
+  }
+
+  // GENERATE TEMP PASSWORD
+  const tempPassword = crypto.randomBytes(4).toString("hex");
+  const password_hash = await bcrypt.hash(tempPassword, 12);
+
+  // CREATE EMPLOYEE PROFILE
+  const profile = await Employee.create({
+    email,
+    name,
+    phone,
+    department,
+    designation,
+    status,
+    joiningDate,
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    availabilitySlots,
+  });
+
+  // CREATE USER
+  const user = await User.create({
+    email,
+    status,
+    password_hash,
+    role,
+    employeeId: profile.employeeId,
+    isFirstLogin: true,
+  });
+
+  // SEND MAIL
+  try {
+    await sendEmployeeCredentials(email, tempPassword);
+    console.log("Email sent successfully");
+  } catch (mailError) {
+    console.error("Mail Service Error:", mailError.message);
+  }
+
+  console.log("Temporary Password:", tempPassword);
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Employee Registered Successfully", { employee: profile, user }));
+});
 
 // ===============================
 // LOGIN
 // ===============================
 
-exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+exports.login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-        // FIND USER
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User Not Found", "USER_NOT_FOUND");
+  }
 
-        const user = await User.findOne({
-            email,
-        });
+  if (!user.status) {
+    throw new ApiError(403, "Account disabled", "ACCOUNT_DISABLED");
+  }
 
-        if (!user) {
-            return res.status(404).json({
-                message: "User Not Found",
-            });
-        }
+  const isPasswordValid = Boolean(
+    await bcrypt.compare(password, user.password_hash)
+  );
 
-        // CHECK ACCOUNT STATUS
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+  }
 
-        if (!user.status) {
-            return res.status(403).json({
-                message: "Account disabled",
-            });
-        }
-
-        // VERIFY PASSWORD
-
-        const isPasswordValid = Boolean(await bcrypt.compare(password, user.password_hash));
-
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Invalid email or password" });
-        }
-
-        // GENERATE TOKEN
-
-        const token = jwt.sign(
-            {
-                email: user.email,
-                id: user._id,
-                role: user.role,
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN,
-            }
-        );
-
-        // FIRST LOGIN CHECK
-
-        if (user.isFirstLogin) {
-            return res.status(200).json({
-                message: "Password change required",
-                firstLogin: true,
-                token,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    role: user.role,
-                },
-            });
-        }
-
-        // NORMAL LOGIN
-
-        user.last_login = new Date();
-
-        await user.save();
-
-        return res.status(200).json({
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    } catch (err) {
-        console.error("Login error:", err);
-        return res.status(500).json({
-            message: "Server error during login",
-        });
+  const token = jwt.sign(
+    {
+      email: user.email,
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN,
     }
-};
+  );
+
+  if (user.isFirstLogin) {
+    return res.status(200).json(
+      new ApiResponse(200, "Password change required", {
+        firstLogin: true,
+        token,
+        user: { id: user._id, email: user.email, role: user.role },
+      })
+    );
+  }
+
+  user.last_login = new Date();
+  await user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, "Login successful", {
+      token,
+      user: { id: user._id, email: user.email, role: user.role },
+    })
+  );
+});
 
 // ===============================
 // RESET PASSWORD
 // ===============================
 
-exports.resetPassword = async (req, res) => {
-    try {
-        const { oldPassword, newPassword } = req.body;
-        // FIND USER
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
-        // ONLY FIRST LOGIN USERS
-        if (!user.isFirstLogin) {
-            return res.status(403).json({
-                message: "Password reset not allowed",
-            });
-        }
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
 
-        // VERIFY TEMP PASSWORD
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+  }
 
-        const isOldPasswordValid = Boolean(await bcrypt.compare(oldPassword, user.password_hash));
+  if (!user.isFirstLogin) {
+    throw new ApiError(403, "Password reset not allowed", "FORBIDDEN");
+  }
 
-        if (!isOldPasswordValid) {
-            return res.status(401).json({
-                message: "Invalid temporary password",
-            });
-        }
+  const isOldPasswordValid = Boolean(
+    await bcrypt.compare(oldPassword, user.password_hash)
+  );
 
-        // VALIDATE PASSWORD
+  if (!isOldPasswordValid) {
+    throw new ApiError(401, "Invalid temporary password", "INVALID_CREDENTIALS");
+  }
 
-        if (!newPassword || newPassword.length < 8) {
-            return res.status(400).json({
-                message: "Password must be at least 8 characters",
-            });
-        }
+  if (!newPassword || newPassword.length < 8) {
+    throw new ApiError(
+      400,
+      "Password must be at least 8 characters",
+      "VALIDATION_ERROR"
+    );
+  }
 
-        // HASH NEW PASSWORD
+  const password_hash = await bcrypt.hash(newPassword, 12);
 
-        const password_hash = await bcrypt.hash(newPassword, 12);
+  user.password_hash = password_hash;
+  user.isFirstLogin = false;
+  user.last_login = new Date();
+  await user.save();
 
-        // UPDATE USER
-
-        user.password_hash = password_hash;
-        user.isFirstLogin = false;
-        user.last_login = new Date();
-        await user.save();
-        return res.status(200).json({
-            message: "Password updated successfully",
-        });
-    } catch (err) {
-        console.error("Reset Password Error:", err);
-        return res.status(500).json({
-            message: "Server error during password reset",
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Password updated successfully"));
+});
 
 // ===============================
-// UPDATE EMPLOYEE
+// UPDATE EMPLOYEE (SELF)
 // ===============================
-exports.updateEmployeeById = async (req, res) => {
-    try {
-        const { employeeId } = req.params;
-        const {
-            name,
-            phone,
-            specialization,
-            consultationFee,
-            availabilitySlots,
-            department,
-            designation,
-        } = req.body;
+exports.updateEmployeeById = asyncHandler(async (req, res) => {
+  const { employeeId } = req.params;
+  const {
+    name,
+    phone,
+    specialization,
+    consultationFee,
+    availabilitySlots,
+    department,
+    designation,
+  } = req.body;
 
-        // FIND USER
+  const user = await User.findById(req.user.id).select("-password_hash -__v");
+  if (!user) {
+    throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+  }
 
-        const user = await User.findById(req.user.id).select("-password_hash -__v");
+  if (employeeId !== user.employeeId) {
+    throw new ApiError(403, "You can only update your own profile", "FORBIDDEN");
+  }
 
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
+  const existEmployee = await Employee.findOne({ employeeId });
+  if (!existEmployee) {
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
 
-        // ALLOW ONLY OWN PROFILE UPDATE
+  if (name) existEmployee.name = name;
+  if (phone) existEmployee.phone = phone;
+  if (specialization) existEmployee.specialization = specialization;
+  if (consultationFee) existEmployee.consultationFee = consultationFee;
+  if (availabilitySlots) existEmployee.availabilitySlots = availabilitySlots;
+  if (department) existEmployee.department = department;
+  if (designation) existEmployee.designation = designation;
 
-        if (employeeId !== user.employeeId) {
-            return res.status(403).json({
-                message: "You can only update your own profile",
-            });
-        }
+  await existEmployee.save();
 
-        // FIND EMPLOYEE
+  user.updated_at = new Date();
+  await user.save();
 
-        const existEmployee = await Employee.findOne({
-            employeeId,
-        });
-
-        if (!existEmployee) {
-            return res.status(404).json({
-                message: "Employee not found",
-            });
-        }
-
-        // UPDATE FIELDS
-
-        if (name) existEmployee.name = name;
-
-        if (phone) existEmployee.phone = phone;
-
-        if (specialization) existEmployee.specialization = specialization;
-
-        if (consultationFee) existEmployee.consultationFee = consultationFee;
-
-        if (availabilitySlots) existEmployee.availabilitySlots = availabilitySlots;
-
-        if (department) existEmployee.department = department;
-
-        if (designation) existEmployee.designation = designation;
-
-        // SAVE
-
-        await existEmployee.save();
-
-        user.updated_at = new Date();
-
-        await user.save();
-
-        return res.status(200).json({
-            message: `Employee with id ${existEmployee.employeeId} updated successfully`,
-        });
-    } catch (err) {
-        console.error("Update Profile Error:", err);
-
-        return res.status(500).json({
-            message: "Server error during updating employee",
-        });
-    }
-};
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      `Employee with id ${existEmployee.employeeId} updated successfully`,
+      { employee: existEmployee }
+    )
+  );
+});
 
 // ===============================
 // CURRENT USER
 // ===============================
 
-exports.currentUser = async (req, res) => {
-    try {
-        // FIND USER
-
-        const user = await User.findById(req.user.id).select("-password_hash -__v");
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
-
-        // FIND EMPLOYEE
-
-        const employee = await Employee.findOne({
-            employeeId: user.employeeId,
-        });
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee profile not found",
-            });
-        }
-
-        // RESPONSE
-
-        if (["doctor", "nurse", "lab_Tech", "pharmacist"].includes(user.role)) {
-            return res.status(200).json({
-                id: user.employeeId,
-                email: user.email,
-                role: user.role,
-                name: employee.name,
-                phone: employee.phone,
-                department: employee.department,
-                medicalRegistrationNo: employee.medicalRegistrationNo,
-                designation: employee.designation,
-                status:employee.status,
-            });
-        }
-
-        return res.status(200).json({
-            id: user.employeeId,
-            email: user.email,
-            role: user.role,
-            name: employee.name,
-            phone: employee.phone,
-            department: employee.department,
-            designation: employee.designation,
-            status:employee.status,
-        });
-    } catch (error) {
-        console.error("Unable to fetch current user", error);
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-//Get Employees
-exports.getEmployees = async (req, res) => {
-  try {
-    const employees = await Employee.find().sort({ createdAt: -1 });
-
-    const employeeData = await Promise.all(
-      employees.map(async (employee) => {
-        const user = await User.findOne({
-          employeeId: employee.employeeId,
-        });
-
-        return {
-          ...employee.toObject(),
-          role: user?.role || "",
-        };
-      })
-    );
-
-    return res.status(200).json({
-      success: true,
-      count: employeeData.length,
-      data: employeeData,
-    });
-
-  } catch (err) {
-    console.error(err);
-
-    return res.status(500).json({
-      message: "Server error during fetch employees",
-    });
+exports.currentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password_hash -__v");
+  if (!user) {
+    throw new ApiError(404, "User not found", "USER_NOT_FOUND");
   }
-};
 
-//Delete Employees
-exports.deleteEmployee = async (req, res) => {
-  try {
-    const { employeeId } = req.params;
-
-    const employee = await Employee.findOne({
-      employeeId,
-    });
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found",
-      });
-    }
-
-    await User.deleteOne({
-      employeeId,
-    });
-
-    await employee.deleteOne();
-
-    return res.status(200).json({
-      success: true,
-      message: "Employee deleted successfully",
-    });
-  } catch (err) {
-    console.error(err);
-
-    return res.status(500).json({
-      message: "Server error during delete employee",
-    });
+  const employee = await Employee.findOne({ employeeId: user.employeeId });
+  if (!employee) {
+    throw new ApiError(404, "Employee profile not found", "EMPLOYEE_NOT_FOUND");
   }
-};
+
+  const baseData = {
+    id: user.employeeId,
+    email: user.email,
+    role: user.role,
+    name: employee.name,
+    phone: employee.phone,
+    department: employee.department,
+    designation: employee.designation,
+    status: employee.status,
+    joiningDate: employee.joiningDate,
+    qualification: employee.qualification,
+  };
+
+  if (["doctor", "nurse", "lab_Tech", "pharmacist"].includes(user.role)) {
+    baseData.medicalRegistrationNo = employee.medicalRegistrationNo;
+    baseData.specialization = employee.specialization;
+    baseData.consultationFee = employee.consultationFee;
+    baseData.availabilitySlots = employee.availabilitySlots;
+  }
+
+  const roleDoc = await Role.findOne({ role_name: user.role }).select("role_permissions");
+  baseData.permissions = roleDoc?.role_permissions || [];
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Current user fetched successfully", baseData));
+});
+
+//===========================
+//Get Employees (PAGINATED)
+//===========================
+exports.getEmployees = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+
+  const totalCount = await Employee.countDocuments();
+
+  const employees = await Employee.find()
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const employeeData = await Promise.all(
+    employees.map(async (employee) => {
+      const user = await User.findOne({ employeeId: employee.employeeId });
+
+      return {
+        ...employee.toObject(),
+        role: user?.role || "",
+      };
+    })
+  );
+
+  const meta = buildPaginationMeta(page, limit, totalCount);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employees fetched successfully", employeeData, meta));
+});
+
+//===========================
+//Delete Employee
+//===========================
+exports.deleteEmployee = asyncHandler(async (req, res) => {
+  const { employeeId } = req.params;
+
+  const employee = await Employee.findOne({ employeeId });
+  if (!employee) {
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
+
+  await User.deleteOne({ employeeId });
+  await employee.deleteOne();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee deleted successfully"));
+});
+
+//===========================
+//Update Employee By Admin
+//===========================
+exports.updateEmployee = asyncHandler(async (req, res) => {
+  const { employeeId } = req.params;
+
+  const employee = await Employee.findOne({ employeeId });
+  if (!employee) {
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
+
+  Object.assign(employee, req.body);
+  await employee.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee updated successfully", { employee }));
+});
+
+//===========================
+//Get Pending Approvals (Employees awaiting admin sign-off after formSignUp)
+//===========================
+exports.getPendingApprovals = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+
+  const totalCount = await Employee.countDocuments({ status: false });
+
+  const pendingEmployees = await Employee.find({ status: false })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const data = await Promise.all(
+    pendingEmployees.map(async (employee) => {
+      const user = await User.findOne({ employeeId: employee.employeeId });
+
+      return {
+        employeeId: employee.employeeId,
+        email: employee.email,
+        role: user?.role || "",
+        isFirstLogin: user?.isFirstLogin ?? null,
+      };
+    })
+  );
+
+  const meta = buildPaginationMeta(page, limit, totalCount);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Pending approvals fetched successfully", data, meta));
+});
+
+//===========================
+//Approve Employee (activates both Employee profile and User login)
+//===========================
+exports.approveEmployee = asyncHandler(async (req, res) => {
+  const { employeeId } = req.params;
+
+  const employee = await Employee.findOne({ employeeId });
+  if (!employee) {
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
+
+  const user = await User.findOne({ employeeId });
+  if (!user) {
+    throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+  }
+
+  employee.status = true;
+  user.status = true;
+  await employee.save();
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee approved successfully", { employee }));
+});
+
+//===========================
+//Approval Stats
+//===========================
+exports.approvalStats = asyncHandler(async (req, res) => {
+  const pendingApprovals = await Employee.countDocuments({ status: false });
+  const verifiedUsers = await User.countDocuments({ isFirstLogin: false });
+  const inactiveAccounts = await User.countDocuments({ status: false });
+  const firstLoginPending = await User.countDocuments({ isFirstLogin: true });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Approval stats fetched successfully", {
+      pendingApprovals,
+      verifiedUsers,
+      inactiveAccounts,
+      firstLoginPending,
+    })
+  );
+});

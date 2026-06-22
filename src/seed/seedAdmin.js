@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 require("dotenv").config({ path: "../.env" });
 
-const Employee = require("./models/Employee");
-const User = require("./models/User");
+const Employee = require("../models/Employee");
+const User = require("../models/User");
 
   try {
     mongoose.connect(process.env.MONGO_URI);
