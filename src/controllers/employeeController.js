@@ -3,45 +3,104 @@ const Users = require("../models/Users");
 
 exports.getAllEmployees = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // 1. Build dynamic match stage for filters
+    let matchStage = {
+      name: { $exists: true, $ne: "" },
+      employeeCode: { $exists: true, $ne: null },
+    };
+
+    if (req.query.department) {
+      matchStage.department = req.query.department;
+    }
+    if (req.query.status) {
+      matchStage.status = req.query.status;
+    }
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, "i");
+      matchStage.$or = [
+        { name: searchRegex },
+        { email: searchRegex },
+        { employeeCode: searchRegex },
+      ];
+    }
+
+    // 2. Fetch Global Stats for the Dashboard Cards
+    // (This ignores current pagination/filters so dashboard numbers are absolute)
+    const totalStats = await Employees.aggregate([
+      { $match: { name: { $exists: true, $ne: "" }, employeeCode: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          pending: { $sum: { $cond: [{ $eq: ["$status", "ADMIN_APPROVAL_PENDING"] }, 1, 0] } },
+          verified: { $sum: { $cond: [{ $eq: ["$status", "ACTIVE"] }, 1, 0] } },
+          inactive: { $sum: { $cond: [{ $eq: ["$status", "INACTIVE"] }, 1, 0] } },
+          firstLogin: { $sum: { $cond: [{ $eq: ["$status", "PASSWORD_CHANGE_PENDING"] }, 1, 0] } }
+        }
+      }
+    ]);
+
+    const stats = totalStats.length > 0 ? totalStats[0] : { total: 0, pending: 0, verified: 0, inactive: 0, firstLogin: 0 };
+
     const employees = await Employees.aggregate([
-      {
-        $match: {
-          name: { $exists: true, $ne: "" },
-          employeeCode: { $exists: true, $ne: null },
-        },
-      },
+      { $match: matchStage },
       { $sort: { createdAt: -1 } },
-
       {
-        $lookup: {
-          from: "users",
-          localField: "employeeCode",
-          foreignField: "employeeID",
-          as: "userInfo",
-        },
-      },
-
-      {
-        $addFields: {
-          role: { $arrayElemAt: ["$userInfo.role", 0] },
-          status: { $ifNull: ["$status", "INACTIVE"] },
-        },
-      },
-
-      {
-        $project: {
-          userInfo: 0,
-          __v: 0,
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "users",
+                localField: "employeeCode",
+                foreignField: "employeeID",
+                as: "userInfo",
+              },
+            },
+            {
+              $addFields: {
+                role: { $arrayElemAt: ["$userInfo.role", 0] },
+                status: { $ifNull: ["$status", "INACTIVE"] },
+              },
+            },
+            {
+              $project: {
+                userInfo: 0,
+                __v: 0,
+              },
+            },
+          ],
         },
       },
     ]);
 
-    res.status(200).json(employees);
+    const total = employees[0].metadata[0] ? employees[0].metadata[0].total : 0;
+    const data = employees[0].data;
+
+    res.status(200).json({
+      success: true,
+      data: data,
+      stats: stats,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit,
+      },
+    });
   } catch (error) {
     console.error("Error fetching employees:", error);
     res.status(500).json({ message: "Failed to fetch employee directory" });
   }
 };
+
+// ... keep your existing update/delete/approve/reject functions below
 
 exports.deleteEmployee = async (req, res) => {
   try {
