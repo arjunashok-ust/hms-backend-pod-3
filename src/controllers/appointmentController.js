@@ -4,21 +4,112 @@ const Users = require("../models/Users");
 const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
 
+// Replace these two functions at the top of your controller:
+
 exports.getAppointmentStats = async (req, res) => {
   try {
-    const total = await Appointments.countDocuments();
-    const completed = await Appointments.countDocuments({
-      status: "Completed",
-    });
-    const booked = await Appointments.countDocuments({ status: "Scheduled" });
-    const cancelled = await Appointments.countDocuments({
-      status: "Cancelled",
-    });
+    const userRole = req.user?.role?.toUpperCase();
+    const employeeID = req.user?.employeeID;
 
-    res.status(200).json({ total, completed, booked, cancelled });
+    // Build the dynamic match stage based on who is asking
+    let matchStage = {};
+    if (userRole === "DOCTOR") {
+      matchStage = { doctorEmployeeID: employeeID };
+    } else if (userRole === "PATIENT") {
+      matchStage = { patientId: req.user.UHID };
+    }
+
+    const total = await Appointments.countDocuments(matchStage);
+    const completed = await Appointments.countDocuments({ ...matchStage, status: "Completed" });
+    const booked = await Appointments.countDocuments({ ...matchStage, status: "Scheduled" });
+    const cancelled = await Appointments.countDocuments({ ...matchStage, status: "Cancelled" });
+    
+    // Using regex for case-insensitive matching (Pending vs PENDING)
+    const pending = await Appointments.countDocuments({ ...matchStage, status: { $regex: /^pending$/i } });
+
+    res.status(200).json({ total, completed, booked, cancelled, pending });
   } catch (error) {
     console.error("Appointment Stats Error:", error);
     res.status(500).json({ message: "Error fetching appointment stats" });
+  }
+};
+
+exports.getRecentAppointments = async (req, res) => {
+  try {
+    const userRole = req.user?.role?.toUpperCase();
+    const employeeID = req.user?.employeeID;
+    
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    let matchStage = {};
+    if (userRole === "DOCTOR") {
+      matchStage = { doctorEmployeeID: employeeID };
+    } else if (userRole === "PATIENT") {
+      matchStage = { patientId: req.user.UHID };
+    }
+
+    const appointments = await Appointments.aggregate([
+      { $match: matchStage },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "employees",
+                localField: "doctorEmployeeID",
+                foreignField: "employeeCode",
+                as: "doctorInfo",
+              },
+            },
+            {
+              $lookup: {
+                from: "employees",
+                localField: "createdByEmployeeID",
+                foreignField: "employeeCode",
+                as: "creatorInfo",
+              },
+            },
+            {
+              $project: {
+                appointmentCode: 1,
+                patientId: 1,
+                doctorEmployeeID: 1,
+                date: 1,
+                timeSlot: 1,
+                status: 1,
+                doctorName: { $arrayElemAt: ["$doctorInfo.name", 0] },
+                doctorDept: { $arrayElemAt: ["$doctorInfo.department", 0] },
+                creatorName: { $arrayElemAt: ["$creatorInfo.name", 0] },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const total = appointments[0].metadata[0] ? appointments[0].metadata[0].total : 0;
+    const data = appointments[0].data;
+
+    res.status(200).json({
+      success: true,
+      data: data,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error("Get Recent Appointments Error:", error);
+    res.status(500).json({ message: "Error fetching recent appointments" });
   }
 };
 
@@ -54,62 +145,6 @@ exports.getDoctorsList = async (req, res) => {
   }
 };
 
-exports.getRecentAppointments = async (req, res) => {
-  try {
-    const userRole = req.user?.role?.toUpperCase();
-    const employeeID = req.user?.employeeID;
-
-    // 1. Build the dynamic match stage based on who is asking
-    let matchStage = {};
-    if (userRole === "DOCTOR") {
-      matchStage = { doctorEmployeeID: employeeID };
-    } else if (userRole === "PATIENT") {
-      // Assuming you have patientId in req.user for patients
-      matchStage = { patientId: req.user.UHID };
-    }
-    // Admin sees everything, so matchStage remains empty {}
-
-    const appointments = await Appointments.aggregate([
-      { $match: matchStage }, // Filter FIRST
-      { $sort: { createdAt: -1 } },
-      { $limit: 10 }, // Then limit to 10
-      {
-        $lookup: {
-          from: "employees",
-          localField: "doctorEmployeeID",
-          foreignField: "employeeCode",
-          as: "doctorInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          localField: "createdByEmployeeID",
-          foreignField: "employeeCode",
-          as: "creatorInfo",
-        },
-      },
-      {
-        $project: {
-          appointmentCode: 1,
-          patientId: 1,
-          doctorEmployeeID: 1,
-          date: 1,
-          timeSlot: 1,
-          status: 1,
-          doctorName: { $arrayElemAt: ["$doctorInfo.name", 0] },
-          doctorDept: { $arrayElemAt: ["$doctorInfo.department", 0] },
-          creatorName: { $arrayElemAt: ["$creatorInfo.name", 0] },
-        },
-      },
-    ]);
-
-    res.status(200).json(appointments);
-  } catch (error) {
-    console.error("Get Recent Appointments Error:", error);
-    res.status(500).json({ message: "Error fetching recent appointments" });
-  }
-};
 
 const normalizeToUTCWithoutTime = (dateInput) => {
   const d = new Date(dateInput);
