@@ -230,7 +230,6 @@ exports.signUpByAdmin = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password, clientType } = req.body;
-
     const user = await Users.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -240,14 +239,12 @@ exports.login = async (req, res) => {
         message: "Client type (MOBILE or WEB) is required for login.",
       });
     }
-
     if (clientType === "MOBILE" && user.role !== "PATIENT") {
       return res.status(403).json({
         message:
           "Access Denied: Staff and Admin accounts cannot log in via the mobile app.",
       });
     }
-
     if (clientType === "WEB" && user.role === "PATIENT") {
       return res.status(403).json({
         message:
@@ -258,20 +255,17 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-
     if (!user.isEmailVerified) {
       return res.status(403).json({
         message: "Please verify your email address before logging in.",
       });
     }
-
     if (user.status === "ADMIN_APPROVAL_PENDING") {
       return res.status(403).json({
         message:
           "Your account is currently pending Admin approval. Please check back later.",
       });
     }
-
     if (user.status === "PASSWORD_CHANGE_PENDING") {
       return res.status(200).json({
         requiresPasswordChange: true,
@@ -279,13 +273,10 @@ exports.login = async (req, res) => {
         message: "Security requirement: Please update your default password.",
       });
     }
-
     const roleExists = await Roles.findOne({ roleName: user.role });
     const permissions = roleExists ? roleExists.rolePermissions : [];
-
     user.lastLogin = new Date();
     await user.save();
-
     let token="";
     if (user.role === "PATIENT") {
        token = jwt.sign(
@@ -310,23 +301,19 @@ exports.login = async (req, res) => {
         { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
       );
     }
-
     let profile;
     if (user.role === "PATIENT") {
       profile = await Patients.findOne({ email: user.email }).select("-__v");
     } else {
       profile = await Employees.findOne({ email: user.email }).select("-__v");
     }
-
     if (!profile) {
       return res.status(404).json({
         message: `Login successful, but ${user.role} profile is missing.`,
       });
     }
-
     console.log("token:",token);
     console.log("pid:",user.patientUHID);
-
     res.status(200).json({
       message: "Login successful",
       token,
