@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
 const mail = require('../utils/mail.utils')
+const { generateAccessToken, generateRefreshToken } = require('../utils/tokenGenerator.util')
 
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
@@ -176,21 +177,29 @@ const login = asyncHandler(async (req, res) => {
     }
 
     existingUser.lastLoginAt = Date.now();
+
+    const payload = {
+        userId: existingUser.employeeId || existingUser.patientId,
+        email: existingUser.email,
+        role: existingUser.role,
+    }
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    existingUser.refresh_token = refreshToken;
     await existingUser.save();
 
-    const token = jwt.sign(
-        {
-            userId: existingUser.employeeId || existingUser.patientId,
-            email: existingUser.email,
-            role: existingUser.role,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN })
+    res.cookie("refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+    });
 
     return res.status(200).json({
         message: 'login sucessfull',
         email: existingUser.email,
-        token: token,
+        token: accessToken,
         role: existingUser.role,
         status: existingUser.status,
         firstLogin: existingUser.firstLogin,
@@ -365,5 +374,38 @@ const getPermissions = asyncHandler(async (req, res) => {
     return res.status(200).json(roleData);
 });
 
-module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions };
+const getAccessToken = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies.refresh_token;
+    if (!refreshToken) throw ERR.tokenNotFound()
+
+    const user = await User.findOne({ refresh_token: refreshToken });
+    if (!user) throw ERR.tokenInvalidOrExpired();
+
+    try {
+        jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET,
+        );
+    } catch (err) {
+        console.error(err);
+        throw ERR.tokenInvalidOrExpired();
+    }
+
+    const payload = {
+        userId: user.employeeId || user.patientId,
+        email: user.email,
+        role: user.role,
+    }
+
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    user.refresh_token = newRefreshToken;
+    await user.save();
+
+    res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: false, sameSite: "lax" });
+    return res.status(200).json({ token: newAccessToken });
+});
+
+module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions, getAccessToken };
 

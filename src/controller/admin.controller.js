@@ -54,6 +54,7 @@ const deleteUserProfile = asyncHandler(async (req, res) => {
     }
 
     await existingUser.deleteOne();
+    await existingEmployee.deleteOne();
 
     return res.status(200).json({
         message: 'Account deleted successfully',
@@ -235,4 +236,3 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
 
 module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile, getUserEmployee };
-

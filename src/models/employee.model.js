@@ -13,6 +13,9 @@ const employeeSchema = new mongoose.Schema({
     qualification: { type: String },
     consultationFee: { type: Number },
     availabilitySlots: [{ type: String }],
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
 });
 
 employeeSchema.index({

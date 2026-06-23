@@ -13,11 +13,13 @@ const ERR = {
     doctorNotFound: () => new AppError("Doctor not found", 404),
     appointmentNotFound: () => new AppError("Appointment not found", 404),
     medicalRecordNotFound: () => new AppError("Medical Record not found", 404),
+    tokenNotFound: () => new AppError("Token not found",403),
     
     existingPatientAppointment: () => new AppError("Patient have another appointment booked for this slot", 400),
     existingSlot: () => new AppError("Time slot already booked"),
 
     invalidCredentials: () => new AppError("Invalid credentials", 401),
+    tokenInvalidOrExpired: () => new AppError("Invalid or expired token", 403),
 
     emailNotVerified: () => new AppError("Email not verified", 400),
     accountNotActivated: () => new AppError("Account not activated", 400),
