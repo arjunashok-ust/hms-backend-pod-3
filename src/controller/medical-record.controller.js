@@ -136,7 +136,7 @@ const getMedicalRecordStats = asyncHandler(async (req, res) => {
             MedicalRecord.countDocuments(),
             MedicalRecord.countDocuments({ status: 'Completed' }),
             MedicalRecord.countDocuments({ status: 'Draft' }),
-            MedicalRecord.countDocuments({ status: 'Deleted' }),
+            MedicalRecord.countDocuments({ isDeleted: true }),
         ]);
 
     return res.status(200).json({
@@ -180,7 +180,7 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
 const getMedicalRecordById = asyncHandler(async (req, res) => {
     const medicalRecordId = req.query.medicalRecordId;
 
-    const medicalRecord = await MedicalRecord.findOne({ medicalRecordId });
+    const medicalRecord = await MedicalRecord.findOne({ medicalRecordId, isDeleted: false });
 
     if (!medicalRecord) {
         throw ERR.medicalRecordNotFound();
