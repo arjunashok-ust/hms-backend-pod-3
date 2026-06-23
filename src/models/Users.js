@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
         "LAB_TECH",
         "PHARMACIST",
         "PATIENT",
+        "SUPER_ADMIN"
       ],
       required: true,
     },

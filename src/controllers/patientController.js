@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 exports.getAllPatients = async (req, res) => {
   try {
     const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 10;
+    const limit = Number.parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
     let matchStage = {};
@@ -198,7 +198,7 @@ exports.createPatientFromMobile = async (req, res) => {
       passwordHash,
       role: "PATIENT",
       status: "ACTIVE",
-      patientId: newPatient.UHID,
+      patientUHID: newPatient.UHID,
     });
 
     return res.status(201).json({

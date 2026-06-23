@@ -286,16 +286,30 @@ exports.login = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    const token = jwt.sign(
-      {
-        employeeID: user.employeeID,
-        email: user.email,
-        role: user.role,
-        permissions: permissions,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-    );
+    let token="";
+    if (user.role === "PATIENT") {
+       token = jwt.sign(
+         {
+           patientId: user.patientUHID,
+           email: user.email,
+           role: user.role,
+           permissions: permissions,
+         },
+         process.env.JWT_SECRET,
+         { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+       );
+    } else {
+       token = jwt.sign(
+        {
+          employeeID: user.employeeID,
+          email: user.email,
+          role: user.role,
+          permissions: permissions,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+      );
+    }
 
     let profile;
     if (user.role === "PATIENT") {
@@ -309,6 +323,9 @@ exports.login = async (req, res) => {
         message: `Login successful, but ${user.role} profile is missing.`,
       });
     }
+
+    console.log("token:",token);
+    console.log("pid:",user.patientUHID);
 
     res.status(200).json({
       message: "Login successful",

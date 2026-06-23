@@ -40,7 +40,7 @@ router.get(
 router.get(
   "/getMyRecords",
   authenticateToken,
-  requirePermission("VIEW_MY_RECORDS"),
+  requirePermission("VIEW_MY_PATIENT_RECORDS"),
   medicalRecordController.getMyMedicalRecords,
 );
 router.get(
@@ -48,6 +48,13 @@ router.get(
   authenticateToken,
   requirePermission("VIEW_HEALTH_RECORDS"),
   medicalRecordController.getMedicalRecordById,
+);
+
+router.get(
+  "/getPatientRecords",
+  authenticateToken,
+  requirePermission("VIEW_MY_RECORDS"),
+  medicalRecordController.getPatientMedicalRecords
 );
 
 module.exports = router;

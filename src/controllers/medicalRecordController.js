@@ -208,7 +208,7 @@ exports.deleteMedicalRecord = async (req, res) => {
 const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   try {
     const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 10;
+    const limit = Number.parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
     let filter = { status: { $ne: "DELETED" }, ...baseFilter };
@@ -282,4 +282,23 @@ exports.getMedicalRecordById = async (req, res) => {
       .status(500)
       .json({ success: false, message: "Internal server error" });
   }
+};
+
+
+// Add to controllers/medicalRecordController.js
+
+exports.getPatientMedicalRecords = (req, res) => {
+  // Extract the patient's ID from the token payload. 
+  // Adjust 'UHID' to match exactly how you store the ID in the patient's JWT.
+  const patientId = req.user?.patientId || req.user?.id;
+  console.log(patientId);
+
+  if (!patientId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No patient identifier found in token." });
+  }
+
+  // Pass the patientId to the baseFilter of your pagination helper
+  return getPaginatedRecords(req, res, { patientId: patientId });
 };

@@ -49,7 +49,7 @@ exports.getRecentAppointments = async (req, res) => {
     const employeeID = req.user?.employeeID;
 
     const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 10;
+    const limit = Number.parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
     let matchStage = {};
