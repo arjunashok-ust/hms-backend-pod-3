@@ -37,7 +37,7 @@ router.get(
 router.put(
   "/:id",
   authenticateToken,
-  requirePermission("UPDATE_APPOINTMENT"),
+  requirePermission(["UPDATE_APPOINTMENT","UPDATE_MY_APPOINTMENT"]),
   asyncHandler(appointmentController.updateAppointment),
 );
 router.get(
@@ -49,7 +49,7 @@ router.get(
 router.delete(
   "/:id",
   authenticateToken,
-  requirePermission("DELETE_APPOINTMENT"),
+  requirePermission(["DELETE_APPOINTMENT","DELETE_MY_APPOINTMENT"]),
   asyncHandler(appointmentController.deleteAppointment),
 );
 

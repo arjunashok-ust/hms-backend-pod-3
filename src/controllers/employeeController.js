@@ -1,5 +1,6 @@
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
+const Appointments = require("../models/Appointments");
 const ERR = require("../utils/errors.utils");
 
 exports.getAllEmployees = async (req, res) => {
@@ -10,6 +11,7 @@ exports.getAllEmployees = async (req, res) => {
   let matchStage = {
     name: { $exists: true, $ne: "" },
     employeeCode: { $exists: true, $ne: null },
+    status: { $ne: "DELETED" },
   };
 
   if (req.query.department) {
@@ -125,16 +127,33 @@ exports.deleteEmployee = async (req, res) => {
     }
   }
 
-  const deletedEmployee = await Employees.findOneAndDelete({
-    employeeCode: id,
-  });
-  const deletedUser = await Users.findOneAndDelete({ employeeID: id });
+  const deletedEmployee = await Employees.findOneAndUpdate(
+    { employeeCode: id },
+    { $set: { status: "DELETED" } },
+    { new: true },
+  );
+  const deletedUser = await Users.findOneAndUpdate(
+    { employeeID: id },
+    { $set: { status: "DELETED" } },
+    { new: true },
+  );
 
   if (!deletedEmployee && !deletedUser) {
     throw ERR.employeeNotFound();
   }
 
-  res.status(200).json({ message: "Employee permanently deleted" });
+  const deletedDoctorAppointments = await Appointments.updateMany(
+    { doctorEmployeeID: id },
+    { $set: { status: "Deleted" } },
+  );
+
+  const deletedCount = deletedDoctorAppointments.modifiedCount;
+
+  res
+    .status(200)
+    .json({
+      message: `Employee permanently deleted.No of appointemnts deleted:${deletedCount}`,
+    });
 };
 
 exports.updateEmployee = async (req, res) => {

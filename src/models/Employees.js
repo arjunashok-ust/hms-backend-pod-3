@@ -56,6 +56,7 @@ const employeeSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
+        "DELETED"
       ],
     },
     department: {

@@ -5,19 +5,23 @@ const ERR = require("../utils/errors.utils");
 
 exports.getDashboardStats = async (req, res) => {
   const totalEmployees = await Employees.countDocuments();
-  const activeEmployees = await Employees.countDocuments({ status: true });
+  const activeEmployees = await Employees.countDocuments({ status: "ACTIVE" });
   const pendingApprovals = await Users.countDocuments({
     status: "ADMIN_APPROVAL_PENDING",
   });
   const distinctDepartments = await Employees.distinct("department");
   const totalAppointments = await Appointments.countDocuments();
+  const totalPatients = await Users.countDocuments({
+    role: "PATIENT",
+    status: "ACTIVE",
+  });
 
   res.status(200).json({
     totalEmployees,
     activeEmployees,
     pendingApprovals,
     pendingVerifications: 0,
-    totalPatients: 1,
+    totalPatients,
     totalDepartments: distinctDepartments.length,
     totalAppointments,
   });
@@ -25,6 +29,11 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getEmployeeOverview = async (req, res) => {
   const employees = await Employees.aggregate([
+    {
+      $match: {
+        status: { $ne: "DELETED" },
+      },
+    },
     { $sort: { createdAt: -1 } },
     { $limit: 10 },
 

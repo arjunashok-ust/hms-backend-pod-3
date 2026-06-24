@@ -8,6 +8,66 @@ const Roles = require("../models/Roles");
 const sendMail = require("../utils/sendmail");
 const ERR = require("../utils/errors.utils");
 
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET;
+
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+const parseExpiry = (value, fallback) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "") return fallback;
+    if (/^\d+$/.test(trimmed)) return Number(trimmed);
+    return trimmed;
+  }
+  return fallback;
+};
+
+const ACCESS_TOKEN_EXPIRES_IN = parseExpiry(process.env.JWT_EXPIRES_IN, "1d");
+const REFRESH_TOKEN_EXPIRES_IN = parseExpiry(
+  process.env.REFRESH_TOKEN_EXPIRES_IN,
+  "7d",
+);
+
+const getTokenPayload = (user, permissions) => ({
+  ...(user.role === "PATIENT"
+    ? { patientId: user.patientUHID }
+    : { employeeID: user.employeeID }),
+  email: user.email,
+  role: user.role,
+  permissions,
+});
+
+const createAccessToken = (payload) =>
+  jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
+
+const createRefreshToken = (payload) =>
+  jwt.sign(payload, REFRESH_TOKEN_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const setRefreshTokenCookie = (res, refreshToken) => {
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: "/",
+  });
+};
+
+const clearRefreshTokenCookie = (res) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
+};
+
 exports.signupByUser = async (req, res) => {
   const {
     name,
@@ -248,20 +308,13 @@ exports.login = async (req, res) => {
   const roleExists = await Roles.findOne({ roleName: user.role });
   const permissions = roleExists ? roleExists.rolePermissions : [];
   user.lastLogin = new Date();
-  await user.save();
 
-  const token = jwt.sign(
-    {
-      ...(user.role === "PATIENT"
-        ? { patientId: user.patientUHID }
-        : { employeeID: user.employeeID }),
-      email: user.email,
-      role: user.role,
-      permissions,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-  );
+  const payload = getTokenPayload(user, permissions);
+  const accessToken = createAccessToken(payload);
+  const refreshToken = createRefreshToken({ email: user.email });
+  user.refreshToken = refreshToken;
+  user.refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
+  await user.save();
 
   const profile =
     user.role === "PATIENT"
@@ -274,9 +327,11 @@ exports.login = async (req, res) => {
       "PROFILE_NOT_FOUND",
     );
 
+  setRefreshTokenCookie(res, refreshToken);
+
   res.status(200).json({
     message: "Login successful",
-    token,
+    accessToken,
     user: { profile, role: user.role },
   });
 };
@@ -293,30 +348,79 @@ exports.changeFirstPassword = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   user.passwordHash = await bcrypt.hash(password, salt);
   user.status = "ACTIVE";
-  await user.save();
 
+  const roleExists = await Roles.findOne({ roleName: user.role });
+  const permissions = roleExists ? roleExists.rolePermissions : [];
+  const payload = getTokenPayload(user, permissions);
+  const accessToken = createAccessToken(payload);
+  const refreshToken = createRefreshToken({ email: user.email });
+  user.refreshToken = refreshToken;
+  user.refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
+
+  await user.save();
   await Employees.findOneAndUpdate(
     { employeeCode: user.employeeID },
     { $set: { status: "ACTIVE" } },
   );
 
-  const roleExists = await Roles.findOne({ roleName: user.role });
-  const permissions = roleExists ? roleExists.rolePermissions : [];
-
-  const token = jwt.sign(
-    {
-      employeeID: user.employeeID,
-      email: user.email,
-      role: user.role,
-      permissions,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-  );
+  setRefreshTokenCookie(res, refreshToken);
 
   res.status(200).json({
-    token,
+    accessToken,
     user,
     message: "Password updated successfully. Logging in...",
   });
+};
+
+exports.refreshAccessToken = async (req, res) => {
+  console.log(req.cookies);
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken)
+    return res.status(401).json({ message: "Refresh token missing" });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+  } catch (err) {
+    console.log(err);
+    clearRefreshTokenCookie(res);
+    return res
+      .status(401)
+      .json({ message: "Invalid or expired refresh token" });
+  }
+
+  const user = await Users.findOne({ email: decoded.email });
+  if (!user || user.refreshToken !== refreshToken) {
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({ message: "Refresh token invalid" });
+  }
+
+  if (user.refreshTokenExpiry && user.refreshTokenExpiry < new Date()) {
+    user.refreshToken = null;
+    user.refreshTokenExpiry = null;
+    await user.save();
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({ message: "Refresh token expired" });
+  }
+
+  const roleExists = await Roles.findOne({ roleName: user.role });
+  const permissions = roleExists ? roleExists.rolePermissions : [];
+  const payload = getTokenPayload(user, permissions);
+  const accessToken = createAccessToken(payload);
+
+  res.status(200).json({ accessToken });
+};
+
+exports.logout = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (refreshToken) {
+    const user = await Users.findOne({ refreshToken });
+    if (user) {
+      user.refreshToken = null;
+      user.refreshTokenExpiry = null;
+      await user.save();
+    }
+  }
+  clearRefreshTokenCookie(res);
+  res.status(200).json({ message: "Logged out successfully" });
 };

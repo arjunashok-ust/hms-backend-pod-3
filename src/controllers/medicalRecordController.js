@@ -55,9 +55,16 @@ exports.createMedicalRecord = async (req, res) => {
     updatedBy: req.user.employeeID,
   });
 
+  if(!recordStatus){
+    const completedAppointment = await Appointments.findOneAndUpdate(
+      { appointmentCode: appointmentId },
+      { $set: { status: "Completed" } },
+      { new: true },
+    );
+  }
   return res.status(201).json({
     success: true,
-    message: `Medical record saved as ${recordStatus}.`,
+    message: `Medical record saved as ${recordStatus}.Appointment completed`,
     data: newRecord,
   });
 };
@@ -138,9 +145,17 @@ exports.updateMedicalRecord = async (req, res) => {
   record.updatedBy = req.user.id;
   await record.save();
 
+  if (updates.status === "FINAL") {
+    const completedAppointment = await Appointments.findOneAndUpdate(
+      { appointmentCode: updates.appointmentId },
+      {$set: {status: "Completed"} },
+      { new: true },
+    );
+  }
+
   return res.status(200).json({
     success: true,
-    message: `Medical record updated successfully.`,
+    message: `Medical record updated successfully.Appointment completed`,
     data: record,
   });
 };

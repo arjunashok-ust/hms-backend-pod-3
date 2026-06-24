@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 
@@ -17,8 +18,12 @@ app.use(
 
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
+
+const errorMiddleware = require("./middlewares/errorMiddleware");
+app.use(errorMiddleware);
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
@@ -57,9 +62,5 @@ try {
   console.error("MongoDB connection error:", err.message);
   process.exit(1);
 }
-
-// Global error middleware (must be last)
-const errorMiddleware = require("./middlewares/errorMiddleware");
-app.use(errorMiddleware);
 
 module.exports = app;

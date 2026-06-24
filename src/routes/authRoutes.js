@@ -14,6 +14,8 @@ const {
   signupByUser,
   login,
   changeFirstPassword,
+  refreshAccessToken,
+  logout,
 } = require("../controllers/authController");
 
 router.post(
@@ -23,6 +25,8 @@ router.post(
   asyncHandler(signupByUser),
 );
 router.post("/login", loginValidation, validate, asyncHandler(login));
+router.post("/refresh", asyncHandler(refreshAccessToken));
+router.post("/logout", asyncHandler(logout));
 router.post(
   "/setpassword",
   changePasswordValidation,

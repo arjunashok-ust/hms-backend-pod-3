@@ -47,7 +47,7 @@ exports.getRecentAppointments = async (req, res) => {
   const limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  let matchStage = {};
+  let matchStage = { status: { $ne: "Deleted" } };
   if (userRole === "DOCTOR") {
     matchStage = { doctorEmployeeID: employeeID };
   } else if (userRole === "PATIENT") {
@@ -56,7 +56,7 @@ exports.getRecentAppointments = async (req, res) => {
 
   const appointments = await Appointments.aggregate([
     { $match: matchStage },
-    { $sort: { createdAt: -1 } },
+    { $sort: { date: 1, timeSlot: 1} },
     {
       $facet: {
         metadata: [{ $count: "total" }],
@@ -275,11 +275,33 @@ exports.updateAppointment = async (req, res) => {
   });
 };
 
+exports.cancelAppointment = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const cancelledApt = await Appointments.findOneAndUpdate(
+    { appointmentCode: id },
+    {  status },
+    { new: true },
+  );
+
+  if (!cancelledApt) {
+    throw ERR.appointmentNotFound();
+  }
+
+  return res.status(200).json({
+    message: "Appointment cancelled successfully",
+    updatedApt,
+  });
+};
+
 exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
 
-  const deletedApt = await Appointments.findOneAndDelete({
+  const deletedApt = await Appointments.findOneAndUpdate({
     appointmentCode: id,
+  },{
+    status:"Deleted"
   });
 
   if (!deletedApt) {
@@ -297,7 +319,7 @@ exports.getPatientAppointments = async (req, res) => {
   }
 
   const appointments = await Appointments.aggregate([
-    { $match: { patientId: patient.UHID } },
+    { $match: { patientId: patient.UHID,status: { $ne: "Deleted" } } },
     { $sort: { date: 1 } },
     {
       $lookup: {

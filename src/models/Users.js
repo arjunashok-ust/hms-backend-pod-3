@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
+        "DELETED"
       ],
     },
     role: {
@@ -32,12 +33,14 @@ const userSchema = new mongoose.Schema(
         "LAB_TECH",
         "PHARMACIST",
         "PATIENT",
-        "SUPER_ADMIN"
+        "SUPER_ADMIN",
       ],
       required: true,
     },
     employeeID: { type: String, ref: "Employees" },
     patientUHID: { type: String, ref: "Patients", default: null },
+    refreshToken: { type: String, default: null },
+    refreshTokenExpiry: { type: Date, default: null },
     lastLogin: { type: Date, default: null },
     isEmailVerified: { type: Boolean, default: false },
     verification_token: { type: String },

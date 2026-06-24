@@ -1,5 +1,6 @@
 const Patient = require("../models/Patients");
 const User = require("../models/Users");
+const Appointments = require("../models/Appointments")
 const bcrypt = require("bcryptjs");
 const ERR = require("../utils/errors.utils");
 
@@ -8,7 +9,7 @@ exports.getAllPatients = async (req, res) => {
   const limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  let matchStage = {};
+  let matchStage = {status:{$ne:"DELETED"}};
 
   if (req.query.search) {
     const searchRegex = new RegExp(req.query.search, "i");
@@ -118,9 +119,30 @@ exports.updatePatient = async (req, res) => {
 
 exports.deletePatient = async (req, res) => {
   const { id } = req.params;
-  const deleted = await Patient.findOneAndDelete({ UHID: id });
-  if (!deleted) throw ERR.patientNotFound();
-  res.status(200).json({ message: "Patient deleted" });
+  const deleted = await Patient.findOneAndUpdate(
+    { UHID: id },
+    { $set: { status: "DELETED" } },
+    { new: true },
+  );
+
+   const deletedUser = await User.findOneAndUpdate(
+     { patientUHID: id },
+     { $set: { status: "DELETED" } },
+     { new: true },
+   );
+
+  if (!deleted || !deletedUser) throw ERR.patientNotFound();
+
+  const deletedPatientAppointments = await Appointments.updateMany(
+    { patientId: id },
+    { $set: { status: "Deleted" } },
+  );
+
+  const deletedCount = deletedPatientAppointments.modifiedCount;
+
+  res.status(200).json({
+    message: `Patient permanently deleted.No of appointemnts deleted:${deletedCount}`,
+  });
 };
 
 exports.createPatientFromMobile = async (req, res) => {
