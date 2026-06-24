@@ -226,7 +226,6 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
 
 const getPatientById = asyncHandler(async (req, res) => {
     const patientId = req.query.patientId;
-
     const patient = await Patient.findOne({ uhid: patientId });
     if (!patient) return ERR.patientNotFound();
 

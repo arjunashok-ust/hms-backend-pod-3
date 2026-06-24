@@ -32,7 +32,7 @@ const createMedicalRecord = asyncHandler(async (req, res) => {
         throw ERR.patientNotFound();
     }
 
-    const existingAppointment = await Appointment.findOne({ appointmentId: appointmentId });
+    const existingAppointment = await Appointment.findOne({ appointmentId, patientId, doctorEmployeeId: doctorId });
     if (!existingAppointment) {
         throw ERR.appointmentNotFound();
     }
@@ -165,7 +165,7 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
 
     const medicalRecordData = await MedicalRecord.find(filter).sort({ created_at: -1 }).skip(skip).limit(limit);
 
-    if(!medicalRecordData){
+    if (!medicalRecordData) {
         throw ERR.medicalRecordNotFound();
     }
 

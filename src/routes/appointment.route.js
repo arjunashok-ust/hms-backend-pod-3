@@ -15,7 +15,7 @@ router.get('/deleteAppointment', appointmentValidate.validateDeleteAppointment, 
 router.get('/getAppointmentsByPatientId', appointmentValidate.validateGetAppointmentByPatientId, validate, auth, permission('view:appointment'), appointmentController.getAppointmentsByPatientId);
 router.get('/getDoctorByEmployeeId', appointmentValidate.validateGetDoctorByEmployeeId, validate, auth, permission('view:appointment'), appointmentController.getDoctorByEmployeeId);
 router.post('/editAppointment', appointmentValidate.validateEditAppointment, validate, auth, permission('edit:appointment'), appointmentController.editAppointment);
-router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('edit:appointment'), appointmentController.editAppointmentStatus);
+router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('approve:appointment'), appointmentController.editAppointmentStatus);
 router.get('/getAppointmentByDoctorIdOrPatientId', auth, permission('view:patient'), appointmentController.getAppointmentByDoctorIdOrPatientId);
 
 
