@@ -12,6 +12,9 @@ const patientSchema = new mongoose.Schema({
     allergies: { type: String },
     address: { type: String, required: true },
     emergencyContact: { type: String, default: null },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
 });
 
 patientSchema.index({

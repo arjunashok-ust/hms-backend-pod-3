@@ -10,6 +10,9 @@ const appointmentSchema = new mongoose.Schema({
     timeSlot: { type: String, required: true },
     status: { type: String, enum: ['Booked', 'Cancelled', 'Completed', 'Pending'], required: true },
     createdByEmployeeId: { type: String, ref: 'Employees', required: true },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
 });
 
 appointmentSchema.index({

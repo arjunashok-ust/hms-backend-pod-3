@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema({
     verification_expiry: { type: Date },
     refresh_token: { type: String, unique: true },
     isVerified: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
     firstLogin: { type: Boolean, default: true },
     lastLoginAt: { type: Date, default: null }
 },

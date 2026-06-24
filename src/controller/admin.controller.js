@@ -71,7 +71,7 @@ const getDashboardData = asyncHandler(async (req, res) => {
         User.countDocuments({ status: 'Pending' }),
         User.countDocuments({ isVerified: false }),
         User.countDocuments({ firstLogin: true }),
-        Patient.countDocuments(),
+        Patient.countDocuments({ isDeleted: false }),
         Appointment.countDocuments(),
         Department.countDocuments(),
     ]);
@@ -235,4 +235,13 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 });
 
 
-module.exports = { deleteUserProfile, getDashboardData, getAllUsers, getUsers, approveUser, rejectUser, updateUserProfile, getUserEmployee };
+module.exports = {
+    deleteUserProfile,
+    getDashboardData,
+    getAllUsers,
+    getUsers,
+    approveUser,
+    rejectUser,
+    updateUserProfile,
+    getUserEmployee
+};

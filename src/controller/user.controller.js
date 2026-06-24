@@ -2,6 +2,7 @@ const User = require('../models/user.model');
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const Appointment = require('../models/appointment.model');
+const MedicalRecord = require('../models/medical-record.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
@@ -42,7 +43,7 @@ const getPatients = asyncHandler(async (req, res) => {
     const limit = Number.parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    const filter = {}
+    const filter = { isDeleted: false }
 
     if (selectedText) {
         filter.$text = { $search: selectedText }
@@ -62,21 +63,22 @@ const getPatients = asyncHandler(async (req, res) => {
 
 const deletePatient = asyncHandler(async (req, res) => {
     const patientId = req.body.patientId;
+    const deletedBy = req.body.deletedBy;
 
-    const patient = await Patient.findOne({ uhid: patientId });
+    const patient = await Patient.findOneAndUpdate({ uhid: patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
+
     if (!patient) {
         throw ERR.patientNotFound();
     }
 
-    await patient.deleteOne();
-
-    const userPatient = await User.findOne({ patientId: patientId });
+    const userPatient = await User.findOneAndUpdate({ patientId: patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
 
     if (!userPatient) {
         throw ERR.patientNotFound();
     }
 
-    await userPatient.deleteOne();
+    await Appointment.updateMany({ patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
+    await MedicalRecord.updateMany({ patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() })
 
     return res.status(200).json({ message: 'Patient Deleted Sucessfully' });
 });

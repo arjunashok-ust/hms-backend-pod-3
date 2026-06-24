@@ -82,21 +82,21 @@ const getAllAppointments = asyncHandler(async (req, res) => {
     const limit = Number.parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    const filter = {};
+    const filter = { isDeleted: false };
 
-    if(selectedText){
-        filter.$text = {$search: selectedText};
+    if (selectedText) {
+        filter.$text = { $search: selectedText };
     }
 
     const appointments = await Appointment.find(filter).skip(skip).limit(limit);
 
     const total = await Appointment.countDocuments(filter);
-    
+
     return res.status(200).json({
         data: appointments,
         total: total,
         page: page,
-        totalPages: Math.ceil(total/limit),
+        totalPages: Math.ceil(total / limit),
     });
 });
 
@@ -138,7 +138,13 @@ const getAppointmentUiData = asyncHandler(async (req, res) => {
 
 const deleteAppointment = asyncHandler(async (req, res) => {
     const appointmentId = req.query.appointmentId;
-    const deleted = await Appointment.findOneAndDelete({ appointmentId: appointmentId });
+    const deletedBy = req.query.deletedBy;
+
+    const deleted = await Appointment.findOneAndUpdate({ appointmentId: appointmentId }, {
+        isDeleted: true,
+        deletedBy,
+        deletedAt: Date.now()
+    });
 
     if (!deleted) {
         throw ERR.appointmentNotFound();
