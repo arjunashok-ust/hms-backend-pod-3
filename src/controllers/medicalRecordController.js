@@ -2,96 +2,84 @@ const MedicalRecord = require("../models/MedicalRecords");
 const Employees = require("../models/Employees");
 const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
+const ERR = require("../utils/errors.utils");
 
 exports.createMedicalRecord = async (req, res) => {
-  try {
-    const {
-      doctorEmployeeId,
-      appointmentId,
-      patientId,
-      status,
-      diagnosis,
-      complaint,
-      symptoms,
-      medications,
-      medicalObservations,
-      notes,
-    } = req.body;
+  const {
+    doctorEmployeeId,
+    appointmentId,
+    patientId,
+    status,
+    diagnosis,
+    complaint,
+    symptoms,
+    medications,
+    medicalObservations,
+    notes,
+  } = req.body;
 
-    if (!doctorEmployeeId || !appointmentId || !patientId) {
-      return res.status(400).json({
-        success: false,
-        message: "doctorEmployeeId, appointmentId, and patientId are required.",
-      });
-    }
-
-    const doctorExists = await Employees.findOne({
-      employeeCode: doctorEmployeeId,
-    });
-    if (!doctorExists)
-      return res
-        .status(404)
-        .json({ success: false, message: "Doctor not found." });
-
-    const patientExists = await Patients.findOne({ UHID: patientId });
-    if (!patientExists)
-      return res
-        .status(404)
-        .json({ success: false, message: "Patient not found." });
-
-    const appointmentExists = await Appointments.findOne({
-      appointmentCode: appointmentId,
-    });
-    if (!appointmentExists)
-      return res
-        .status(404)
-        .json({ success: false, message: "Appointment not found." });
-
-    const recordStatus = status === "DRAFT" ? "DRAFT" : "FINAL";
-
-    const newRecord = await MedicalRecord.create({
-      doctorEmployeeId,
-      appointmentId,
-      patientId,
-      diagnosis,
-      complaint,
-      symptoms,
-      medications: medications || [],
-      medicalObservations: medicalObservations || [],
-      notes,
-      status: recordStatus,
-      createdBy: req.user.employeeID,
-      updatedBy: req.user.employeeID,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: `Medical record saved as ${recordStatus}.`,
-      data: newRecord,
-    });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+  if (!doctorEmployeeId || !appointmentId || !patientId) {
+    throw ERR.invalidRequest(
+      "doctorEmployeeId, appointmentId, and patientId are required.",
+      "MEDICAL_RECORD_REQUIRED_FIELDS",
+    );
   }
+
+  const doctorExists = await Employees.findOne({
+    employeeCode: doctorEmployeeId,
+  });
+  if (!doctorExists) throw ERR.doctorNotFound();
+
+  const patientExists = await Patients.findOne({ UHID: patientId });
+  if (!patientExists) throw ERR.patientNotFound();
+
+  const appointmentExists = await Appointments.findOne({
+    appointmentCode: appointmentId,
+  });
+  if (!appointmentExists) throw ERR.appointmentNotFound();
+
+  const recordStatus = status === "DRAFT" ? "DRAFT" : "FINAL";
+
+  const newRecord = await MedicalRecord.create({
+    doctorEmployeeId,
+    appointmentId,
+    patientId,
+    diagnosis,
+    complaint,
+    symptoms,
+    medications: medications || [],
+    medicalObservations: medicalObservations || [],
+    notes,
+    status: recordStatus,
+    createdBy: req.user.employeeID,
+    updatedBy: req.user.employeeID,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: `Medical record saved as ${recordStatus}.`,
+    data: newRecord,
+  });
 };
 
 const validateUpdatePermissions = (record, userPermissions) => {
-  if (record.status === "DELETED")
-    return { status: 400, message: "Cannot update a deleted record." };
+  if (record.status === "DELETED") {
+    return ERR.invalidRequest(
+      "Cannot update a deleted record.",
+      "MEDICAL_RECORD_DELETED",
+    );
+  }
 
   const canUpdateFinalized = userPermissions.includes(
     "UPDATE_FINALISED_RECORD",
   );
   if (record.status === "FINAL" && !canUpdateFinalized) {
-    return {
-      status: 403,
-      message:
-        "Access Denied: Record is FINAL. You lack permission to edit finalized records.",
-      errorCode: "FORBIDDEN",
-    };
+    return ERR.forbidden(
+      "Access Denied: Record is FINAL. You lack permission to edit finalized records.",
+      "UPDATE_FINALIZED_RECORD_FORBIDDEN",
+    );
   }
+
   return null;
 };
 
@@ -106,154 +94,124 @@ const validateCriticalFieldPermissions = (updates, record, userPermissions) => {
     attemptingCriticalUpdate &&
     !userPermissions.includes("UPDATE_CRITICAL_RECORD_FIELDS")
   ) {
-    return {
-      status: 403,
-      message:
-        "Access Denied: You lack 'UPDATE_CRITICAL_RECORD_FIELDS' permission.",
-      errorCode: "FORBIDDEN",
-    };
+    return ERR.forbidden(
+      "Access Denied: You lack 'UPDATE_CRITICAL_RECORD_FIELDS' permission.",
+      "UPDATE_CRITICAL_FIELDS_FORBIDDEN",
+    );
   }
   return null;
 };
 
 exports.updateMedicalRecord = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = { ...req.body };
-    const userPermissions = req.user.permissions || [];
+  const { id } = req.params;
+  const updates = { ...req.body };
+  const userPermissions = req.user.permissions || [];
 
-    const record = await MedicalRecord.findById(id);
-    if (!record)
-      return res
-        .status(404)
-        .json({ success: false, message: "Medical record not found." });
+  const record = await MedicalRecord.findById(id);
+  if (!record)
+    throw ERR.notFound("Medical record not found.", "MEDICAL_RECORD_NOT_FOUND");
 
-    if (record.status === "FINAL") {
-      return res
-        .status(409)
-        .json({ success: false, message: "Cannot edit finalized record" });
-    }
-
-    const permissionError = validateUpdatePermissions(record, userPermissions);
-    if (permissionError)
-      return res
-        .status(permissionError.status)
-        .json({ success: false, message: permissionError.message });
-
-    const criticalFieldError = validateCriticalFieldPermissions(
-      updates,
-      record,
-      userPermissions,
+  if (record.status === "FINAL") {
+    throw ERR.conflict(
+      "Cannot edit finalized record",
+      "MEDICAL_RECORD_FINALIZED",
     );
-    if (criticalFieldError)
-      return res
-        .status(criticalFieldError.status)
-        .json({ success: false, message: criticalFieldError.message });
-
-    const protectedFields = ["_id", "recordCode", "createdBy", "createdAt"];
-    protectedFields.forEach((field) => delete updates[field]);
-
-    if (updates.status && !["DRAFT", "FINAL"].includes(updates.status))
-      delete updates.status;
-
-    record.set(updates);
-    record.updatedBy = req.user.id;
-    await record.save();
-
-    return res.status(200).json({
-      success: true,
-      message: `Medical record updated successfully.`,
-      data: record,
-    });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
   }
+
+  const permissionError = validateUpdatePermissions(record, userPermissions);
+  if (permissionError) throw permissionError;
+
+  const criticalFieldError = validateCriticalFieldPermissions(
+    updates,
+    record,
+    userPermissions,
+  );
+  if (criticalFieldError) throw criticalFieldError;
+
+  const protectedFields = ["_id", "recordCode", "createdBy", "createdAt"];
+  protectedFields.forEach((field) => delete updates[field]);
+
+  if (updates.status && !["DRAFT", "FINAL"].includes(updates.status))
+    delete updates.status;
+
+  record.set(updates);
+  record.updatedBy = req.user.id;
+  await record.save();
+
+  return res.status(200).json({
+    success: true,
+    message: `Medical record updated successfully.`,
+    data: record,
+  });
 };
 
 exports.deleteMedicalRecord = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!req.user.permissions?.includes("DELETE_HEALTH_RECORD")) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Access Denied." });
-    }
-
-    const record = await MedicalRecord.findById(id);
-    if (!record)
-      return res.status(404).json({ success: false, message: "Not found." });
-    if (record.status === "DELETED")
-      return res
-        .status(400)
-        .json({ success: false, message: "Already deleted." });
-
-    record.status = "DELETED";
-    record.updatedBy = req.user.id;
-    await record.save();
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Successfully deleted." });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+  const { id } = req.params;
+  if (!req.user.permissions?.includes("DELETE_HEALTH_RECORD")) {
+    throw ERR.forbidden("Access Denied.", "DELETE_HEALTH_RECORD_FORBIDDEN");
   }
+
+  const record = await MedicalRecord.findById(id);
+  if (!record)
+    throw ERR.notFound("Medical record not found.", "MEDICAL_RECORD_NOT_FOUND");
+  if (record.status === "DELETED") {
+    throw ERR.invalidRequest(
+      "Medical record is already deleted.",
+      "MEDICAL_RECORD_ALREADY_DELETED",
+    );
+  }
+
+  record.status = "DELETED";
+  record.updatedBy = req.user.id;
+  await record.save();
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Successfully deleted." });
 };
 
 const getPaginatedRecords = async (req, res, baseFilter = {}) => {
-  try {
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+  const page = Number.parseInt(req.query.page) || 1;
+  const limit = Number.parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
 
-    let filter = { status: { $ne: "DELETED" }, ...baseFilter };
+  let filter = { status: { $ne: "DELETED" }, ...baseFilter };
 
-    if (req.query.patientId) {
-      filter.patientId = req.query.patientId;
-    }
-
-    if (req.query.doctorId) {
-      filter.doctorEmployeeId = req.query.doctorId;
-    }
-
-    if (req.query.date) {
-      const startDate = new Date(req.query.date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(req.query.date);
-      endDate.setHours(23, 59, 59, 999);
-
-      filter.visitDate = { $gte: startDate, $lte: endDate };
-    }
-
-    const [total, records] = await Promise.all([
-      MedicalRecord.countDocuments(filter),
-      MedicalRecord.find(filter)
-        .sort({ visitDate: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-    ]);
-
-    return res.status(200).json({
-      success: true,
-      data: records,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit,
-      },
-    });
-  } catch (error) {
-    console.error("Pagination Error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+  if (req.query.patientId) {
+    filter.patientId = req.query.patientId;
   }
+
+  if (req.query.doctorId) {
+    filter.doctorEmployeeId = req.query.doctorId;
+  }
+
+  if (req.query.date) {
+    const startDate = new Date(req.query.date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(req.query.date);
+    endDate.setHours(23, 59, 59, 999);
+
+    filter.visitDate = { $gte: startDate, $lte: endDate };
+  }
+
+  const [total, records] = await Promise.all([
+    MedicalRecord.countDocuments(filter),
+    MedicalRecord.find(filter)
+      .sort({ visitDate: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    data: records,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit,
+    },
+  });
 };
 
 exports.getAllMedicalRecords = (req, res) => {
@@ -263,42 +221,30 @@ exports.getAllMedicalRecords = (req, res) => {
 exports.getMyMedicalRecords = (req, res) => {
   const employeeID = req.user?.employeeID;
   if (!employeeID) {
-    return res
-      .status(400)
-      .json({ success: false, message: "No employee ID found in token." });
+    throw ERR.invalidRequest(
+      "No employee ID found in token.",
+      "EMPLOYEE_ID_REQUIRED",
+    );
   }
   return getPaginatedRecords(req, res, { doctorEmployeeId: employeeID });
 };
 
 exports.getMedicalRecordById = async (req, res) => {
-  try {
-    const record = await MedicalRecord.findById(req.params.id);
-    if (!record || record.status === "DELETED")
-      return res.status(404).json({ success: false, message: "Not found." });
-    return res.status(200).json({ success: true, data: record });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+  const record = await MedicalRecord.findById(req.params.id);
+  if (!record || record.status === "DELETED") {
+    throw ERR.notFound("Medical record not found.", "MEDICAL_RECORD_NOT_FOUND");
   }
+  return res.status(200).json({ success: true, data: record });
 };
 
-
-// Add to controllers/medicalRecordController.js
-
 exports.getPatientMedicalRecords = (req, res) => {
-  // Extract the patient's ID from the token payload. 
-  // Adjust 'UHID' to match exactly how you store the ID in the patient's JWT.
   const patientId = req.user?.patientId || req.user?.id;
-  console.log(patientId);
-
   if (!patientId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "No patient identifier found in token." });
+    throw ERR.invalidRequest(
+      "No patient identifier found in token.",
+      "PATIENT_ID_REQUIRED",
+    );
   }
 
-  // Pass the patientId to the baseFilter of your pagination helper
-  return getPaginatedRecords(req, res, { patientId: patientId });
+  return getPaginatedRecords(req, res, { patientId });
 };

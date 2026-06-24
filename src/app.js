@@ -58,4 +58,8 @@ try {
   process.exit(1);
 }
 
+// Global error middleware (must be last)
+const errorMiddleware = require("./middlewares/errorMiddleware");
+app.use(errorMiddleware);
+
 module.exports = app;

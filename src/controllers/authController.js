@@ -6,76 +6,70 @@ const Users = require("../models/Users");
 const Patients = require("../models/Patients");
 const Roles = require("../models/Roles");
 const sendMail = require("../utils/sendmail");
+const ERR = require("../utils/errors.utils");
 
 exports.signupByUser = async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      password,
-      role,
-      phone,
-      department,
-      designation,
-      joiningDate,
-      medicalRegistrationNo,
-      specialization,
-      qualification,
-      consultationFee,
-      weeklySchedule,
-    } = req.body;
+  const {
+    name,
+    email,
+    password,
+    role,
+    phone,
+    department,
+    designation,
+    joiningDate,
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    weeklySchedule,
+  } = req.body;
 
-    const existingUser = await Users.findOne({ email });
-    if (existingUser)
-      return res.status(409).json({ message: "Email already exists" });
+  const existingUser = await Users.findOne({ email });
+  if (existingUser) throw ERR.emailAlreadyExists();
 
-    if (medicalRegistrationNo) {
-      const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
-      if (medicalRegNo) {
-        return res
-          .status(409)
-          .json({ message: "Medical Registration no. already exists." });
-      }
-    }
+  if (medicalRegistrationNo) {
+    const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
+    if (medicalRegNo) throw ERR.medicalRegistrationNoExists();
+  }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 12);
 
-    const newEmployee = await Employees.create({
-      email,
-      name,
-      phone,
-      department,
-      designation,
-      joiningDate,
-      status: "ADMIN_APPROVAL_PENDING",
-      role: role.toUpperCase(),
-      medicalRegistrationNo,
-      specialization,
-      qualification,
-      consultationFee,
-      weeklySchedule,
-    });
+  const newEmployee = await Employees.create({
+    email,
+    name,
+    phone,
+    department,
+    designation,
+    joiningDate,
+    status: "ADMIN_APPROVAL_PENDING",
+    role: role.toUpperCase(),
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    weeklySchedule,
+  });
 
-    const employeeID = newEmployee.employeeCode;
+  const employeeID = newEmployee.employeeCode;
+  const verification_token = crypto.randomBytes(32).toString("hex");
+  const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
 
-    const verification_token = crypto.randomBytes(32).toString("hex");
-    const verification_expiry = Date.now() + 60 * 60 * 24 * 1000; // 24 hours
+  const newUser = await Users.create({
+    email,
+    passwordHash,
+    role: role.toUpperCase(),
+    status: "ADMIN_APPROVAL_PENDING",
+    employeeID,
+    isEmailVerified: false,
+    verification_token,
+    verification_expiry,
+  });
 
-    const newUser = await Users.create({
-      email,
-      passwordHash,
-      role: role.toUpperCase(),
-      status: "ADMIN_APPROVAL_PENDING",
-      employeeID,
-      isEmailVerified: false,
-      verification_token,
-      verification_expiry,
-    });
-
-    await sendMail({
-      to: newUser.email,
-      subject: "HMS | Please verify your email address",
-      htmlContent: `
+  await sendMail({
+    to: newUser.email,
+    subject: "HMS | Please verify your email address",
+    htmlContent: `
         <h2>Welcome to HMS, ${name}</h2>
         <p>Before the Admin can approve your account, you must verify your email address.</p>
         <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${newUser.email}&token=${verification_token}">
@@ -85,291 +79,244 @@ exports.signupByUser = async (req, res) => {
         </a>
         <p>This link expires in 24 hours.</p>
       `,
-    });
+  });
 
-    console.log(
-      `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
-    );
-    res.status(201).json({
-      message:
-        "Registration successful. Please check your email to verify your account.",
-      user: { employeeID },
-      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
-    });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
+  const verifyEmailUrl = `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${newUser.email}&token=${verification_token}`;
+
+  res.status(201).json({
+    message:
+      "Registration successful. Please check your email to verify your account.",
+    user: { employeeID },
+    verifyEmailUrl,
+  });
 };
 
 exports.signUpByAdmin = async (req, res) => {
-  try {
-    const {
-      name,
-      role,
-      email,
-      department,
-      designation,
-      phone,
-      joiningDate,
-      medicalRegistrationNo,
-      specialization,
-      qualification,
-      consultationFee,
-      weeklySchedule,
-    } = req.body;
+  const {
+    name,
+    role,
+    email,
+    department,
+    designation,
+    phone,
+    joiningDate,
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    weeklySchedule,
+  } = req.body;
 
-    // 1. ADD SECURITY CHECK: Block unauthorized Admin creation
-    if (role.toUpperCase() === "ADMIN") {
-      const userPermissions = req.user?.permissions || [];
-      if (!userPermissions.includes("CREATE_ADMIN")) {
-        return res.status(403).json({
-          message:
-            "Access Denied: You do not have permission to create an Admin account.",
-        });
-      }
-    }
-
-    const existingUser = await Employees.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: "Email is already registered." });
-    }
-
-    const targetMedicalRoles = new Set([
-      "Doctor",
-      "Nurse",
-      "Pharmacist",
-      "Lab_Tech",
-    ]);
-    // Standardize role to uppercase for checking
-    const hasMedicalRole =
-      targetMedicalRoles.has(role) ||
-      targetMedicalRoles.has(
-        role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+  if (role.toUpperCase() === "ADMIN") {
+    const userPermissions = req.user?.permissions || [];
+    if (!userPermissions.includes("CREATE_ADMIN")) {
+      throw ERR.forbidden(
+        "Access Denied: You do not have permission to create an Admin account.",
+        "CREATE_ADMIN_FORBIDDEN",
       );
-
-    if (hasMedicalRole) {
-      const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
-      if (medicalRegNo) {
-        return res
-          .status(409)
-          .json({ message: "Medical registration no should be unique." });
-      }
     }
+  }
 
-    const tempPassword = crypto.randomBytes(6).toString("hex");
-    const passwordHash = await bcrypt.hash(tempPassword, 12);
+  const existingUser = await Employees.findOne({ email });
+  if (existingUser) throw ERR.emailAlreadyExists();
 
-    const profile = await Employees.create({
-      name,
-      email,
-      department,
-      designation,
-      status: "PASSWORD_CHANGE_PENDING",
-      phone,
-      joiningDate,
-      medicalRegistrationNo,
-      specialization,
-      qualification,
-      consultationFee,
-      weeklySchedule,
-    });
+  const targetMedicalRoles = new Set([
+    "Doctor",
+    "Nurse",
+    "Pharmacist",
+    "Lab_Tech",
+  ]);
+  const normalizedRole =
+    role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  const hasMedicalRole =
+    targetMedicalRoles.has(role) || targetMedicalRoles.has(normalizedRole);
 
-    const verification_token = crypto.randomBytes(32).toString("hex");
-    const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
+  if (hasMedicalRole) {
+    const medicalRegNo = await Employees.findOne({ medicalRegistrationNo });
+    if (medicalRegNo) throw ERR.medicalRegistrationNoExists();
+  }
 
-    const user = await Users.create({
-      email,
-      passwordHash,
-      role: role.toUpperCase(), // Ensure role is saved cleanly
-      employeeID: profile.employeeCode,
-      verification_token,
-      verification_expiry,
-      status: "PASSWORD_CHANGE_PENDING",
-    });
+  const tempPassword = crypto.randomBytes(6).toString("hex");
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-    await sendMail({
-      to: user.email,
-      subject: "HMS Employee Credentials",
-      htmlContent: `
+  const profile = await Employees.create({
+    name,
+    email,
+    department,
+    designation,
+    status: "PASSWORD_CHANGE_PENDING",
+    phone,
+    joiningDate,
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    weeklySchedule,
+  });
+
+  const verification_token = crypto.randomBytes(32).toString("hex");
+  const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
+
+  const user = await Users.create({
+    email,
+    passwordHash,
+    role: role.toUpperCase(),
+    employeeID: profile.employeeCode,
+    verification_token,
+    verification_expiry,
+    status: "PASSWORD_CHANGE_PENDING",
+  });
+
+  await sendMail({
+    to: user.email,
+    subject: "HMS Employee Credentials",
+    htmlContent: `
         <h2>Welcome to HMS</h2>
         <p>Your account credentials:</p>
         <p><strong>Email:</strong> ${user.email}</p>
         <p><strong>Temporary Password:</strong> ${tempPassword}</p>
         <p>Please change your password immediately after your first sign in.</p>
       `,
-    });
+  });
 
-    await sendMail({
-      to: user.email,
-      subject: "HMS System | User Email Verification",
-      htmlContent: `
+  await sendMail({
+    to: user.email,
+    subject: "HMS System | User Email Verification",
+    htmlContent: `
         <h1>Hospital Management System</h1>
         <p>Thank you ${profile.name} for registering. Verify your account below:</p>
         <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}">
           <button>Verify Email</button>
         </a>
       `,
-    });
+  });
 
-    console.log("temp password:", tempPassword);
-    console.log(
-      `verify url: ${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
-    );
-    return res.status(201).json({
-      message: "Account created successfully.",
-      email,
-      verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error during signup" });
-  }
+  return res.status(201).json({
+    message: "Account created successfully.",
+    email,
+    verifyEmailUrl: `${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}`,
+  });
 };
 
 exports.login = async (req, res) => {
-  try {
-    const { email, password, clientType } = req.body;
-    const user = await Users.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-    if (!clientType) {
-      return res.status(400).json({
-        message: "Client type (MOBILE or WEB) is required for login.",
-      });
-    }
-    if (clientType === "MOBILE" && user.role !== "PATIENT") {
-      return res.status(403).json({
-        message:
-          "Access Denied: Staff and Admin accounts cannot log in via the mobile app.",
-      });
-    }
-    if (clientType === "WEB" && user.role === "PATIENT") {
-      return res.status(403).json({
-        message:
-          "Access Denied: Patient accounts must use the mobile application to log in.",
-      });
-    }
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email address before logging in.",
-      });
-    }
-    if (user.status === "ADMIN_APPROVAL_PENDING") {
-      return res.status(403).json({
-        message:
-          "Your account is currently pending Admin approval. Please check back later.",
-      });
-    }
-    if (user.status === "PASSWORD_CHANGE_PENDING") {
-      return res.status(200).json({
-        requiresPasswordChange: true,
-        email: user.email,
-        message: "Security requirement: Please update your default password.",
-      });
-    }
-    const roleExists = await Roles.findOne({ roleName: user.role });
-    const permissions = roleExists ? roleExists.rolePermissions : [];
-    user.lastLogin = new Date();
-    await user.save();
-    let token="";
-    if (user.role === "PATIENT") {
-       token = jwt.sign(
-         {
-           patientId: user.patientUHID,
-           email: user.email,
-           role: user.role,
-           permissions: permissions,
-         },
-         process.env.JWT_SECRET,
-         { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-       );
-    } else {
-       token = jwt.sign(
-        {
-          employeeID: user.employeeID,
-          email: user.email,
-          role: user.role,
-          permissions: permissions,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-      );
-    }
-    let profile;
-    if (user.role === "PATIENT") {
-      profile = await Patients.findOne({ email: user.email }).select("-__v");
-    } else {
-      profile = await Employees.findOne({ email: user.email }).select("-__v");
-    }
-    if (!profile) {
-      return res.status(404).json({
-        message: `Login successful, but ${user.role} profile is missing.`,
-      });
-    }
-    console.log("token:",token);
-    console.log("pid:",user.patientUHID);
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: { profile, role: user.role },
-    });
-  } catch (err) {
-    console.error("Login error: ", err);
-    res.status(500).json({ message: "Internal server error" });
+  const { email, password, clientType } = req.body;
+  const user = await Users.findOne({ email });
+
+  if (!user) throw ERR.invalidCredentials();
+  if (!clientType)
+    throw ERR.invalidRequest(
+      "Client type (MOBILE or WEB) is required for login.",
+      "CLIENT_TYPE_REQUIRED",
+    );
+  if (clientType === "MOBILE" && user.role !== "PATIENT") {
+    throw ERR.forbidden(
+      "Access Denied: Staff and Admin accounts cannot log in via the mobile app.",
+      "INVALID_CLIENT_TYPE",
+    );
   }
+  if (clientType === "WEB" && user.role === "PATIENT") {
+    throw ERR.forbidden(
+      "Access Denied: Patient accounts must use the mobile application to log in.",
+      "INVALID_CLIENT_TYPE",
+    );
+  }
+
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) throw ERR.invalidCredentials();
+
+  if (!user.isEmailVerified)
+    throw ERR.forbidden(
+      "Please verify your email address before logging in.",
+      "EMAIL_NOT_VERIFIED",
+    );
+
+  if (user.status === "ADMIN_APPROVAL_PENDING") {
+    throw ERR.forbidden(
+      "Your account is currently pending Admin approval. Please check back later.",
+      "ACCOUNT_PENDING_APPROVAL",
+    );
+  }
+
+  if (user.status === "PASSWORD_CHANGE_PENDING") {
+    return res.status(200).json({
+      requiresPasswordChange: true,
+      email: user.email,
+      message: "Security requirement: Please update your default password.",
+    });
+  }
+
+  const roleExists = await Roles.findOne({ roleName: user.role });
+  const permissions = roleExists ? roleExists.rolePermissions : [];
+  user.lastLogin = new Date();
+  await user.save();
+
+  const token = jwt.sign(
+    {
+      ...(user.role === "PATIENT"
+        ? { patientId: user.patientUHID }
+        : { employeeID: user.employeeID }),
+      email: user.email,
+      role: user.role,
+      permissions,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+  );
+
+  const profile =
+    user.role === "PATIENT"
+      ? await Patients.findOne({ email: user.email }).select("-__v")
+      : await Employees.findOne({ email: user.email }).select("-__v");
+
+  if (!profile)
+    throw ERR.notFound(
+      `Login successful, but ${user.role} profile is missing.`,
+      "PROFILE_NOT_FOUND",
+    );
+
+  res.status(200).json({
+    message: "Login successful",
+    token,
+    user: { profile, role: user.role },
+  });
 };
 
 exports.changeFirstPassword = async (req, res) => {
-  try {
-    const { email, oldPassword, password } = req.body;
+  const { email, oldPassword, password } = req.body;
 
-    const user = await Users.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+  const user = await Users.findOne({ email });
+  if (!user) throw ERR.userNotFound();
 
-    const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
-    if (!isMatch)
-      return res.status(400).json({ message: "Authentication failed" });
+  const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+  if (!isMatch) throw ERR.invalidCredentials();
 
-    const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(10);
+  user.passwordHash = await bcrypt.hash(password, salt);
+  user.status = "ACTIVE";
+  await user.save();
 
-    user.passwordHash = await bcrypt.hash(password, salt);
-    user.status = "ACTIVE";
-    await user.save();
+  await Employees.findOneAndUpdate(
+    { employeeCode: user.employeeID },
+    { $set: { status: "ACTIVE" } },
+  );
 
-    await Employees.findOneAndUpdate(
-      { employeeCode: user.employeeID },
-      { $set: { status: "ACTIVE" } },
-    );
+  const roleExists = await Roles.findOne({ roleName: user.role });
+  const permissions = roleExists ? roleExists.rolePermissions : [];
 
-    const roleExists = await Roles.findOne({ roleName: user.role });
-    const permissions = roleExists ? roleExists.rolePermissions : [];
+  const token = jwt.sign(
+    {
+      employeeID: user.employeeID,
+      email: user.email,
+      role: user.role,
+      permissions,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+  );
 
-    const token = jwt.sign(
-      {
-        employeeID: user.employeeID,
-        email: user.email,
-        role: user.role,
-        permissions: permissions,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
-    );
-
-    res.status(200).json({
-      token,
-      user,
-      message: "Password updated successfully. Logging in...",
-    });
-  } catch (error) {
-    console.error("Change password error:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Failed to update password" });
-  }
+  res.status(200).json({
+    token,
+    user,
+    message: "Password updated successfully. Logging in...",
+  });
 };

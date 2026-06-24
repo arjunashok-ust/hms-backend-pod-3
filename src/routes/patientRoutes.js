@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const patientController = require("../controllers/patientController");
+const asyncHandler = require("../middlewares/asyncHandler");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const { patientSignupValidation } = require("../validations/authValidation");
 const validate = require("../middlewares/validate");
@@ -10,7 +11,7 @@ router.get(
   "/all",
   authenticateToken,
   requirePermission("VIEW_PATIENTS"),
-  patientController.getAllPatients,
+  asyncHandler(patientController.getAllPatients),
 );
 router.post(
   "/create",
@@ -18,23 +19,23 @@ router.post(
   requirePermission("CREATE_PATIENT"),
   patientSignupValidation,
   validate,
-  patientController.createPatient,
+  asyncHandler(patientController.createPatient),
 );
 router.put(
   "/:id",
   authenticateToken,
   requirePermission("UPDATE_PATIENT"),
-  patientController.updatePatient,
+  asyncHandler(patientController.updatePatient),
 );
 router.delete(
   "/:id",
   authenticateToken,
   requirePermission("DELETE_PATIENT"),
-  patientController.deletePatient,
+  asyncHandler(patientController.deletePatient),
 );
 router.post(
   "/mobile-register",
-  patientController.createPatientFromMobile,
+  asyncHandler(patientController.createPatientFromMobile),
 );
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");
+const asyncHandler = require("../middlewares/asyncHandler");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const requirePermission = require("../middlewares/permissionMiddleware");
 const {
@@ -14,7 +15,7 @@ router.post(
   requirePermission(["CREATE_RECORD", "CREATE_RECORD_FOR_ANYONE"]),
   validateMedicalRecord,
   validate,
-  medicalRecordController.createMedicalRecord,
+  asyncHandler(medicalRecordController.createMedicalRecord),
 );
 router.put(
   "/updateRecord/:id",
@@ -22,39 +23,39 @@ router.put(
   requirePermission("UPDATE_RECORD"),
   validateMedicalRecord,
   validate,
-  medicalRecordController.updateMedicalRecord,
+  asyncHandler(medicalRecordController.updateMedicalRecord),
 );
 router.delete(
   "/deleteRecord/:id",
   authenticateToken,
   requirePermission("DELETE_HEALTH_RECORD"),
-  medicalRecordController.deleteMedicalRecord,
+  asyncHandler(medicalRecordController.deleteMedicalRecord),
 );
 
 router.get(
   "/getAllRecords",
   authenticateToken,
   requirePermission("VIEW_ALL_RECORDS"),
-  medicalRecordController.getAllMedicalRecords,
+  asyncHandler(medicalRecordController.getAllMedicalRecords),
 );
 router.get(
   "/getMyRecords",
   authenticateToken,
   requirePermission("VIEW_MY_PATIENT_RECORDS"),
-  medicalRecordController.getMyMedicalRecords,
+  asyncHandler(medicalRecordController.getMyMedicalRecords),
 );
 router.get(
   "/getRecord/:id",
   authenticateToken,
   requirePermission("VIEW_HEALTH_RECORDS"),
-  medicalRecordController.getMedicalRecordById,
+  asyncHandler(medicalRecordController.getMedicalRecordById),
 );
 
 router.get(
   "/getPatientRecords",
   authenticateToken,
   requirePermission("VIEW_MY_RECORDS"),
-  medicalRecordController.getPatientMedicalRecords
+  asyncHandler(medicalRecordController.getPatientMedicalRecords),
 );
 
 module.exports = router;
