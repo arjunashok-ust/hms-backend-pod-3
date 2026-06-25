@@ -103,7 +103,7 @@ const updateMedicalRecord = asyncHandler(async (req, res) => {
         throw ERR.employeeNotFound();
     }
 
-    const updatedRecord = await MedicalRecord.findOneAndUpdate({ medicalRecordId }, {
+    const updatedRecord = await MedicalRecord.findOneAndUpdate({ medicalRecordId, isDeleted: false }, {
         doctorId,
         appointmentId,
         patientId,
@@ -151,13 +151,17 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
     const page = Number.parseInt(req.query.page);
     const limit = Number.parseInt(req.query.limit);
     const patientId = req.query.patientId;
+    const doctorId = req.query.doctorId;
 
     const skip = (page - 1) * limit;
     const filter = {
         isDeleted: false,
     }
 
-    if (patientId) {
+    if (doctorId) {
+        filter.doctorId = doctorId;
+    }
+    else if (patientId) {
         filter.patientId = patientId;
     }
 

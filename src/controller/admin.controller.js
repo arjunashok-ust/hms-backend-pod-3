@@ -3,6 +3,7 @@ const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const Appointment = require('../models/appointment.model');
 const Department = require('../models/department.model');
+const MedicalRecord = require('../models/medical-record.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
@@ -11,7 +12,7 @@ const { trusted } = require('mongoose');
 const medicalRoles = new Set(['Doctor', 'Nurse']);
 
 const findUserByEmployeeId = async (employeeId) => {
-    return await User.findOne({ employeeId });
+    return await User.findOne({ employeeId, isDeleted: false });
 };
 
 const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) => {
@@ -41,38 +42,69 @@ const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) =>
 });
 
 const deleteUserProfile = asyncHandler(async (req, res) => {
-    const EmployeeId = req.body.employeeId;
+    const employeeId = req.body.employeeId;
 
-    const existingUser = await findUserByEmployeeId(EmployeeId);
+    const existingUser = await findUserByEmployeeId(employeeId);
     if (!existingUser) {
         throw ERR.userNotFound();
     }
 
-    const existingEmployee = await Employee.findOneAndDelete({ employeeCode: EmployeeId });
+    const existingEmployee = await Employee.findOneAndUpdate(
+        { employeeCode: employeeId },
+        {
+            $set: {
+                isDeleted: true,
+                deletedBy: req.user.userId,
+                deletedAt: new Date(),
+            }
+        },
+        { new: true }
+    );
+
     if (!existingEmployee) {
         throw ERR.employeeNotFound();
     }
 
-    await existingUser.deleteOne();
-    await existingEmployee.deleteOne();
+    const updateData = {
+        isDeleted: true,
+        deletedBy: req.user.userId,
+        deletedAt: new Date(),
+    }
+
+    if (existingUser.role == 'Doctor') {
+        // for cancelling any booked appointments
+        await Appointment.updateMany({
+            doctorEmployeeId: employeeId,
+            status: 'Booked',
+        }, {
+            $set: {
+                status: 'Cancelled',
+            }
+        });
+
+        await Appointment.updateMany({ doctorEmployeeId: employeeId }, { $set: updateData })
+        await MedicalRecord.updateMany({ doctorId: employeeId }, { $set: updateData });
+    }
+
+    await existingUser.updateOne({ $set: updateData });
 
     return res.status(200).json({
         message: 'Account deleted successfully',
-        employeeId: EmployeeId,
+        employeeId: employeeId,
     });
 });
 
 const getDashboardData = asyncHandler(async (req, res) => {
     const [employeeCount, activeCount, inactiveCount, verifiedCount, pendingApprovalCount, pendingVerifyCount, pendingFirstLoginCount, patientCount, appointmentCount, departmentCount] = await Promise.all([
-        Employee.countDocuments(),
-        Employee.countDocuments({ status: 'Active' }),
-        Employee.countDocuments({ status: 'Inactive' }),
-        User.countDocuments({ isVerified: true }),
-        User.countDocuments({ status: 'Pending' }),
-        User.countDocuments({ isVerified: false }),
-        User.countDocuments({ firstLogin: true }),
+        Employee.countDocuments({ isDeleted: false }),
+        Employee.countDocuments({ status: 'Active', isDeleted: false }),
+        Employee.countDocuments({ status: 'Inactive', isDeleted: false }),
+        User.countDocuments({ isVerified: true, isDeleted: false }),
+        User.countDocuments({ status: 'Pending', isDeleted: false }),
+        User.countDocuments({ isVerified: false, isDeleted: false }),
+        User.countDocuments({ firstLogin: true, isDeleted: false }),
         Patient.countDocuments({ isDeleted: false }),
-        Appointment.countDocuments(),
+        Appointment.countDocuments({ isDeleted: false }),
         Department.countDocuments(),
     ]);
 
@@ -97,7 +129,7 @@ const getUserEmployee = asyncHandler(async (req, res) => {
     const limit = Number.parseInt(req.query.limit) || 5;
 
     const skip = (page - 1) * limit;
-    const employeeFilter = {}
+    const employeeFilter = { isDeleted: false }
 
     if (selectedText) {
         employeeFilter.$text = { $search: selectedText };
@@ -167,7 +199,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
     const limit = Number.parseInt(req.query.limit) || 5;
 
     const skip = (page - 1) * limit;
-    const filter = {}
+    const filter = { isDeleted: false }
 
     if (selectedDepartment) {
         filter.department = selectedDepartment;
@@ -190,7 +222,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 const getUsers = asyncHandler(async (req, res) => {
-    const user = await User.find();
+    const user = await User.find({ isDeleted: false });
     if (user.length === 0) {
         throw ERR.noUsersFound();
     }
@@ -227,7 +259,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         }
     }
 
-    await Employee.findOneAndUpdate({ employeeCode: employeeId }, data);
+    await Employee.findOneAndUpdate({ employeeCode: employeeId, isDeleted: false }, data);
 
     return res.status(200).json({
         message: "Profile updated successfully!",

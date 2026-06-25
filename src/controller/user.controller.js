@@ -12,8 +12,8 @@ const { json } = require('express');
 const getUserProfile = asyncHandler(async (req, res) => {
     const email = req.query.email;
 
-    const user = await User.findOne({ email });
-    const employee = await Employee.findOne({ email });
+    const user = await User.findOne({ email, isDeleted: false });
+    const employee = await Employee.findOne({ email, isDeleted: false });
 
     if (!user) throw ERR.userNotFound();
 
@@ -65,13 +65,13 @@ const deletePatient = asyncHandler(async (req, res) => {
     const patientId = req.body.patientId;
     const deletedBy = req.body.deletedBy;
 
-    const patient = await Patient.findOneAndUpdate({ uhid: patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
+    const patient = await Patient.findOneAndUpdate({ uhid: patientId, isDeleted: false }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
 
     if (!patient) {
         throw ERR.patientNotFound();
     }
 
-    const userPatient = await User.findOneAndUpdate({ patientId: patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
+    const userPatient = await User.findOneAndUpdate({ patientId: patientId, isDeleted: false }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
 
     if (!userPatient) {
         throw ERR.patientNotFound();
@@ -85,8 +85,8 @@ const deletePatient = asyncHandler(async (req, res) => {
 
 const getPatientProfile = asyncHandler(async (req, res) => {
     const email = req.query.email;
-    const user = await User.findOne({ email });
-    const patient = await Patient.findOne({ email });
+    const user = await User.findOne({ email, isDeleted: false });
+    const patient = await Patient.findOne({ email, isDeleted: false });
 
     if (!user) throw ERR.userNotFound();
 
@@ -110,7 +110,7 @@ const getPatientProfile = asyncHandler(async (req, res) => {
 
 const getPatientId = asyncHandler(async (req, res) => {
     const email = req.query.email;
-    const patient = await Patient.findOne({ email });
+    const patient = await Patient.findOne({ email, isDeleted: false });
     if (!patient) throw ERR.patientNotFound();
     return res.status(200).json({
         message: "Patient id sent successfully",
@@ -127,7 +127,7 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
 
     const date = inputDate.toDateString();
 
-    const doctor = await Employee.findOne({ employeeCode: employeeId });
+    const doctor = await Employee.findOne({ employeeCode: employeeId, isDeleted: false });
     if (!doctor) throw ERR.doctorNotFound();
     const appointments = await Appointment.find();
 
@@ -171,7 +171,7 @@ const updatePatientProfile = asyncHandler(async (req, res) => {
         emergencyContact,
     } = req.body;
 
-    const patient = await Patient.findOneAndUpdate({ uhid: patientId }, {
+    const patient = await Patient.findOneAndUpdate({ uhid: patientId, isDeleted: false }, {
         name,
         gender,
         dob,
@@ -229,7 +229,7 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
 
 const getPatientById = asyncHandler(async (req, res) => {
     const patientId = req.query.patientId;
-    const patient = await Patient.findOne({ uhid: patientId });
+    const patient = await Patient.findOne({ uhid: patientId, isDeleted: false });
     if (!patient) return ERR.patientNotFound();
 
     return res.status(200).json(patient);
@@ -238,7 +238,7 @@ const getPatientById = asyncHandler(async (req, res) => {
 const getDoctorById = asyncHandler(async (req, res) => {
     const doctorId = req.query.doctorId;
 
-    const doctor = await Employee.findOne({ employeeCode: doctorId });
+    const doctor = await Employee.findOne({ employeeCode: doctorId, isDeleted: false });
     if (!doctor) return ERR.doctorNotFound();
 
     return res.status(200).json(doctor);
@@ -248,12 +248,12 @@ const getDoctorById = asyncHandler(async (req, res) => {
 const getSingleUser = asyncHandler(async (req, res) => {
     const email = req.query.email;
 
-    const employee = await Employee.findOne({ email });
+    const employee = await Employee.findOne({ email, isDeleted: false });
     if (!employee) {
         throw ERR.employeeNotFound();
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, isDeleted: false });
     if (!user) {
         throw ERR.userNotFound();
     }

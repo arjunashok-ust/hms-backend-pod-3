@@ -101,7 +101,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 });
 
 const getDoctors = asyncHandler(async (req, res) => {
-    const doctorUser = await User.find({ role: 'Doctor', status: 'Active' });
+    const doctorUser = await User.find({ role: 'Doctor', status: 'Active', isDeleted: false });
 
     if (!doctorUser.length) {
         return res.status(200).json([]);
@@ -121,10 +121,10 @@ const getDoctors = asyncHandler(async (req, res) => {
 const getAppointmentUiData = asyncHandler(async (req, res) => {
     const [appointmentCount, bookedCount, cancelledCount, completedCount] =
         await Promise.all([
-            Appointment.countDocuments(),
-            Appointment.countDocuments({ status: 'Booked' }),
-            Appointment.countDocuments({ status: 'Cancelled' }),
-            Appointment.countDocuments({ status: 'Completed' }),
+            Appointment.countDocuments({ isDeleted: false }),
+            Appointment.countDocuments({ status: 'Booked', isDeleted: false }),
+            Appointment.countDocuments({ status: 'Cancelled', isDeleted: false }),
+            Appointment.countDocuments({ status: 'Completed', isDeleted: false }),
         ]);
 
 
@@ -156,13 +156,13 @@ const deleteAppointment = asyncHandler(async (req, res) => {
 const getAppointmentsByPatientId = asyncHandler(async (req, res) => {
     const patientId = req.query.patientId;
 
-    const patient = await Patient.findOne({ uhid: patientId });
+    const patient = await Patient.findOne({ uhid: patientId, isDeleted: false });
 
     if (!patient) {
         throw ERR.patientNotFound();
     }
 
-    const appointments = await Appointment.find({ patientId: patientId });
+    const appointments = await Appointment.find({ patientId: patientId, isDeleted: false });
 
     return res.status(200).json(appointments);
 });
@@ -170,7 +170,7 @@ const getAppointmentsByPatientId = asyncHandler(async (req, res) => {
 const getDoctorByEmployeeId = asyncHandler(async (req, res) => {
     const employeeId = req.query.employeeId;
 
-    const doctor = await Employee.findOne({ employeeCode: employeeId });
+    const doctor = await Employee.findOne({ employeeCode: employeeId, isDeleted: false });
 
     if (!doctor) {
         throw ERR.doctorNotFound();
@@ -193,7 +193,8 @@ const editAppointment = asyncHandler(async (req, res) => {
         doctorEmployeeId,
         date,
         timeSlot,
-        status: { $ne: 'Cancelled' }
+        status: { $ne: 'Cancelled' },
+        isDeleted: false
     });
 
     if (existingAppointment) {
@@ -206,6 +207,7 @@ const editAppointment = asyncHandler(async (req, res) => {
         date,
         timeSlot,
         status,
+        isDeleted: false
     }, {
         new: true,
         runValidators: true,
@@ -224,7 +226,7 @@ const editAppointmentStatus = asyncHandler(async (req, res) => {
         status
     } = req.body;
 
-    const appointment = await Appointment.findOneAndUpdate({ appointmentId }, {
+    const appointment = await Appointment.findOneAndUpdate({ appointmentId, isDeleted: false }, {
         status,
     }, {
         new: true,
@@ -245,7 +247,7 @@ const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
         appointmentId,
     } = req.query;
 
-    let filters = [{ status: 'Completed' }];
+    let filters = [{ status: 'Completed', isDeleted: false }];
 
     let conditions = [];
 
@@ -273,7 +275,7 @@ const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
 });
 
 
-const escapeRegex = (text) => text?.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
+const escapeRegex = (text) => text?.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
 
 
 module.exports = {

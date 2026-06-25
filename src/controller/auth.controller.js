@@ -150,7 +150,7 @@ const login = asyncHandler(async (req, res) => {
         isClientApp,
     } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email, isDeleted: false });
 
     if (!existingUser) {
         throw ERR.invalidCredentials();
@@ -407,5 +407,31 @@ const getAccessToken = asyncHandler(async (req, res) => {
     return res.status(200).json({ token: newAccessToken });
 });
 
-module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions, getAccessToken };
+const logout = asyncHandler(async (req, res) => {
+    const userId = req.user.userId;
+
+    const user = await User.findOne({
+        $or: [
+            { employeeId: userId },
+            { patientId: userId }
+        ]
+    });
+
+    if (!user) {
+        throw ERR.userNotFound();
+    }
+
+    user.refresh_token = null;
+    await user.save();
+
+
+    res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax'
+    });
+    return res.status(200).json({ message: "User logged out successfully" });
+});
+
+module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions, getAccessToken, logout };
 
