@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     patientId: { type: String, ref: 'Patient' },
     verification_token: { type: String, unique: true },
     verification_expiry: { type: Date },
-    refresh_token: { type: String, unique: true },
+    refresh_token: { type: String },
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },
