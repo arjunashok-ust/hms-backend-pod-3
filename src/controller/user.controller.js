@@ -213,13 +213,16 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
         searchText,
     } = req.query;
 
+
     const doctors = await Employee.find({
+        department: { $ne: 'Administration' },
         $or: [
             { employeeCode: { $regex: searchText, $options: "i" } },
             { name: { $regex: searchText, $options: "i" } },
             { specialization: { $regex: searchText, $options: "i" } }
         ]
     });
+
 
     return res.status(200).json(doctors);
 });
