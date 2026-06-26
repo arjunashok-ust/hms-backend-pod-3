@@ -53,6 +53,11 @@ const validateGetSingleUser = [
     query("email").notEmpty().withMessage("Email is required"),
 ]
 
+const validatePagination = [
+    query("page").notEmpty().withMessage("Page is required"),
+    query("limit").notEmpty().withMessage("Limit is required")
+]
+
 module.exports = {
     validateGetUserProfile,
     validateGetNameByEmployeeId,
@@ -67,4 +72,5 @@ module.exports = {
     validateGetPatientById,
     validateGetDoctorById,
     validateGetSingleUser,
+    validatePagination,
 };

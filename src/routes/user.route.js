@@ -9,7 +9,7 @@ const permission = require('../middleware/permission.middleware');
 
 // routes
 router.get('/getUserProfile', userValidate.validateGetUserProfile, validate, auth, permission('view:profile'), userController.getUserProfile);
-router.get('/getPatients', auth, permission('view:patient'), userController.getPatients);
+router.get('/getPatients', userValidate.validatePagination, validate, auth, permission('view:patient'), userController.getPatients);
 router.post('/deletePatient', userValidate.validateDeletePatient, validate, auth, permission('view:patient'), userController.deletePatient);
 router.get('/getPatientProfile', userValidate.validateGetPatientProfile, validate, auth, permission('view:patient'), userController.getPatientProfile);
 router.get('/getPatientId', userValidate.validateGetPatientId, validate, auth, permission('view:profile'), userController.getPatientId);
@@ -19,6 +19,6 @@ router.get('/getPatientsBySearch', userValidate.validateGetPatientsBySearch, val
 router.get('/getDoctorsBySearch', userValidate.validateGetDoctorsBySearch, validate, auth, permission('view:profile'), userController.getDoctorsBySearch);
 router.get('/getPatientById', userValidate.validateGetPatientById, validate, auth, permission('view:profile'), userController.getPatientById);
 router.get('/getDoctorById', userValidate.validateGetDoctorById, validate, auth, permission('view:profile'), userController.getDoctorById);
-router.get('/getSingleUser', userValidate.validateGetSingleUser,validate,auth,permission("view:profile"), userController.getSingleUser);
+router.get('/getSingleUser', userValidate.validateGetSingleUser, validate, auth, permission("view:profile"), userController.getSingleUser);
 
 module.exports = router;
