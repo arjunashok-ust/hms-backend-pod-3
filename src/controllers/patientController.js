@@ -5,8 +5,14 @@ const bcrypt = require("bcryptjs");
 const ERR = require("../utils/errors.utils");
 
 exports.getAllPatients = async (req, res) => {
-  const page = Number.parseInt(req.query.page) || 1;
-  const limit = Number.parseInt(req.query.limit) || 5;
+  let page = Number.parseInt(req.query.page, 10);
+  let limit = Number.parseInt(req.query.limit, 10);
+
+  // Validate page and limit.
+  page = !Number.isNaN(page) && page > 0 ? page : 1;
+  limit = !Number.isNaN(limit) && limit > 0 ? limit : 5;
+  limit = Math.min(limit, 50);
+
   const skip = (page - 1) * limit;
 
   let matchStage = {status:{$ne:"DELETED"}};

@@ -198,9 +198,14 @@ exports.deleteMedicalRecord = async (req, res) => {
 };
 
 const getPaginatedRecords = async (req, res, baseFilter = {}) => {
-  const page = Number.parseInt(req.query.page) || 1;
-  const limit = Number.parseInt(req.query.limit) || 5;
+  let page = Number.parseInt(req.query.page) || 1;
+  let limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
+
+  // Validate page and limit, providing sensible defaults and constraints.
+  page = !Number.isNaN(page) && page > 0 ? page : 1;
+  limit = !Number.isNaN(limit) && limit > 0 ? limit : 5;
+  limit = Math.min(limit, 50);
 
   let filter = { status: { $nin: ["DELETED"] }, ...baseFilter };
 
