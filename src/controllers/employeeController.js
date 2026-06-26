@@ -4,8 +4,8 @@ const Appointments = require("../models/Appointments");
 const ERR = require("../utils/errors.utils");
 
 exports.getAllEmployees = async (req, res) => {
-  const page = Number.parseInt(req.query.page) || 1;
-  const limit = Number.parseInt(req.query.limit) || 5;
+  let page = Number.parseInt(req.query.page) || 1;
+  let limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
   // Validate page and limit.
