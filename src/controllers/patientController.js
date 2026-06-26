@@ -108,6 +108,8 @@ exports.updatePatient = async (req, res) => {
     ? buildPatientUpdatePayload(req.body, targetPatient.address)
     : buildStaffUpdatePayload(req.body);
 
+    console.log(cleanUpdatePayload)
+
   const updated = await Patient.findOneAndUpdate(
     { UHID: id },
     { $set: cleanUpdatePayload },

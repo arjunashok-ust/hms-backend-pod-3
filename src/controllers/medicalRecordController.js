@@ -55,12 +55,18 @@ exports.createMedicalRecord = async (req, res) => {
     updatedBy: req.user.employeeID,
   });
 
-  if(!recordStatus){
+  if (recordStatus === "FINAL") {
     const completedAppointment = await Appointments.findOneAndUpdate(
       { appointmentCode: appointmentId },
       { $set: { status: "Completed" } },
       { new: true },
     );
+
+    return res.status(201).json({
+      success: true,
+      message: `Medical record saved as ${recordStatus}.Appointment ${completedAppointment.appointmentCode} completed`,
+      data: newRecord,
+    });
   }
   return res.status(201).json({
     success: true,
@@ -148,14 +154,20 @@ exports.updateMedicalRecord = async (req, res) => {
   if (updates.status === "FINAL") {
     const completedAppointment = await Appointments.findOneAndUpdate(
       { appointmentCode: updates.appointmentId },
-      {$set: {status: "Completed"} },
+      { $set: { status: "Completed" } },
       { new: true },
     );
+
+    return res.status(200).json({
+      success: true,
+      message: `Medical record updated successfully. Appointment ${completedAppointment.appointmentCode} completed`,
+      data: record,
+    });
   }
 
   return res.status(200).json({
     success: true,
-    message: `Medical record updated successfully.Appointment completed`,
+    message: `Medical record updated successfully. Appointment completed`,
     data: record,
   });
 };
@@ -190,10 +202,12 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   const limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  let filter = { status: { $ne: "DELETED" }, ...baseFilter };
+  let filter = { status: { $nin: ["DELETED"] }, ...baseFilter };
 
-  if (req.query.patientId) {
+  if (req.query.patientId || baseFilter.patientId) {
     filter.patientId = req.query.patientId;
+    if (baseFilter.patientId) filter.patientId = baseFilter.patientId;
+    filter.status = { $nin: ["DELETED", "DRAFT"] };
   }
 
   if (req.query.doctorId) {
@@ -209,14 +223,70 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
     filter.visitDate = { $gte: startDate, $lte: endDate };
   }
 
-  const [total, records] = await Promise.all([
-    MedicalRecord.countDocuments(filter),
-    MedicalRecord.find(filter)
-      .sort({ visitDate: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
-  ]);
+  if (req.query.appointmentId) {
+    filter.appointmentId = req.query.appointmentId;
+  }
 
+  if (req.query.search) {
+    const searchRegex = new RegExp(
+      req.query.search.replaceAll(/[-\\^$*+?.()|[\]{}]/g, String.raw`\$&`),
+      "i",
+    );
+    const searchFilter = {
+      $or: [{ recordCode: searchRegex }, { "doctorInfo.name": searchRegex }],
+    };
+
+    filter = { $and: [filter, searchFilter] };
+  }
+
+  const aggregationPipeline = [
+    {
+      $lookup: {
+        from: "employees",
+        localField: "doctorEmployeeId",
+        foreignField: "employeeCode",
+        as: "doctorInfo",
+      },
+    },
+    { $match: filter },
+    { $sort: { visitDate: -1, createdAt: -1 } },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: "patients",
+              localField: "patientId",
+              foreignField: "UHID",
+              as: "patientInfo",
+            },
+          },
+          {
+            $addFields: {
+              doctorName: { $arrayElemAt: ["$doctorInfo.name", 0] },
+              patientName: { $arrayElemAt: ["$patientInfo.name", 0] },
+            },
+          },
+          {
+            $project: {
+              doctorInfo: 0,
+              patientInfo: 0,
+            },
+          },
+        ],
+      },
+    },
+  ];
+
+  const results = await MedicalRecord.aggregate(aggregationPipeline);
+
+  const records = results[0].data;
+  const total = results[0].metadata[0] ? results[0].metadata[0].total : 0;
+
+  console.log(records);
   return res.status(200).json({
     success: true,
     data: records,
@@ -235,6 +305,7 @@ exports.getAllMedicalRecords = (req, res) => {
 
 exports.getMyMedicalRecords = (req, res) => {
   const employeeID = req.user?.employeeID;
+
   if (!employeeID) {
     throw ERR.invalidRequest(
       "No employee ID found in token.",

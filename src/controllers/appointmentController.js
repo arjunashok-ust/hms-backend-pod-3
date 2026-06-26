@@ -56,7 +56,7 @@ exports.getRecentAppointments = async (req, res) => {
 
   const appointments = await Appointments.aggregate([
     { $match: matchStage },
-    { $sort: { date: 1, timeSlot: 1} },
+    { $sort: { date: 1, timeSlot: 1 } },
     {
       $facet: {
         metadata: [{ $count: "total" }],
@@ -281,7 +281,7 @@ exports.cancelAppointment = async (req, res) => {
 
   const cancelledApt = await Appointments.findOneAndUpdate(
     { appointmentCode: id },
-    {  status },
+    { status },
     { new: true },
   );
 
@@ -298,11 +298,14 @@ exports.cancelAppointment = async (req, res) => {
 exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
 
-  const deletedApt = await Appointments.findOneAndUpdate({
-    appointmentCode: id,
-  },{
-    status:"Deleted"
-  });
+  const deletedApt = await Appointments.findOneAndUpdate(
+    {
+      appointmentCode: id,
+    },
+    {
+      status: "Deleted",
+    },
+  );
 
   if (!deletedApt) {
     throw ERR.appointmentNotFound();
@@ -312,6 +315,7 @@ exports.deleteAppointment = async (req, res) => {
 };
 
 exports.getPatientAppointments = async (req, res) => {
+  const { doctor, appointmentId, date, status } = req.query;
   const patient = await Patients.findOne({ email: req.user.email });
 
   if (!patient) {
@@ -319,14 +323,38 @@ exports.getPatientAppointments = async (req, res) => {
   }
 
   const appointments = await Appointments.aggregate([
-    { $match: { patientId: patient.UHID,status: { $ne: "Deleted" } } },
-    { $sort: { date: 1 } },
+    { $match: { patientId: patient.UHID, status: { $ne: "Deleted" } } },
     {
       $lookup: {
         from: "employees",
         localField: "doctorEmployeeID",
         foreignField: "employeeCode",
         as: "doctorInfo",
+      },
+    },
+    {
+      $match: {
+        ...(doctor && {
+          $or: [
+            { doctorEmployeeID: doctor },
+            { "doctorInfo.name": new RegExp(doctor, "i") },
+          ],
+        }),
+        ...(appointmentId && { appointmentCode: appointmentId }),
+        ...(date && {
+          date: {
+            $gte: new Date(new Date(date).setUTCHours(0, 0, 0, 0)),
+            $lte: new Date(new Date(date).setUTCHours(23, 59, 59, 999)),
+          },
+        }),
+        ...(status && { status: new RegExp(`^${status}$`, "i") }),
+      },
+    },
+    {
+      $sort: {
+        date: 1,
+        "doctorInfo.name": 1,
+        appointmentCode: 1,
       },
     },
     {

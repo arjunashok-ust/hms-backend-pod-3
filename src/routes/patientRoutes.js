@@ -6,6 +6,7 @@ const { authenticateToken } = require("../middlewares/authMiddleware");
 const {
   patientSignupValidation,
   patientSignupByAdminValidation,
+  patientSelfUpdate,
 } = require("../validations/authValidation");
 const validate = require("../middlewares/validate");
 const requirePermission = require("../middlewares/permissionMiddleware");
@@ -27,8 +28,8 @@ router.post(
 router.put(
   "/:id",
   authenticateToken,
-  requirePermission("UPDATE_PATIENT"),
-  patientSignupByAdminValidation,
+  requirePermission(["UPDATE_PATIENT", "UPDATE_PATIENT_SELF"]),
+  patientSelfUpdate,
   validate,
   asyncHandler(patientController.updatePatient),
 );

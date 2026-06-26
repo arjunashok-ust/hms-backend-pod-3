@@ -1,17 +1,12 @@
-/**
- * Global error handling middleware
- * Must be registered as the last middleware in app.js
- * Catches all errors from routes and async handlers
- */
+
 
 const errorMiddleware = (err, req, res, next) => {
-  // Default values
+
   let statusCode = err.statusCode || 500;
   let message = err.message || "Internal server error";
   let code = err.code || "INTERNAL_SERVER_ERROR";
   let details = err.details || {};
 
-  // Handle Mongoose validation errors
   if (err.name === "ValidationError") {
     statusCode = 422;
     code = "VALIDATION_ERROR";
@@ -21,7 +16,6 @@ const errorMiddleware = (err, req, res, next) => {
     }, {});
   }
 
-  // Handle Mongoose duplicate key errors
   if (err.code === 11000) {
     statusCode = 409;
     code = "CONFLICT_ERROR";
@@ -30,7 +24,6 @@ const errorMiddleware = (err, req, res, next) => {
     details = { field, value: err.keyValue[field] };
   }
 
-  // Handle JWT errors
   if (err.name === "JsonWebTokenError") {
     statusCode = 401;
     code = "INVALID_TOKEN";
@@ -43,7 +36,6 @@ const errorMiddleware = (err, req, res, next) => {
     message = "Token has expired";
   }
 
-  // Log error with context
   console.error(`[${code}] ${message}`, {
     statusCode,
     details,
@@ -53,7 +45,6 @@ const errorMiddleware = (err, req, res, next) => {
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 
-  // Send response to client
   res.status(statusCode).json({
     success: false,
     message,

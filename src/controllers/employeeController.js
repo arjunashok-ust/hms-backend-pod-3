@@ -149,11 +149,9 @@ exports.deleteEmployee = async (req, res) => {
 
   const deletedCount = deletedDoctorAppointments.modifiedCount;
 
-  res
-    .status(200)
-    .json({
-      message: `Employee permanently deleted.No of appointemnts deleted:${deletedCount}`,
-    });
+  res.status(200).json({
+    message: `Employee permanently deleted.No of appointemnts deleted:${deletedCount}`,
+  });
 };
 
 exports.updateEmployee = async (req, res) => {
@@ -233,21 +231,21 @@ exports.approveEmployee = async (req, res) => {
 exports.rejectEmployee = async (req, res) => {
   const { id } = req.params;
 
-  const emp = await Employees.findOneAndUpdate(
-    { employeeCode: id },
-    { $set: { status: "INACTIVE" } },
-    { new: true, runValidators: true },
-  );
-
   const user = await Users.findOneAndUpdate(
     { employeeID: id },
     { $set: { status: "INACTIVE" } },
     { new: true, runValidators: true },
   );
 
+  const emp = await Employees.findOneAndUpdate(
+    { employeeCode: id },
+    { $set: { status: "INACTIVE" } },
+    { new: true, runValidators: true },
+  );
+
   if (!emp || !user) {
     throw ERR.notFound(
-      "Employee or User account record missing",
+      "Employee or User account record not found",
       "EMPLOYEE_USER_RECORD_MISSING",
     );
   }
