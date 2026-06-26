@@ -37,6 +37,14 @@ const MedicalRecordSchema = new mongoose.Schema(
     { timestamps: { createdAt: "created_at" } },
 );
 
+MedicalRecordSchema.index({
+    medicalRecordId: "text",
+    doctorId: "text",
+    patientId: "text",
+    appointmentId: "text",
+    status: "text",
+});
+
 // pre hook
 MedicalRecordSchema.pre('save', async function () {
     if (this.isNew) {

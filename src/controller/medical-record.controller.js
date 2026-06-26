@@ -148,14 +148,51 @@ const getMedicalRecordStats = asyncHandler(async (req, res) => {
 });
 
 const getMedicalRecords = asyncHandler(async (req, res) => {
+    const selectedText = req.query.selectedText?.trim();
     const page = Number.parseInt(req.query.page);
     const limit = Number.parseInt(req.query.limit);
     const patientId = req.query.patientId;
     const doctorId = req.query.doctorId;
+    const isClientApp = req.query.isClientApp;
 
     const skip = (page - 1) * limit;
     const filter = {
         isDeleted: false,
+    }
+
+    if (selectedText) {
+        const isIdLike = /^(REC-?|APT-?|PAT-?|EMP-?)?\d+$/i.test(selectedText);
+
+        if (isIdLike) {
+            const normalized = selectedText
+                .replace(/^(REC-?|APT-?|PAT-?|EMP-?)/i, '')
+                .padStart(6, '0');
+
+            const prefix = selectedText.match(/^(REC|APT|PAT|EMP)/i)?.[0]?.toUpperCase();
+
+            if (prefix === 'REC') {
+                filter.medicalRecordId = { $regex: `^REC-${normalized}$`, $options: 'i' };
+            } else if (prefix === 'APT') {
+                filter.appointmentId = { $regex: `^APT-${normalized}$`, $options: 'i' };
+            } else if (prefix === 'PAT') {
+                filter.patientId = { $regex: `^PAT-${normalized}$`, $options: 'i' };
+            } else if (prefix === 'EMP') {
+                filter.doctorId = { $regex: `^EMP-${normalized}$`, $options: 'i' };
+            } else {
+                filter.$or = [
+                    { medicalRecordId: { $regex: `^REC-${normalized}$`, $options: 'i' } },
+                    { patientId: { $regex: `^PAT-${normalized}$`, $options: 'i' } },
+                    { doctorId: { $regex: `^EMP-${normalized}$`, $options: 'i' } },
+                    { appointmentId: { $regex: `^APT-${normalized}$`, $options: 'i' } },
+                ];
+            }
+        } else {
+            filter.$text = { $search: selectedText };
+        }
+    }
+
+    if (isClientApp) {
+        filter.status = 'Completed';
     }
 
     if (doctorId) {
@@ -199,11 +236,7 @@ const deleteMedicalRecord = asyncHandler(async (req, res) => {
 
     const deletedBy = req.user.userId;
 
-    const deletedMedicalRecord = await MedicalRecord.findOneAndUpdate(
-        { medicalRecordId },
-        { isDeleted: true, deletedBy: deletedBy, deletedAt: new Date() },
-        { new: true, }
-    );
+    const deletedMedicalRecord = await MedicalRecord.findOneAndUpdate({ medicalRecordId }, { isDeleted: true, deletedBy: deletedBy, deletedAt: new Date() }, { new: true });
 
     if (!deletedMedicalRecord) {
         throw ERR.medicalRecordNotFound();

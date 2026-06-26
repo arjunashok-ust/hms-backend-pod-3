@@ -77,6 +77,7 @@ const deletePatient = asyncHandler(async (req, res) => {
         throw ERR.patientNotFound();
     }
 
+    await Appointment.updateMany({ patientId, status: 'Booked' }, { status: 'Cancelled' });
     await Appointment.updateMany({ patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() });
     await MedicalRecord.updateMany({ patientId }, { isDeleted: true, deletedBy, deletedAt: Date.now() })
 

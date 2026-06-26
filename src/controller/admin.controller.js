@@ -206,7 +206,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
     }
 
     if (selectedText) {
-        filter.$text = { $search: selectedText }
+        filter.$text = { $search: selectedText };
     }
 
     const total = await Employee.countDocuments(filter);

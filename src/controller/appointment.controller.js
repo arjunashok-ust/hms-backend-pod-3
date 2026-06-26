@@ -155,6 +155,10 @@ const deleteAppointment = asyncHandler(async (req, res) => {
 
 const getAppointmentsByPatientId = asyncHandler(async (req, res) => {
     const patientId = req.query.patientId;
+    const selectedText = req.query.selectedText?.trim();
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
     const patient = await Patient.findOne({ uhid: patientId, isDeleted: false });
 
@@ -162,9 +166,51 @@ const getAppointmentsByPatientId = asyncHandler(async (req, res) => {
         throw ERR.patientNotFound();
     }
 
-    const appointments = await Appointment.find({ patientId: patientId, isDeleted: false });
+    const filter = {
+        patientId: patientId,
+        isDeleted: false,
+    };
 
-    return res.status(200).json(appointments);
+    if (selectedText) {
+        const isIdLike = /^(APT-?|PAT-?|EMP-?)?\d+$/i.test(selectedText);
+
+        if (isIdLike) {
+            const normalized = selectedText
+                .replace(/^(APT-?|PAT-?|EMP-?)/i, '')
+                .padStart(6, '0');
+
+            const prefix = selectedText.match(/^(APT|PAT|EMP)/i)?.[0]?.toUpperCase();
+
+            if (prefix === 'APT') {
+                filter.appointmentId = { $regex: `^APT-${normalized}$`, $options: 'i' };
+            } else if (prefix === 'PAT') {
+                filter.patientId = { $regex: `^PAT-${normalized}$`, $options: 'i' };
+            } else if (prefix === 'EMP') {
+                filter.doctorEmployeeId = { $regex: `^EMP-${normalized}$`, $options: 'i' };
+            } else {
+                filter.$or = [
+                    { patientId: { $regex: `^PAT-${normalized}$`, $options: 'i' } },
+                    { doctorId: { $regex: `^EMP-${normalized}$`, $options: 'i' } },
+                    { appointmentId: { $regex: `^APT-${normalized}$`, $options: 'i' } },
+                ];
+            }
+        } else {
+            filter.$text = { $search: selectedText };
+        }
+    }
+
+    const total = await Appointment.countDocuments(filter);
+    const appointments = await Appointment.find(filter)
+        .sort({ appointmentDate: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    return res.status(200).json({
+        data: appointments,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+    });
 });
 
 const getDoctorByEmployeeId = asyncHandler(async (req, res) => {
