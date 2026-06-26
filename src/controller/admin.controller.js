@@ -125,8 +125,8 @@ const getDashboardData = asyncHandler(async (req, res) => {
 
 const getUserEmployee = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
 
     const skip = (page - 1) * limit;
     const employeeFilter = { isDeleted: false }
@@ -195,8 +195,9 @@ const getUserEmployee = asyncHandler(async (req, res) => {
 const getAllUsers = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
     const selectedDepartment = req.query.selectedDepartment;
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
+    
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
 
     const skip = (page - 1) * limit;
     const filter = { isDeleted: false }
@@ -265,6 +266,12 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         message: "Profile updated successfully!",
     });
 });
+
+const normalizeNumber = (value, defaultValue) => {
+    const num = Number.parseInt(value);
+    return Number.isNaN(num) || num < 1 ? defaultValue : num;
+};
+
 
 
 module.exports = {

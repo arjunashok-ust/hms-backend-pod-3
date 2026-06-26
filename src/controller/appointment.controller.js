@@ -78,8 +78,8 @@ const createAppointment = asyncHandler(async (req, res) => {
 
 const getAllAppointments = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
     const skip = (page - 1) * limit;
 
     const filter = { isDeleted: false };
@@ -156,8 +156,8 @@ const deleteAppointment = asyncHandler(async (req, res) => {
 const getAppointmentsByPatientId = asyncHandler(async (req, res) => {
     const patientId = req.query.patientId;
     const selectedText = req.query.selectedText?.trim();
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
     const skip = (page - 1) * limit;
 
     const patient = await Patient.findOne({ uhid: patientId, isDeleted: false });
@@ -320,6 +320,11 @@ const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
     return res.status(200).json(appointments);
 });
 
+
+const normalizeNumber = (value, defaultValue) => {
+    const num = Number.parseInt(value);
+    return Number.isNaN(num) || num < 1 ? defaultValue : num;
+};
 
 const escapeRegex = (text) => text?.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
 

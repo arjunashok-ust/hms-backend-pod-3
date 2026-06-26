@@ -39,8 +39,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
 const getPatients = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
-    const page = Number.parseInt(req.query.page) || 1;
-    const limit = Number.parseInt(req.query.limit) || 5;
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
     const skip = (page - 1) * limit;
 
     const filter = { isDeleted: false }
@@ -278,7 +278,10 @@ const getSingleUser = asyncHandler(async (req, res) => {
     })
 })
 
-
+const normalizeNumber = (value, defaultValue) => {
+    const num = Number.parseInt(value);
+    return Number.isNaN(num) || num < 1 ? defaultValue : num;
+};
 
 module.exports = {
     getUserProfile,

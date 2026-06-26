@@ -149,8 +149,8 @@ const getMedicalRecordStats = asyncHandler(async (req, res) => {
 
 const getMedicalRecords = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
-    const page = Number.parseInt(req.query.page);
-    const limit = Number.parseInt(req.query.limit);
+    const page = normalizeNumber(req.query.page, 1);
+    const limit = normalizeNumber(req.query.limit, 5);
     const patientId = req.query.patientId;
     const doctorId = req.query.doctorId;
     const isClientApp = req.query.isClientApp;
@@ -244,5 +244,12 @@ const deleteMedicalRecord = asyncHandler(async (req, res) => {
 
     return res.status(200).json({ message: "Medical record deleted sucessfully" });
 })
+
+
+const normalizeNumber = (value, defaultValue) => {
+    const num = Number.parseInt(value);
+    return Number.isNaN(num) || num < 1 ? defaultValue : num;
+};
+
 
 module.exports = { createMedicalRecord, getMedicalRecordStats, getMedicalRecords, getMedicalRecordById, updateMedicalRecord, deleteMedicalRecord }
