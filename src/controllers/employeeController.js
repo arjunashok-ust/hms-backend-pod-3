@@ -3,6 +3,15 @@ const User = require("../models/User");
 const Patient = require("../models/Patient");
 const Appointment = require("../models/Appointment");
 const Role = require("../models/Role");
+const PERMISSIONS = require("../constants/permissions");
+
+
+const PROTECTED_ROLES = ["super_admin", "admin"];
+
+const requesterCanManageAdmins = async (req) => {
+  const roleDoc = await Role.findOne({ role_name: req.user.role }).select("role_permissions");
+  return Boolean(roleDoc?.role_permissions?.includes(PERMISSIONS.MANAGE_ADMIN));
+};
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -15,6 +24,14 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
 const ApiError = require("../utils/ApiError");
 const { getPagination, buildPaginationMeta } = require("../utils/pagination");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+  hashToken,
+  compareToken,
+  refreshCookieOptions,
+} = require("../utils/tokenService");
 
 exports.dashboardStats = asyncHandler(async (req, res) => {
   const totalEmployees = await Employee.countDocuments();
@@ -143,9 +160,17 @@ exports.signup = asyncHandler(async (req, res) => {
     availabilitySlots,
   } = req.body;
 
-  // BLOCK ADMIN
-  if (["admin", "owner"].includes(role)) {
-    throw new ApiError(403, "Cannot create this role", "FORBIDDEN_ROLE");
+  // ADMIN-TIER GUARD: only a holder of manage:admin (super_admin) may create
+  // an admin or super_admin account.
+  if (PROTECTED_ROLES.includes(role)) {
+    const allowed = await requesterCanManageAdmins(req);
+    if (!allowed) {
+      throw new ApiError(
+        403,
+        "Only a super admin can create an admin or super admin account.",
+        "FORBIDDEN_ROLE"
+      );
+    }
   }
 
   // VALIDATE DOCTOR REGISTRATION NUMBER
@@ -260,17 +285,17 @@ exports.login = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
   }
 
-  const token = jwt.sign(
-    {
-      email: user.email,
-      id: user._id,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    }
-  );
+  /* Issue a short-lived access token (header) + a long-lived refresh token.
+     The refresh token's hash is persisted (stateful session) and the token
+     itself is set as an httpOnly cookie — never returned in the JSON body. */
+  const token = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  user.refreshTokenHash = await hashToken(refreshToken);
+  user.last_login = new Date();
+  await user.save();
+
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions());
 
   if (user.isFirstLogin) {
     return res.status(200).json(
@@ -282,15 +307,76 @@ exports.login = asyncHandler(async (req, res) => {
     );
   }
 
-  user.last_login = new Date();
-  await user.save();
-
   return res.status(200).json(
     new ApiResponse(200, "Login successful", {
       token,
       user: { id: user._id, email: user.email, role: user.role },
     })
   );
+});
+
+// ===============================
+// REFRESH ACCESS TOKEN (public — the access token is expired by definition;
+// the httpOnly refresh cookie is the credential). Rotates the refresh token.
+// ===============================
+
+exports.refreshToken = asyncHandler(async (req, res) => {
+  const tokenFromCookie = req.cookies?.refreshToken;
+  if (!tokenFromCookie) {
+    throw new ApiError(401, "No refresh token", "NO_REFRESH_TOKEN");
+  }
+
+  let payload;
+  try {
+    payload = verifyRefreshToken(tokenFromCookie);
+  } catch {
+    res.clearCookie("refreshToken", { path: "/api/emp" });
+    throw new ApiError(401, "Invalid or expired refresh token", "INVALID_REFRESH_TOKEN");
+  }
+
+  const user = await User.findById(payload.id);
+  
+  if (!user || !user.refreshTokenHash || !(await compareToken(tokenFromCookie, user.refreshTokenHash))) {
+    res.clearCookie("refreshToken", { path: "/api/emp" });
+    throw new ApiError(401, "Session expired, please log in again", "REFRESH_REVOKED");
+  }
+
+  if (!user.status) {
+    res.clearCookie("refreshToken", { path: "/api/emp" });
+    throw new ApiError(403, "Account disabled", "ACCOUNT_DISABLED");
+  }
+
+  /* ROTATE: new access + new refresh; replace the stored hash and reset cookie. */
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken(user);
+
+  user.refreshTokenHash = await hashToken(newRefreshToken);
+  await user.save();
+
+  res.cookie("refreshToken", newRefreshToken, refreshCookieOptions());
+
+  return res.status(200).json(
+    new ApiResponse(200, "Token refreshed", {
+      token: newAccessToken,
+      user: { id: user._id, email: user.email, role: user.role },
+    })
+  );
+});
+
+// ===============================
+// LOGOUT — revoke the refresh session and clear the cookie.
+// ===============================
+
+exports.logout = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user) {
+    user.refreshTokenHash = null;
+    await user.save();
+  }
+
+  res.clearCookie("refreshToken", { path: "/api/emp" });
+
+  return res.status(200).json(new ApiResponse(200, "Logged out successfully"));
 });
 
 // ===============================
@@ -473,6 +559,19 @@ exports.deleteEmployee = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
+  // ADMIN-TIER GUARD: deleting an admin/super_admin requires manage:admin.
+  const targetUser = await User.findOne({ employeeId });
+  if (targetUser && PROTECTED_ROLES.includes(targetUser.role)) {
+    const allowed = await requesterCanManageAdmins(req);
+    if (!allowed) {
+      throw new ApiError(
+        403,
+        "Only a super admin can delete an admin or super admin account.",
+        "FORBIDDEN_ROLE"
+      );
+    }
+  }
+
   await User.deleteOne({ employeeId });
   await employee.deleteOne();
 
@@ -490,6 +589,19 @@ exports.updateEmployee = asyncHandler(async (req, res) => {
   const employee = await Employee.findOne({ employeeId });
   if (!employee) {
     throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
+
+  // ADMIN-TIER GUARD: updating an admin/super_admin requires manage:admin.
+  const targetUser = await User.findOne({ employeeId });
+  if (targetUser && PROTECTED_ROLES.includes(targetUser.role)) {
+    const allowed = await requesterCanManageAdmins(req);
+    if (!allowed) {
+      throw new ApiError(
+        403,
+        "Only a super admin can update an admin or super admin account.",
+        "FORBIDDEN_ROLE"
+      );
+    }
   }
 
   Object.assign(employee, req.body);
@@ -557,6 +669,36 @@ exports.approveEmployee = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, "Employee approved successfully", { employee }));
+});
+
+//===========================
+//Reject Employee (hard reject: discards the pending signup entirely)
+//Reuses the approve:employee permission — whoever can approve can reject.
+//Guarded so only a still-pending (status:false) account can be rejected,
+//preventing an already-approved, active employee from being deleted here.
+//===========================
+exports.rejectEmployee = asyncHandler(async (req, res) => {
+  const { employeeId } = req.params;
+
+  const employee = await Employee.findOne({ employeeId });
+  if (!employee) {
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
+  }
+
+  if (employee.status === true) {
+    throw new ApiError(
+      400,
+      "Cannot reject an already-approved employee.",
+      "ALREADY_APPROVED"
+    );
+  }
+
+  await Employee.deleteOne({ employeeId });
+  await User.deleteOne({ employeeId });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee rejected and removed successfully", { employeeId }));
 });
 
 //===========================

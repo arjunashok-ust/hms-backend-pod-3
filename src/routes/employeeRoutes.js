@@ -11,6 +11,8 @@ const {
   login,
   currentUser,
   resetPassword,
+  refreshToken,
+  logout,
   formSignUp,
   dashboardStats,
   getEmployees,
@@ -19,6 +21,7 @@ const {
   updateEmployeeById,
   getPendingApprovals,
   approveEmployee,
+  rejectEmployee,
   approvalStats
 } = require("../controllers/employeeController");
 
@@ -44,6 +47,12 @@ const signUpValidation = [
 /* PUBLIC */
 router.post("/formSignUp", signUpValidation, validate, formSignUp);
 router.post("/login", login);
+/* Refresh is public: the access token is expired by definition; the httpOnly
+   refresh cookie is the credential. */
+router.post("/refresh", refreshToken);
+
+/* AUTH ONLY */
+router.post("/logout", auth, logout);
 
 /* AUTH ONLY (no specific permission needed) */
 router.get("/currentUser", auth, currentUser);
@@ -62,6 +71,7 @@ router.put("/updateEmployee/:employeeId",auth,checkPermission(PERMISSIONS.EDIT_E
 /* EMPLOYEE APPROVAL WORKFLOW */
 router.get("/pendingApprovals", auth, checkPermission(PERMISSIONS.VIEW_APPROVAL), getPendingApprovals);
 router.put("/approveEmployee/:employeeId", auth, checkPermission(PERMISSIONS.APPROVE_EMPLOYEE), approveEmployee);
+router.delete("/rejectEmployee/:employeeId", auth, checkPermission(PERMISSIONS.APPROVE_EMPLOYEE), rejectEmployee);
 router.get("/approvalStats", auth, checkPermission(PERMISSIONS.VIEW_APPROVAL), approvalStats);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./src/config/db");
 const errorMiddleware = require("./src/middlewares/error.middleware.js"); // see filename note below
 
@@ -16,6 +17,7 @@ app.use(
 );
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 
 const employeeRoutes = require("./src/routes/employeeRoutes");
 const appointmentRoutes = require("./src/routes/appointmentRoutes");

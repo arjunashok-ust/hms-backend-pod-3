@@ -4,9 +4,9 @@ const Node = require('../models/Node');
 // @route   POST /api/nodes
 exports.createNode = async (req, res) => {
     try {
-        const { order, name, path, role, icon } = req.body;
+        const { node_id, name, path, role, icon } = req.body;
 
-        const node = new Node({ order, name, path, role, icon });
+        const node = new Node({ node_id, name, path, role, icon });
         const savedNode = await node.save();
 
         return res.status(201).json({
@@ -74,11 +74,11 @@ exports.getNodeById = async (req, res) => {
 // @route   PUT /api/nodes/:id
 exports.updateNode = async (req, res) => {
     try {
-        const { order, name, path, role, icon } = req.body;
+        const { node_id, name, path, role, icon } = req.body;
 
         const updatedNode = await Node.findByIdAndUpdate(
             req.params.id,
-            { order, name, path, role, icon },
+            { node_id, name, path, role, icon },
             { new: true, runValidators: true }
         );
 

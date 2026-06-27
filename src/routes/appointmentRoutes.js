@@ -27,6 +27,14 @@ const appointmentValidation = [
   body("timeSlot").notEmpty().withMessage("Time slot required"),
 ];
 
+/* UPDATE validation — editing never changes the patient, so patientId is not
+   sent by the Edit modal and must NOT be required here (only the editable fields). */
+const updateAppointmentValidation = [
+  body("doctorEmployeeId").notEmpty().withMessage("Doctor ID required"),
+  body("date").notEmpty().withMessage("Appointment date required"),
+  body("timeSlot").notEmpty().withMessage("Time slot required"),
+];
+
 /* CREATE */
 router.post("/createAppointment",auth,checkPermission(PERMISSIONS.CREATE_APPOINTMENT),appointmentValidation,validate,createAppointment,);
 
@@ -41,7 +49,7 @@ router.delete("/deleteAppointment/:appointmentId",auth,checkPermission(PERMISSIO
 router.get("/getAppointmentUI",auth,checkPermission(PERMISSIONS.VIEW_APPOINTMENT_STAT),getAppointmentUI,);
 
 /* UPDATE */
-router.put("/updateAppointment/:appointmentId",auth,checkPermission(PERMISSIONS.EDIT_APPOINTMENT),appointmentValidation,validate,updateAppointment,);
+router.put("/updateAppointment/:appointmentId",auth,checkPermission(PERMISSIONS.EDIT_APPOINTMENT),updateAppointmentValidation,validate,updateAppointment,);
 /* WORKFLOW */
 router.put("/approveAppointment/:appointmentId",auth,checkPermission(PERMISSIONS.APPROVE_APPOINTMENT),approveAppointment,);
 router.put("/rejectAppointment/:appointmentId",auth,checkPermission(PERMISSIONS.REJECT_APPOINTMENT),rejectAppointment,);

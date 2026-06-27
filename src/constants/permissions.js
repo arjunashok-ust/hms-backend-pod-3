@@ -35,6 +35,8 @@ module.exports = {
   // Employee approval workflow (self-signup -> admin approval)
   APPROVE_EMPLOYEE: "approve:employee",
 
+  MANAGE_ADMIN: "manage:admin",
+
   // Edit permissions
   EDIT_APPOINTMENT: "edit:appointment",
   EDIT_PATIENT: "edit:patient",

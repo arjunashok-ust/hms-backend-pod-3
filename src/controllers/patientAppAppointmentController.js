@@ -29,6 +29,22 @@ exports.createPatientAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(409, "Slot Already Booked", "SLOT_CONFLICT");
   }
 
+ 
+  const patientConflict = await Appointment.findOne({
+    patientId: patient.UHID,
+    date,
+    timeSlot,
+    status: { $in: ["PENDING", "BOOKED"] },
+  });
+
+  if (patientConflict) {
+    throw new ApiError(
+      409,
+      "You already have an appointment booked at this time.",
+      "PATIENT_SLOT_CONFLICT"
+    );
+  }
+
   const doctor = await Employee.findOne({
     employeeId: doctorEmployeeId,
     status: true,

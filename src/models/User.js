@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
     employeeId: { type: String },
     isFirstLogin: { type: Boolean, default: true },
     last_login: { type: Date, default: null },
+    refreshTokenHash: { type: String, default: null },
   },
   {
     timestamps: {

@@ -10,6 +10,13 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
 const ApiError = require("../utils/ApiError");
 const { getPagination, buildPaginationMeta } = require("../utils/pagination");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+  hashToken,
+  compareToken,
+} = require("../utils/tokenService");
 
 //Patient SignUp
 exports.patientSignup = asyncHandler(async (req, res) => {
@@ -81,25 +88,77 @@ exports.patientLogin = asyncHandler(async (req, res) => {
 
   const patient = await Patient.findOne({ email });
 
-  const token = jwt.sign(
-    {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    }
-  );
+  
+  const token = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  user.refreshTokenHash = await hashToken(refreshToken);
+  await user.save();
 
   return res.status(200).json(
     new ApiResponse(200, "Login Successful", {
       token,
+      refreshToken,
       user: { id: user._id, email: user.email, role: user.role },
       patient,
     })
   );
+});
+
+//=========================
+//Patient Refresh (mobile) — refresh token comes from the request body
+//(SecureStore), not a cookie. Rotates the refresh token.
+//=========================
+
+exports.patientRefresh = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    throw new ApiError(401, "No refresh token", "NO_REFRESH_TOKEN");
+  }
+
+  let payload;
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch {
+    throw new ApiError(401, "Invalid or expired refresh token", "INVALID_REFRESH_TOKEN");
+  }
+
+  const user = await User.findById(payload.id);
+  if (
+    !user ||
+    user.role !== "patient" ||
+    !user.refreshTokenHash ||
+    !(await compareToken(refreshToken, user.refreshTokenHash))
+  ) {
+    throw new ApiError(401, "Session expired, please log in again", "REFRESH_REVOKED");
+  }
+
+  /* ROTATE: issue new access + refresh, replace stored hash. */
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken(user);
+  user.refreshTokenHash = await hashToken(newRefreshToken);
+  await user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, "Token refreshed", {
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+    })
+  );
+});
+
+//=========================
+//Patient Logout (mobile) — revoke the refresh session.
+//=========================
+
+exports.patientLogout = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user) {
+    user.refreshTokenHash = null;
+    await user.save();
+  }
+
+  return res.status(200).json(new ApiResponse(200, "Logged out successfully"));
 });
 
 //=============================

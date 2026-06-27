@@ -3,12 +3,37 @@ const Role = require("../models/Role");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
 const Patient = require("../models/Patient");
+const Appointment = require("../models/Appointment");
 const PERMISSIONS = require("../constants/permissions");
 
 const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
 const ApiError = require("../utils/ApiError");
 const { getPagination, buildPaginationMeta } = require("../utils/pagination");
+
+/* Combines an appointment's date with the START time of its timeSlot
+   (e.g. "12:00 PM - 12:30 PM" -> 12:00) into a single Date, so we can tell
+   whether the visit has actually begun. Dates are stored at midnight UTC, so
+   the calendar day is read in UTC and the clock time applied in server-local
+   time — matching the slot-parsing convention already used in
+   patientAppAppointmentController.getAvailableSlots. Returns null if the slot
+   string can't be parsed (in which case the caller should not block). */
+const getSlotStartDateTime = (appointmentDate, timeSlot) => {
+  if (!appointmentDate || !timeSlot) return null;
+
+  const startStr = String(timeSlot).split(" - ")[0]?.trim(); // "12:00 PM"
+  const [time, period] = (startStr || "").split(" ");
+  if (!time || !period) return null;
+
+  let [hours, minutes] = time.split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+
+  if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+  if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+
+  const d = new Date(appointmentDate);
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), hours, minutes, 0, 0);
+};
 
 //Create Medical Record
 exports.createMedicalRecord = asyncHandler(async (req, res) => {
@@ -30,6 +55,23 @@ exports.createMedicalRecord = asyncHandler(async (req, res) => {
       400,
       "doctorEmployeeId, appointmentId, and patientId are required.",
       "VALIDATION_ERROR"
+    );
+  }
+
+  /* The medical record documents an actual visit, so it can't be created before
+     the visit has started. Block creation until the appointment's date + slot
+     start time has been reached. */
+  const appointment = await Appointment.findOne({ appointmentId });
+  if (!appointment) {
+    throw new ApiError(404, "Appointment not found for this medical record.", "APPOINTMENT_NOT_FOUND");
+  }
+
+  const slotStart = getSlotStartDateTime(appointment.date, appointment.timeSlot);
+  if (slotStart && Date.now() < slotStart.getTime()) {
+    throw new ApiError(
+      400,
+      "This appointment hasn't started yet. A medical record can only be created on or after the appointment's start time.",
+      "APPOINTMENT_NOT_STARTED"
     );
   }
 

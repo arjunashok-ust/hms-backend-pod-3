@@ -1,15 +1,4 @@
 const Role = require("../models/Role");
-
-/**
- * Permission-based access control middleware.
- * Looks up the user's role permissions fresh from DB on every request,
- * so role/permission changes take effect immediately (no stale JWT).
- *
- * Must run AFTER `auth`, since it relies on req.user.role.
- *
- * Usage:
- *   router.post("/route", auth, checkPermission(PERMISSIONS.APPOINTMENT_CREATE), handler);
- */
 const checkPermission = (...requiredPermissions) => {
   return async (req, res, next) => {
     try {

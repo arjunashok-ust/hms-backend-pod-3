@@ -8,7 +8,7 @@ const { getPagination, buildPaginationMeta } = require("../utils/pagination");
    CREATE PATIENT (staff-created, e.g. walk-in registration)
    ================================ */
 exports.createPatient = asyncHandler(async (req, res) => {
-  const { email, name, phone, gender, date_of_birth, bloodGroup, allergies, address, emergencyContact } = req.body;
+  const { email, name, phone, gender, date_of_birth, bloodGroup, allergies, address, emergencyContact, status } = req.body;
 
   if (email) {
     const existing = await Patient.findOne({ email });
@@ -27,7 +27,8 @@ exports.createPatient = asyncHandler(async (req, res) => {
     allergies,
     address,
     emergencyContact,
-    status: true,
+    /* Honor the form's Active/Inactive choice; default Active when absent. */
+    status: status !== undefined ? status : true,
   });
 
   return res

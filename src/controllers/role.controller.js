@@ -1,7 +1,5 @@
 const Role = require('../models/Role');
 
-// @desc    Create a new role
-// @route   POST /api/roles
 exports.createRole = async (req, res) => {
     try {
         const { role_id, role_name, role_permissions } = req.body;
@@ -23,8 +21,6 @@ exports.createRole = async (req, res) => {
     }
 };
 
-// @desc    Get all roles
-// @route   GET /api/roles
 exports.getAllRoles = async (req, res) => {
     try {
         const roles = await Role.find().sort({ role_id: 1 });
@@ -43,8 +39,6 @@ exports.getAllRoles = async (req, res) => {
     }
 };
 
-// @desc    Get a single role by id
-// @route   GET /api/roles/:id
 exports.getRoleById = async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
@@ -69,8 +63,6 @@ exports.getRoleById = async (req, res) => {
     }
 };
 
-// @desc    Update a role by id
-// @route   PUT /api/roles/:id
 exports.updateRole = async (req, res) => {
     try {
         const { role_id, role_name, role_permissions } = req.body;
@@ -102,8 +94,6 @@ exports.updateRole = async (req, res) => {
     }
 };
 
-// @desc    Delete a role by id
-// @route   DELETE /api/roles/:id
 exports.deleteRole = async (req, res) => {
     try {
         const deletedRole = await Role.findByIdAndDelete(req.params.id);
@@ -114,7 +104,6 @@ exports.deleteRole = async (req, res) => {
                 message: 'Role not found',
             });
         }
-
         return res.status(200).json({
             success: true,
             message: 'Role deleted successfully',
