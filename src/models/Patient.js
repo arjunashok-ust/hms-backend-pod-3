@@ -59,7 +59,7 @@ const patientSchema = mongoose.Schema({
     type: Boolean,
     default: true,
   },
-});
+}, { timestamps: true });
 
 patientSchema.pre("save", async function () {
   try {

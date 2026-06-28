@@ -284,10 +284,6 @@ exports.login = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
   }
-
-  /* Issue a short-lived access token (header) + a long-lived refresh token.
-     The refresh token's hash is persisted (stateful session) and the token
-     itself is set as an httpOnly cookie — never returned in the JSON body. */
   const token = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 

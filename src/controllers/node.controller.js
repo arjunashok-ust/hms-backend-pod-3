@@ -1,131 +1,74 @@
-const Node = require('../models/Node');
+const Node = require("../models/Node");
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
 
 // @desc    Create a new node
-// @route   POST /api/nodes
-exports.createNode = async (req, res) => {
-    try {
-        const { node_id, name, path, role, icon } = req.body;
+// @route   POST /api/node
+exports.createNode = asyncHandler(async (req, res) => {
+  const { node_id, name, path, role, icon } = req.body;
 
-        const node = new Node({ node_id, name, path, role, icon });
-        const savedNode = await node.save();
+  const node = await new Node({ node_id, name, path, role, icon }).save();
 
-        return res.status(201).json({
-            success: true,
-            message: 'Node created successfully',
-            data: savedNode,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to create node',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Node created successfully", node));
+});
 
 // @desc    Get all nodes
-// @route   GET /api/nodes
-exports.getAllNodes = async (req, res) => {
-    try {
-        const nodes = await Node.find().sort({ order: 1 });
+// @route   GET /api/node
+exports.getAllNodes = asyncHandler(async (req, res) => {
+  const nodes = await Node.find().sort({ node_id: 1 });
 
-        return res.status(200).json({
-            success: true,
-            count: nodes.length,
-            data: nodes,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch nodes',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Nodes fetched successfully", nodes));
+});
 
 // @desc    Get a single node by id
-// @route   GET /api/nodes/:id
-exports.getNodeById = async (req, res) => {
-    try {
-        const node = await Node.findById(req.params.id);
+// @route   GET /api/node/:id
+exports.getNodeById = asyncHandler(async (req, res) => {
+  const node = await Node.findById(req.params.id);
 
-        if (!node) {
-            return res.status(404).json({
-                success: false,
-                message: 'Node not found',
-            });
-        }
+  if (!node) {
+    throw new ApiError(404, "Node not found", "NODE_NOT_FOUND");
+  }
 
-        return res.status(200).json({
-            success: true,
-            data: node,
-        });
-    } catch (error) {
-        // Handles malformed ObjectId as well
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch node',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Node fetched successfully", node));
+});
 
 // @desc    Update a node by id
-// @route   PUT /api/nodes/:id
-exports.updateNode = async (req, res) => {
-    try {
-        const { node_id, name, path, role, icon } = req.body;
+// @route   PUT /api/node/:id
+exports.updateNode = asyncHandler(async (req, res) => {
+  const { node_id, name, path, role, icon } = req.body;
 
-        const updatedNode = await Node.findByIdAndUpdate(
-            req.params.id,
-            { node_id, name, path, role, icon },
-            { new: true, runValidators: true }
-        );
+  const updatedNode = await Node.findByIdAndUpdate(
+    req.params.id,
+    { node_id, name, path, role, icon },
+    { new: true, runValidators: true }
+  );
 
-        if (!updatedNode) {
-            return res.status(404).json({
-                success: false,
-                message: 'Node not found',
-            });
-        }
+  if (!updatedNode) {
+    throw new ApiError(404, "Node not found", "NODE_NOT_FOUND");
+  }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Node updated successfully',
-            data: updatedNode,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update node',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Node updated successfully", updatedNode));
+});
 
 // @desc    Delete a node by id
-// @route   DELETE /api/nodes/:id
-exports.deleteNode = async (req, res) => {
-    try {
-        const deletedNode = await Node.findByIdAndDelete(req.params.id);
+// @route   DELETE /api/node/:id
+exports.deleteNode = asyncHandler(async (req, res) => {
+  const deletedNode = await Node.findByIdAndDelete(req.params.id);
 
-        if (!deletedNode) {
-            return res.status(404).json({
-                success: false,
-                message: 'Node not found',
-            });
-        }
+  if (!deletedNode) {
+    throw new ApiError(404, "Node not found", "NODE_NOT_FOUND");
+  }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Node deleted successfully',
-            data: deletedNode,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to delete node',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Node deleted successfully", deletedNode));
+});

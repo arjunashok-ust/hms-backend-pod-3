@@ -1,119 +1,74 @@
-const Role = require('../models/Role');
+const Role = require("../models/Role");
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
 
-exports.createRole = async (req, res) => {
-    try {
-        const { role_id, role_name, role_permissions } = req.body;
+// @desc    Create a new role
+// @route   POST /api/role
+exports.createRole = asyncHandler(async (req, res) => {
+  const { role_id, role_name, role_permissions } = req.body;
 
-        const role = new Role({ role_id, role_name, role_permissions });
-        const savedRole = await role.save();
+  const role = await new Role({ role_id, role_name, role_permissions }).save();
 
-        return res.status(201).json({
-            success: true,
-            message: 'Role created successfully',
-            data: savedRole,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to create role',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Role created successfully", role));
+});
 
-exports.getAllRoles = async (req, res) => {
-    try {
-        const roles = await Role.find().sort({ role_id: 1 });
+// @desc    Get all roles
+// @route   GET /api/role
+exports.getAllRoles = asyncHandler(async (req, res) => {
+  const roles = await Role.find().sort({ role_id: 1 });
 
-        return res.status(200).json({
-            success: true,
-            count: roles.length,
-            data: roles,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch roles',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Roles fetched successfully", roles));
+});
 
-exports.getRoleById = async (req, res) => {
-    try {
-        const role = await Role.findById(req.params.id);
+// @desc    Get a single role by id
+// @route   GET /api/role/:id
+exports.getRoleById = asyncHandler(async (req, res) => {
+  const role = await Role.findById(req.params.id);
 
-        if (!role) {
-            return res.status(404).json({
-                success: false,
-                message: 'Role not found',
-            });
-        }
+  if (!role) {
+    throw new ApiError(404, "Role not found", "ROLE_NOT_FOUND");
+  }
 
-        return res.status(200).json({
-            success: true,
-            data: role,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch role',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Role fetched successfully", role));
+});
 
-exports.updateRole = async (req, res) => {
-    try {
-        const { role_id, role_name, role_permissions } = req.body;
+// @desc    Update a role by id
+// @route   PUT /api/role/:id
+exports.updateRole = asyncHandler(async (req, res) => {
+  const { role_id, role_name, role_permissions } = req.body;
 
-        const updatedRole = await Role.findByIdAndUpdate(
-            req.params.id,
-            { role_id, role_name, role_permissions },
-            { new: true, runValidators: true }
-        );
+  const updatedRole = await Role.findByIdAndUpdate(
+    req.params.id,
+    { role_id, role_name, role_permissions },
+    { new: true, runValidators: true }
+  );
 
-        if (!updatedRole) {
-            return res.status(404).json({
-                success: false,
-                message: 'Role not found',
-            });
-        }
+  if (!updatedRole) {
+    throw new ApiError(404, "Role not found", "ROLE_NOT_FOUND");
+  }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Role updated successfully',
-            data: updatedRole,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update role',
-            error: error.message,
-        });
-    }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Role updated successfully", updatedRole));
+});
 
-exports.deleteRole = async (req, res) => {
-    try {
-        const deletedRole = await Role.findByIdAndDelete(req.params.id);
+// @desc    Delete a role by id
+// @route   DELETE /api/role/:id
+exports.deleteRole = asyncHandler(async (req, res) => {
+  const deletedRole = await Role.findByIdAndDelete(req.params.id);
 
-        if (!deletedRole) {
-            return res.status(404).json({
-                success: false,
-                message: 'Role not found',
-            });
-        }
-        return res.status(200).json({
-            success: true,
-            message: 'Role deleted successfully',
-            data: deletedRole,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to delete role',
-            error: error.message,
-        });
-    }
-};
+  if (!deletedRole) {
+    throw new ApiError(404, "Role not found", "ROLE_NOT_FOUND");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Role deleted successfully", deletedRole));
+});
