@@ -202,7 +202,7 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   let limit = Number.parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  // Validate page and limit, providing sensible defaults and constraints.
+  // Validate page and limit.
   page = !Number.isNaN(page) && page > 0 ? page : 1;
   limit = !Number.isNaN(limit) && limit > 0 ? limit : 5;
   limit = Math.min(limit, 50);
@@ -291,7 +291,6 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   const records = results[0].data;
   const total = results[0].metadata[0] ? results[0].metadata[0].total : 0;
 
-  console.log(records);
   return res.status(200).json({
     success: true,
     data: records,
