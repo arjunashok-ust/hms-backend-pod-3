@@ -19,4 +19,36 @@ const getNodes = asyncHandler(async (req, res) => {
     return res.status(200).json(node);
 });
 
-module.exports = { getNodes }
+// Create Node
+const createNode = asyncHandler(async (req, res) => {
+    const data = req.body;
+    const node = await Node.create(data);
+    return res.status(201).json(node);
+})
+
+// Edit Node
+const editNode = asyncHandler(async (req, res) => {
+    const nodeName = req.body.nodeName;
+    const data = req.body.data;
+
+    const updatedNode = await Node.findOneAndUpdate({ name: nodeName }, data, { new: true });
+    if (!updatedNode) {
+        throw ERR.nodeNotFound();
+    }
+
+    return res.status(200).json(updatedNode);
+})
+
+// Delete Node
+const deleteNode = asyncHandler(async (req, res) => {
+    const nodeName = req.body.nodeName;
+
+    const deletedNode = await Node.findOneAndDelete({ name: nodeName });
+    if (!deletedNode) {
+        throw ERR.nodeNotFound();
+    }
+
+    return res.status(200).json({ message: "Node deleted sucessfully" });
+});
+
+module.exports = { getNodes, createNode, editNode, deleteNode }

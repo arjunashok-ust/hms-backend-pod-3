@@ -17,5 +17,8 @@ router.get('/getUserEmployee', validateUser.validatePagination, validate, auth, 
 router.post('/approveUser', validateAdmin.validateApproveUser, validate, auth, permission('approve:user'), adminController.approveUser);
 router.post('/rejectUser', validateAdmin.validateRejectUser, validate, auth, permission('reject:user'), adminController.rejectUser);
 router.post('/updateUserProfile', validateAdmin.validateUpdateProfile, validate, auth, permission('edit:employee', 'edit:profile'), adminController.updateUserProfile);
+router.get('/getRolesData', auth, permission('view:permission'), adminController.getRolesData)
+router.post('/updateRole', auth, permission('edit:permission'), adminController.updateRole)
+
 
 module.exports = router;

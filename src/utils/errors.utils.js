@@ -11,10 +11,12 @@ const ERR = {
     noUsersFound: () => new AppError("No users found", 404),
     patientNotFound: () => new AppError("Patient not found", 404),
     doctorNotFound: () => new AppError("Doctor not found", 404),
+    roleNotFound: () => new AppError("Role not found", 404),
     appointmentNotFound: () => new AppError("Appointment not found", 404),
     medicalRecordNotFound: () => new AppError("Medical Record not found", 404),
-    tokenNotFound: () => new AppError("Token not found",403),
-    
+    tokenNotFound: () => new AppError("Token not found", 403),
+    nodeNotFound: () => new AppError("Node not found", 403),
+
     existingPatientAppointment: () => new AppError("Patient have another appointment booked for this slot", 400),
     existingSlot: () => new AppError("Time slot already booked"),
 
@@ -35,6 +37,7 @@ const ERR = {
     setPassword: () => new AppError("Set password is only allowed for first time users", 400),
 
     unknownRole: () => new AppError("Unknown role", 400),
+    nodeCreateFailed: () => new AppError("Error creating node", 400),
 
     appointmentPastTime: () => new AppError("You cant book appointment in the past", 400),
     doctorNoSlot: () => new AppError("No slots find for doctor", 404),

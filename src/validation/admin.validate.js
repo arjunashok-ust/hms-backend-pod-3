@@ -127,4 +127,8 @@ const validateUpdateProfile = [
     })
 ];
 
-module.exports = { validateDeleteUserProfile, validateApproveUser, validateRejectUser, validateUpdateProfile }
+const validateUpdateRole = [
+    body("roleName").notEmpty("Role name is required!")
+];
+
+module.exports = { validateDeleteUserProfile, validateApproveUser, validateRejectUser, validateUpdateProfile, validateUpdateRole }

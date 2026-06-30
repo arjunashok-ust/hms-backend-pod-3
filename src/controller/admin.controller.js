@@ -4,6 +4,7 @@ const Patient = require('../models/patient.model');
 const Appointment = require('../models/appointment.model');
 const Department = require('../models/department.model');
 const MedicalRecord = require('../models/medical-record.model');
+const Role = require('../models/role.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
@@ -195,7 +196,7 @@ const getUserEmployee = asyncHandler(async (req, res) => {
 const getAllUsers = asyncHandler(async (req, res) => {
     const selectedText = req.query.selectedText?.trim();
     const selectedDepartment = req.query.selectedDepartment;
-    
+
     const page = normalizeNumber(req.query.page, 1);
     const limit = normalizeNumber(req.query.limit, 5);
 
@@ -267,12 +268,28 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     });
 });
 
+const getRolesData = asyncHandler(async (req, res) => {
+    const roles = await Role.find();
+    return res.status(200).json(roles);
+});
+
+const updateRole = asyncHandler(async (req, res) => {
+    const roleName = req.body.roleName;
+    const data = req.body.data;
+    const role = await Role.findOneAndUpdate({ role_name: roleName }, { role_permissions: data.role_permissions }, {
+        new: true,
+    });
+    if (!role) {
+        throw ERR.roleNotFound();
+    }
+
+    return res.status(200).json(role);
+})
+
 const normalizeNumber = (value, defaultValue) => {
     const num = Number.parseInt(value);
     return Number.isNaN(num) || num < 1 ? defaultValue : num;
 };
-
-
 
 module.exports = {
     deleteUserProfile,
@@ -282,5 +299,7 @@ module.exports = {
     approveUser,
     rejectUser,
     updateUserProfile,
-    getUserEmployee
+    getUserEmployee,
+    getRolesData,
+    updateRole
 };
