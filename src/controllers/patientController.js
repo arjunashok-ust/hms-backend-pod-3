@@ -45,10 +45,87 @@ exports.getAllPatients = async (req, res) => {
 };
 
 exports.createPatient = async (req, res) => {
-  const newPatient = new Patient(req.body);
-  await newPatient.save();
-  res.status(201).json(newPatient);
+  const {
+    name,
+    phone,
+    email,
+    gender,
+    dob,
+    emergencyContact,
+    address,
+    bloodGroup,
+    allergies,
+  } = req.body;
+
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (existingUser) throw ERR.emailAlreadyExists();
+
+  const existingPatient = await Patient.findOne({
+    email: email.toLowerCase(),
+  });
+  if (existingPatient) throw ERR.patientAlreadyExists();
+
+  const tempPassword = crypto.randomBytes(6).toString("hex");
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const newPatient = await Patient.create({
+    name,
+    phone,
+    email: email.toLowerCase(),
+    gender,
+    dob,
+    status: "PASSWORD_CHANGE_PENDING",
+    emergencyContact,
+    address,
+    bloodGroup,
+    allergies,
+  });
+
+
+  const verification_token = crypto.randomBytes(32).toString("hex");
+  const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
+
+  const newUser = await User.create({
+    email: email.toLowerCase(),
+    passwordHash,
+    verification_token,
+    verification_expiry,
+    status: "PASSWORD_CHANGE_PENDING",
+    role: "PATIENT",
+    patientUHID: newPatient.UHID,
+  });
+
+  
+    await sendMail({
+      to: newUser.email,
+      subject: "HMS Patient Credentials",
+      htmlContent: `
+          <h2>Welcome to HMS</h2>
+          <p>Your account credentials:</p>
+          <p><strong>Email:</strong> ${newUser.email}</p>
+          <p><strong>Temporary Password:</strong> ${tempPassword}</p>
+          <p>Please change your password immediately after your first sign in.</p>
+        `,
+    });
+  
+    await sendMail({
+      to: newUser.email,
+      subject: "HMS System | Patient Email Verification",
+      htmlContent: `
+          <h1>Hospital Management System</h1>
+          <p>Thank you ${profile.name} for registering. Verify your account below:</p>
+          <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${newUser.email}&token=${verification_token}">
+            <button>Verify Email</button>
+          </a>
+        `,
+    });
+
+  return res.status(201).json({
+    message: "Patient registered successfully",
+    patientUHID: newUser.patientUHID,
+  });
 };
+
 
 const buildPatientUpdatePayload = (body, currentAddress) => {
   const {
@@ -143,7 +220,7 @@ exports.deletePatient = async (req, res) => {
 
   const deletedPatientAppointments = await Appointments.updateMany(
     { patientId: id },
-    { $set: { status: "Deleted" } },
+    { $set: { status: "DELETED" } },
   );
 
   const deletedCount = deletedPatientAppointments.modifiedCount;

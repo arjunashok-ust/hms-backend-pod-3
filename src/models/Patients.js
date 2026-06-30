@@ -25,11 +25,20 @@ const patientSchema = new mongoose.Schema(
     },
     allergies: [
       {
-        type: String
-      }
+        type: String,
+      },
     ],
     emergencyContact: { type: String },
-    status: { type: String, default: true },
+    status: {
+      type: String,
+      enum: [
+        "ACTIVE",
+        "INACTIVE",
+        "PASSWORD_CHANGE_PENDING",
+        "ADMIN_APPROVAL_PENDING",
+        "DELETED",
+      ],
+    },
     address: {
       line1: { type: String, required: true },
       line2: { type: String },
