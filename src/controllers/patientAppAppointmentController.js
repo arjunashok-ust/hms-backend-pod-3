@@ -74,7 +74,7 @@ exports.createPatientAppointment = asyncHandler(async (req, res) => {
 exports.getPatientAppointments = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
 
-  const patient = await Patient.findOne({ email: req.user.email });
+  const patient = await Patient.findOne({ email: req.user.email }).select("UHID").lean();
   if (!patient) {
     throw new ApiError(404, "Patient Not Found", "PATIENT_NOT_FOUND");
   }
@@ -87,21 +87,24 @@ exports.getPatientAppointments = asyncHandler(async (req, res) => {
   const appointments = await Appointment.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  const enrichedAppointments = await Promise.all(
-    appointments.map(async (appointment) => {
-      const doctor = await Employee.findOne({
-        employeeId: appointment.doctorEmployeeId,
-      });
+  /* Batch-fetch the referenced doctors in ONE query (avoids a findOne per row). */
+  const doctorIds = [...new Set(appointments.map((a) => a.doctorEmployeeId).filter(Boolean))];
+  const doctors = await Employee.find({ employeeId: { $in: doctorIds } })
+    .select("employeeId name specialization")
+    .lean();
+  const doctorMap = new Map(doctors.map((d) => [d.employeeId, d]));
 
-      return {
-        ...appointment.toObject(),
-        doctorName: doctor?.name || "Unknown Doctor",
-        specialization: doctor?.specialization || "N/A",
-      };
-    })
-  );
+  const enrichedAppointments = appointments.map((appointment) => {
+    const doctor = doctorMap.get(appointment.doctorEmployeeId);
+    return {
+      ...appointment,
+      doctorName: doctor?.name || "Unknown Doctor",
+      specialization: doctor?.specialization || "N/A",
+    };
+  });
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 

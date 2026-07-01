@@ -18,7 +18,7 @@ exports.createRole = asyncHandler(async (req, res) => {
 // @desc    Get all roles
 // @route   GET /api/role
 exports.getAllRoles = asyncHandler(async (req, res) => {
-  const roles = await Role.find().sort({ role_id: 1 });
+  const roles = await Role.find().sort({ role_id: 1 }).lean();
 
   return res
     .status(200)

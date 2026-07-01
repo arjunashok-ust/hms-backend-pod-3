@@ -64,21 +64,32 @@ exports.getAllAppointments = async ({ query, user }) => {
   const appointments = await Appointment.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  const enrichedAppointments = await Promise.all(
-    appointments.map(async (appointment) => {
-      const doctor = await Employee.findOne({ employeeId: appointment.doctorEmployeeId });
-      const patient = await Patient.findOne({ UHID: appointment.patientId });
+  /* Batch-fetch the referenced doctors + patients in ONE query each (instead of
+     two findOne per row) to avoid the N+1 problem, then map in memory. */
+  const doctorIds = [...new Set(appointments.map((a) => a.doctorEmployeeId).filter(Boolean))];
+  const patientIds = [...new Set(appointments.map((a) => a.patientId).filter(Boolean))];
 
-      return {
-        ...appointment.toObject(),
-        doctorName: doctor?.name || "Unknown Doctor",
-        specialization: doctor?.specialization || "N/A",
-        patientName: patient?.name || "Unknown Patient",
-      };
-    })
-  );
+  const [doctors, patients] = await Promise.all([
+    Employee.find({ employeeId: { $in: doctorIds } }).select("employeeId name specialization").lean(),
+    Patient.find({ UHID: { $in: patientIds } }).select("UHID name").lean(),
+  ]);
+
+  const doctorMap = new Map(doctors.map((d) => [d.employeeId, d]));
+  const patientMap = new Map(patients.map((p) => [p.UHID, p]));
+
+  const enrichedAppointments = appointments.map((appointment) => {
+    const doctor = doctorMap.get(appointment.doctorEmployeeId);
+    const patient = patientMap.get(appointment.patientId);
+    return {
+      ...appointment,
+      doctorName: doctor?.name || "Unknown Doctor",
+      specialization: doctor?.specialization || "N/A",
+      patientName: patient?.name || "Unknown Patient",
+    };
+  });
 
   const meta = buildPaginationMeta(page, limit, totalCount);
   return { appointments: enrichedAppointments, meta };
@@ -113,7 +124,7 @@ exports.deleteAppointment = async ({ appointmentId }) => {
 exports.getDoctors = async ({ query }) => {
   const { page, limit, skip } = getPagination(query);
 
-  const doctorUsers = await User.find({ role: "doctor", status: true });
+  const doctorUsers = await User.find({ role: "doctor", status: true }).select("employeeId").lean();
   const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
 
   const doctorFilter = { employeeId: { $in: employeeIds }, status: true };
@@ -123,7 +134,8 @@ exports.getDoctors = async ({ query }) => {
   const doctors = await Employee.find(doctorFilter)
     .sort({ name: 1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   const meta = buildPaginationMeta(page, limit, totalCount);
   return { doctors, meta };

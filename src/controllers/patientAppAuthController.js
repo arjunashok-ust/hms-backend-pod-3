@@ -195,7 +195,8 @@ exports.getAllPatients = asyncHandler(async (req, res) => {
   const patients = await Patient.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 
@@ -208,7 +209,7 @@ exports.getAllPatients = asyncHandler(async (req, res) => {
 exports.getAllDoctors = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
 
-  const doctorUsers = await User.find({ role: "doctor", status: true });
+  const doctorUsers = await User.find({ role: "doctor", status: true }).select("employeeId").lean();
   const employeeIds = doctorUsers.map((doctor) => doctor.employeeId);
 
   const totalCount = await Employee.countDocuments({
@@ -221,7 +222,8 @@ exports.getAllDoctors = asyncHandler(async (req, res) => {
     status: true,
   })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 

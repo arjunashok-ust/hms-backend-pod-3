@@ -100,7 +100,8 @@ exports.getAllPatients = asyncHandler(async (req, res) => {
   const patients = await Patient.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 

@@ -46,4 +46,11 @@ appointmentSchema.pre("save", async function () {
   }
 });
 
+/* Indexes on the hot query fields used by list/enrichment/slot-conflict queries. */
+appointmentSchema.index({ patientId: 1 });
+appointmentSchema.index({ date: 1 });
+/* Compound index covers both the slot-conflict lookup (doctor+date+timeSlot)
+   and plain doctor-scoped queries (leftmost prefix doctorEmployeeId). */
+appointmentSchema.index({ doctorEmployeeId: 1, date: 1, timeSlot: 1 });
+
 module.exports = mongoose.model("Appointment", appointmentSchema);

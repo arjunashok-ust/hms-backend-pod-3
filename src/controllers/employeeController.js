@@ -524,18 +524,21 @@ exports.getEmployees = asyncHandler(async (req, res) => {
   const employees = await Employee.find()
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  const employeeData = await Promise.all(
-    employees.map(async (employee) => {
-      const user = await User.findOne({ employeeId: employee.employeeId });
+  /* Batch-fetch the matching User docs in ONE query (avoids a findOne per row)
+     to attach each employee's role. */
+  const employeeIds = employees.map((e) => e.employeeId).filter(Boolean);
+  const users = await User.find({ employeeId: { $in: employeeIds } })
+    .select("employeeId role")
+    .lean();
+  const roleMap = new Map(users.map((u) => [u.employeeId, u.role]));
 
-      return {
-        ...employee.toObject(),
-        role: user?.role || "",
-      };
-    })
-  );
+  const employeeData = employees.map((employee) => ({
+    ...employee,
+    role: roleMap.get(employee.employeeId) || "",
+  }));
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 
@@ -619,20 +622,25 @@ exports.getPendingApprovals = asyncHandler(async (req, res) => {
   const pendingEmployees = await Employee.find({ status: false })
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  const data = await Promise.all(
-    pendingEmployees.map(async (employee) => {
-      const user = await User.findOne({ employeeId: employee.employeeId });
+  /* Batch-fetch the matching User docs in ONE query (avoids a findOne per row). */
+  const employeeIds = pendingEmployees.map((e) => e.employeeId).filter(Boolean);
+  const users = await User.find({ employeeId: { $in: employeeIds } })
+    .select("employeeId role isFirstLogin")
+    .lean();
+  const userMap = new Map(users.map((u) => [u.employeeId, u]));
 
-      return {
-        employeeId: employee.employeeId,
-        email: employee.email,
-        role: user?.role || "",
-        isFirstLogin: user?.isFirstLogin ?? null,
-      };
-    })
-  );
+  const data = pendingEmployees.map((employee) => {
+    const user = userMap.get(employee.employeeId);
+    return {
+      employeeId: employee.employeeId,
+      email: employee.email,
+      role: user?.role || "",
+      isFirstLogin: user?.isFirstLogin ?? null,
+    };
+  });
 
   const meta = buildPaginationMeta(page, limit, totalCount);
 

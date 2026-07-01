@@ -18,7 +18,7 @@ exports.createNode = asyncHandler(async (req, res) => {
 // @desc    Get all nodes
 // @route   GET /api/node
 exports.getAllNodes = asyncHandler(async (req, res) => {
-  const nodes = await Node.find().sort({ node_id: 1 });
+  const nodes = await Node.find().sort({ node_id: 1 }).lean();
 
   return res
     .status(200)

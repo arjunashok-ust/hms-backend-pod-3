@@ -32,4 +32,9 @@ const userSchema = new mongoose.Schema(
     },
   },
 );
+
+/* Hot lookup fields: role filters (e.g. find doctors) and employeeId joins
+   used in every enrichment / currentUser / doctor-scope query. */
+userSchema.index({ role: 1 });
+userSchema.index({ employeeId: 1 });
 module.exports = mongoose.model("User", userSchema);

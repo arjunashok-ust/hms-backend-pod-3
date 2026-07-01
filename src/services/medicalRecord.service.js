@@ -100,7 +100,7 @@ exports.getMedicalRecords = async ({ query, user }) => {
 
   /* DOCTORS ONLY SEE THEIR OWN RECORDS — overrides any doctorEmployeeId param. */
   if (user.role === "doctor") {
-    const doctorUser = await User.findById(user.id);
+    const doctorUser = await User.findById(user.id).select("employeeId").lean();
     filter.doctorEmployeeId = doctorUser.employeeId;
   }
 
@@ -109,21 +109,27 @@ exports.getMedicalRecords = async ({ query, user }) => {
   const records = await MedicalRecord.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  /* Enrich with doctor/patient names even if since-deactivated. */
-  const enrichedRecords = await Promise.all(
-    records.map(async (record) => {
-      const doctor = await Employee.findOne({ employeeId: record.doctorEmployeeId });
-      const patient = await Patient.findOne({ UHID: record.patientId });
+  /* Batch-fetch referenced doctors + patients in ONE query each (avoids N+1),
+     then map in memory. Names resolve even if the doctor/patient was deactivated. */
+  const doctorIds = [...new Set(records.map((r) => r.doctorEmployeeId).filter(Boolean))];
+  const patientIds = [...new Set(records.map((r) => r.patientId).filter(Boolean))];
 
-      return {
-        ...record.toObject(),
-        doctorName: doctor?.name || "Unknown Doctor",
-        patientName: patient?.name || "Unknown Patient",
-      };
-    })
-  );
+  const [doctors, patients] = await Promise.all([
+    Employee.find({ employeeId: { $in: doctorIds } }).select("employeeId name").lean(),
+    Patient.find({ UHID: { $in: patientIds } }).select("UHID name").lean(),
+  ]);
+
+  const doctorMap = new Map(doctors.map((d) => [d.employeeId, d]));
+  const patientMap = new Map(patients.map((p) => [p.UHID, p]));
+
+  const enrichedRecords = records.map((record) => ({
+    ...record,
+    doctorName: doctorMap.get(record.doctorEmployeeId)?.name || "Unknown Doctor",
+    patientName: patientMap.get(record.patientId)?.name || "Unknown Patient",
+  }));
 
   const meta = buildPaginationMeta(page, limit, totalCount);
   return { records: enrichedRecords, meta };
