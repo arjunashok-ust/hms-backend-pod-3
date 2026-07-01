@@ -52,6 +52,9 @@ app.use("/api/email", verifyEmailRoutes);
 const roleRoutes = require("./routes/roleRoutes");
 app.use("/api/roles", roleRoutes);
 
+const permissionRoutes = require("./routes/permissionRoutes");
+app.use("/api/permissions", permissionRoutes);
+
 const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 app.use("/api/records", medicalRecordRoutes);
 
