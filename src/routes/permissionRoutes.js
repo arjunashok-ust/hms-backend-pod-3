@@ -8,24 +8,25 @@ const requirePermission = require("../middlewares/permissionMiddleware");
 router.post(
   "/",
   authenticateToken,
-  requirePermission("MANAGE_PERMISSIONS"),
+  requirePermission("CREATE_PERMISSIONS"),
   asyncHandler(permissionController.createPermission),
 );
 router.get(
   "/",
   authenticateToken,
+  requirePermission("VIEW_PERMISSIONS"),
   asyncHandler(permissionController.getAllPermissions),
 );
 router.post(
   "/assign",
   authenticateToken,
-  requirePermission("MANAGE_PERMISSIONS"),
+  requirePermission("UPDATE_PERMISSIONS"),
   asyncHandler(permissionController.assignPermissionToRole),
 );
 router.post(
   "/revoke",
   authenticateToken,
-  requirePermission("MANAGE_PERMISSIONS"),
+  requirePermission("UPDATE_PERMISSIONS"),
   asyncHandler(permissionController.revokePermissionFromRole),
 );
 
