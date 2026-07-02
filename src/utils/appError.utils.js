@@ -10,6 +10,7 @@ class AppError extends Error {
     details = {},
   ) {
     super(message);
+    this.message=message;
     this.name = "AppError";
     this.statusCode = statusCode;
     this.code = code;

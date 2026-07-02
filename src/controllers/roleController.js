@@ -2,7 +2,8 @@ const Role = require("../models/Roles");
 const ERR = require("../utils/errors.utils");
 
 exports.createRole = async (req, res) => {
-  const { roleName, rolePermissions } = req.body;
+  // Added isMedicalRole to destructuring
+  const { roleName, rolePermissions, isMedicalRole } = req.body;
 
   if (!roleName) {
     throw ERR.invalidRequest("roleName is required", "ROLE_NAME_REQUIRED");
@@ -18,6 +19,7 @@ exports.createRole = async (req, res) => {
   const newRole = await Role.create({
     roleName: roleName.toUpperCase(),
     rolePermissions: rolePermissions || [],
+    isMedicalRole: isMedicalRole || false, // Added to creation
   });
 
   return res.status(201).json({

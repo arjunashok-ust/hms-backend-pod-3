@@ -1,12 +1,22 @@
 const MenuNode = require("../models/MenuNode");
 const ERR = require("../utils/errors.utils");
 
+const normalizeRoles = (roles) =>
+  Array.isArray(roles)
+    ? roles.map((role) =>
+        typeof role === "string" ? role.trim().toUpperCase() : role,
+      )
+    : [];
+
+const escapeRegex = (value) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
 exports.createMenuNode = async (req, res) => {
   const { name, key, path, icon, parentId, rolesAllowed, order } = req.body;
 
-  if (!name || !path || !rolesAllowed || rolesAllowed.length === 0) {
+  if (!name || !path || !icon) {
     throw ERR.invalidRequest(
-      "name, path and rolesAllowed are required",
+      "name, path and icon are required",
       "MENU_NODE_REQUIRED_FIELDS",
     );
   }
@@ -25,7 +35,7 @@ exports.createMenuNode = async (req, res) => {
     path,
     icon,
     parentId: parentId || null,
-    rolesAllowed,
+    rolesAllowed: normalizeRoles(rolesAllowed),
     order: order || 0,
     isActive: true,
   });
@@ -67,9 +77,10 @@ exports.getSidebarMenu = async (req, res) => {
     );
   }
 
+  const normalizedRole = escapeRegex(userRole);
   const accessibleNodes = await MenuNode.find({
     isActive: true,
-    rolesAllowed: { $in: [userRole] },
+    rolesAllowed: { $in: [new RegExp(`^${normalizedRole}$`, "i")] },
   }).sort({ order: 1 });
 
   return res.status(200).json({ success: true, menuItems: accessibleNodes });
@@ -101,7 +112,10 @@ exports.checkPermission = async (req, res) => {
     return res.json({ allowed: false, message: "Route not defined" });
   }
 
-  const isAllowed = node.rolesAllowed.includes(role.toUpperCase());
+  const normalizedRole = role?.toUpperCase();
+  const isAllowed = (node.rolesAllowed || []).some(
+    (allowedRole) => allowedRole?.toUpperCase() === normalizedRole,
+  );
   res.json({ allowed: isAllowed });
 };
 
@@ -118,13 +132,11 @@ exports.updateMenuNode = async (req, res) => {
 
     if (!updatedNode)
       return res.status(404).json({ message: "Menu node not found" });
-    res
-      .status(200)
-      .json({
-        success: true,
-        data: updatedNode,
-        message: "Node updated successfully",
-      });
+    res.status(200).json({
+      success: true,
+      data: updatedNode,
+      message: "Node updated successfully",
+    });
   } catch (error) {
     res
       .status(500)

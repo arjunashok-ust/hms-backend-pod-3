@@ -8,25 +8,25 @@ const requirePermission = require("../middlewares/permissionMiddleware");
 router.post(
   "/create",
   authenticateToken,
-  requirePermission("CREATE_NODES"),
+  requirePermission("CREATE_ROLES"),
   asyncHandler(roleController.createRole),
 );
 router.get(
   "/show",
   authenticateToken,
-  requirePermission("VIEW_NODES"),
+  requirePermission("VIEW_ROLES"),
   asyncHandler(roleController.getAllRoles),
 );
 router.put(
   "/:id",
   authenticateToken,
-  requirePermission("UPDATE_NODES"),
+  requirePermission("UPDATE_ROLES"),
   asyncHandler(roleController.updateRole),
 );
 router.delete(
   "/:id",
   authenticateToken,
-  requirePermission("DELETE_NODES"),
+  requirePermission("DELETE_ROLES"),
   asyncHandler(roleController.deleteRole),
 );
 

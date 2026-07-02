@@ -58,6 +58,9 @@ app.use("/api/permissions", permissionRoutes);
 const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 app.use("/api/records", medicalRecordRoutes);
 
+const departmentRoutes = require("./routes/departmentRoutes");
+app.use("/api/departments", departmentRoutes);
+
 
 try {
   mongoose.connect(process.env.MONGO_URI);

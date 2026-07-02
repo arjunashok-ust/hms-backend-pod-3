@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
+const Departments = require("./Departments");
 
 const timeSlotSchema = new mongoose.Schema(
   {
@@ -56,13 +57,21 @@ const employeeSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
-        "DELETED"
+        "DELETED",
       ],
     },
     department: {
       type: String,
-      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN", "SUPER_ADMIN"],
       required: true,
+      validate: {
+        validator: async function (value) {
+          const department = await Departments.findOne({
+            departmentName: value,
+          });
+          return !!department;
+        },
+        message: (props) => `${props.value} is not a valid department.`,
+      },
     },
 
     designation: { type: String, required: true },

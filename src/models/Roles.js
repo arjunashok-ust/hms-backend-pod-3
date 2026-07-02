@@ -5,6 +5,7 @@ const roleSchema = new mongoose.Schema({
   roleId: { type: String},
   roleName: { type: String, required: true },
   rolePermissions: [{ type: String }],
+  isMedicalRole:{type:Boolean,default:false}
 });
 
 roleSchema.pre("save", async function () {

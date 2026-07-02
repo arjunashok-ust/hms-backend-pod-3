@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Roles = require("./Roles");
 
 const userSchema = new mongoose.Schema(
   {
@@ -17,25 +18,19 @@ const userSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
-        "DELETED"
+        "DELETED",
       ],
     },
     role: {
       type: String,
-      enum: [
-        "OWNER",
-        "ADMIN",
-        "DOCTOR",
-        "RECEPTIONIST",
-        "CASHIER",
-        "CASHIER",
-        "NURSE",
-        "LAB_TECH",
-        "PHARMACIST",
-        "PATIENT",
-        "SUPER_ADMIN",
-      ],
       required: true,
+      validate: {
+        validator: async function (value) {
+          const role = await Roles.findOne({ roleName: value });
+          return !!role;
+        },
+        message: (props) => `${props.value} is not a valid role.`,
+      },
     },
     employeeID: { type: String, ref: "Employees" },
     patientUHID: { type: String, ref: "Patients", default: null },

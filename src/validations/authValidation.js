@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const Roles = require("../models/Roles");
 
 exports.signupValidation = [
   body("email")
@@ -24,17 +25,12 @@ exports.signupValidation = [
     .notEmpty()
     .withMessage("Role is required")
     .toUpperCase()
-    .isIn([
-      "OWNER",
-      "ADMIN",
-      "DOCTOR",
-      "RECEPTIONIST",
-      "CASHIER",
-      "NURSE",
-      "LAB_TECH",
-      "PHARMACIST",
-    ])
-    .withMessage("Invalid role"),
+    .custom(async (value) => {
+      const role = await Roles.findOne({ roleName: value });
+      if (!role) {
+        throw new Error("Invalid role");
+      }
+    }),
 
   body("phone")
     .trim()
