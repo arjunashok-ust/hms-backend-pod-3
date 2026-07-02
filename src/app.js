@@ -58,6 +58,7 @@ app.use("/api/permissions", permissionRoutes);
 const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 app.use("/api/records", medicalRecordRoutes);
 
+
 try {
   mongoose.connect(process.env.MONGO_URI);
   console.log("MongoDB connected");

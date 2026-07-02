@@ -14,6 +14,13 @@ router.post(
   asyncHandler(menuController.createMenuNode),
 );
 
+router.put(
+  "/updateMenuNode/:id",
+  authenticateToken,
+  validate,
+  asyncHandler(menuController.updateMenuNode),
+);
+
 router.delete(
   "/deleteMenuNode/:id",
   authenticateToken,

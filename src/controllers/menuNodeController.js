@@ -76,8 +76,19 @@ exports.getSidebarMenu = async (req, res) => {
 };
 
 exports.getMenus = async (req, res) => {
-  const menus = await MenuNode.find({ isActive: true }).sort({ order: 1 });
-  res.status(200).json(menus);
+  try {
+    // If the request URL has ?all=true, fetch everything. Otherwise, only fetch active.
+    const fetchAll = req.query.all === "true";
+    const filter = fetchAll ? {} : { isActive: true };
+
+    const menus = await MenuNode.find(filter).sort({ order: 1 });
+
+    res.status(200).json(menus);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching menu nodes", error: error.message });
+  }
 };
 
 exports.checkPermission = async (req, res) => {
@@ -92,4 +103,31 @@ exports.checkPermission = async (req, res) => {
 
   const isAllowed = node.rolesAllowed.includes(role.toUpperCase());
   res.json({ allowed: isAllowed });
+};
+
+exports.updateMenuNode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const updatedNode = await MenuNode.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true },
+    );
+
+    if (!updatedNode)
+      return res.status(404).json({ message: "Menu node not found" });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: updatedNode,
+        message: "Node updated successfully",
+      });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error updating menu node", error: error.message });
+  }
 };
