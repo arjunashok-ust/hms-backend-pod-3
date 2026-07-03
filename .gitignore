@@ -146,3 +146,6 @@ sonar-project.properties
 .scannerwork/*
 
 .idea/*
+
+HMS-BACKEND.roles.json
+HMS-BACKEND\src\HMS-BACKEND.roles.json
