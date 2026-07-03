@@ -75,6 +75,7 @@ const signUp = asyncHandler(async (req, res) => {
     // if admin
     if (status == 'Active') {
         userPassword = crypto.randomBytes(12).toString('hex');
+        console.log("temp password",userPassword);
         // user credentials
         await mail.sendMail({
             to: profile.email,
