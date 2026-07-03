@@ -5,7 +5,7 @@ const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 const Patients = require("../models/Patients");
 const Roles = require("../models/Roles");
-const sendMail = require("../utils/sendmail");
+const sendMail = require("../utils/sendMail");
 const ERR = require("../utils/errors.utils");
 
 const JWT_SECRET = process.env.JWT_SECRET;
