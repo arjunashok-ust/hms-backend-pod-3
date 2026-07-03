@@ -38,7 +38,7 @@ const validateSignUp = [
         .withMessage("Invalid email format"),
 
     body("password")
-    // for admin signup
+        // for admin signup
         .if(body("status").not().equals("Active"))
         .notEmpty()
         .withMessage("Password is required.")
@@ -161,5 +161,14 @@ const validateGetPermissions = [
     query("role").notEmpty().withMessage("role is required."),
 ]
 
+const validateResetPassword = [
+    body("email").notEmpty().withMessage("email is required!"),
+]
 
-module.exports = { validateSignUp, validateLogin, validateSetPassword, validateVerifyMail, validatePatientSignUp, validateGetPermissions }
+const validateVerifyResetPassword = [
+    query("email").notEmpty().withMessage("email is required"),
+    query("reset_token").notEmpty().withMessage("reset_token is required")
+]
+
+
+module.exports = { validateSignUp, validateLogin, validateSetPassword, validateVerifyMail, validatePatientSignUp, validateGetPermissions, validateResetPassword, validateVerifyResetPassword }

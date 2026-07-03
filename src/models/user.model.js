@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     verification_token: { type: String, unique: true },
     verification_expiry: { type: Date },
     refresh_token: { type: String, default: null },
+    reset_token: {type: String, default: null},
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },

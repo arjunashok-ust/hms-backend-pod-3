@@ -14,6 +14,8 @@ router.get('/verify-email', authValidate.validateVerifyMail, validate, authContr
 router.post('/patientSignUp', authValidate.validatePatientSignUp, validate, authController.patientSignUp);
 router.get('/getPermissions', authValidate.validateGetPermissions, validate, authController.getPermissions);
 router.get('/refresh-token', authController.getAccessToken);
+router.post('/reset-password', authValidate.validateResetPassword, validate, authController.resetPassword);
+router.get('/verify-reset-password', authValidate.validateVerifyResetPassword, validate, authController.verifyResetPassword);
 router.get('/logout', auth, authController.logout);
 
 module.exports = router;
