@@ -62,12 +62,14 @@ const departmentRoutes = require("./routes/departmentRoutes");
 app.use("/api/departments", departmentRoutes);
 
 
-try {
-  mongoose.connect(process.env.MONGO_URI);
-  console.log("MongoDB connected");
-} catch (err) {
-  console.error("MongoDB connection error:", err.message);
-  process.exit(1);
-}
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 module.exports = app;
