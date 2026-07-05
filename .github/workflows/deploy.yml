@@ -1,5 +1,6 @@
 name: Deploy HMS Backend
-on: 
+
+on:
   push:
     branches:
       - feature/sprint_5/arjun
@@ -14,8 +15,10 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2.SSH_KEY }}
-          scripts:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
             cd hms-backend-pod-3
             git pull origin feature/sprint_5/arjun
-            pm2 start src/server.js --name hms-backend
+            npm ci
+            pm2 restart hms-backend || pm2 start src/server.js --name hms-backend
+            pm2 save
