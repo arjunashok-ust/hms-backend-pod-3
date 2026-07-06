@@ -1,4 +1,3 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const Brevo = require('sib-api-v3-sdk');
 
 const client = Brevo.ApiClient.instance;

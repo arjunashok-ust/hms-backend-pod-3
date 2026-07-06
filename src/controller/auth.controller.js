@@ -113,13 +113,13 @@ const signUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
@@ -348,13 +348,13 @@ const patientSignUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     // 201 created
     return res.status(201).json({
@@ -469,12 +469,12 @@ const resetPassword = asyncHandler(async (req, res) => {
                 Please use the above credentials to sign in after resetting your password. For security, we recommend changing your password immediately after login.
                 </p>
             <br>
-            <a href="http://localhost:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}">
+            <a href="https://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}">
                 <input type="button" value="Reset Password">
             </a>`
     });
 
-    console.log(`reset link: http://localhost:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}`);
+    console.log(`reset link: http://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}`);
     console.log(`temp password: ${temp_password}`);
     return res.status(200).json({ message: `Reset link is sent to mail` });
 });
