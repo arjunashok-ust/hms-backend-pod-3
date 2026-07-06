@@ -268,11 +268,7 @@ exports.forgotPassword = async (req, res) => {
   const user = await Users.findOne({ email });
 
   if (!user) {
-    throw ERR.userNotFound()
-    // return res.status(200).json({
-    //   message:
-    //     "If an account exists for this email, a password reset email has been sent.",
-    // });
+    throw ERR.userNotFound();
   }
 
   const tempPassword = crypto.randomBytes(6).toString("hex");
