@@ -6,12 +6,12 @@ exports.createPermission = async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    throw ERR.badRequest("Permission name is required.");
+    throw ERR.invalidRequest("Permission name is required.");
   }
 
   const existingPermission = await Permissions.findOne({ name });
   if (existingPermission) {
-    throw ERR.badRequest(`Permission '${name}' already exists.`);
+    throw ERR.invalidRequest(`Permission '${name}' already exists.`);
   }
 
   const newPermission = new Permissions({ name });

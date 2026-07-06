@@ -10,6 +10,9 @@ const ERR = {
   tokenInvalidOrExpired: () =>
     new AppError("Invalid or expired token", 401, "INVALID_TOKEN"),
   tokenNotFound: () => new AppError("Token not found", 401, "TOKEN_NOT_FOUND"),
+  emailAlreadyExists: () =>
+    new AppError("Email already exists", 409, "EMAIL_ALREADY_EXISTS"),
+
 
   // User / employee / patient lookup
   userNotFound: () => new AppError("User not found", 404, "USER_NOT_FOUND"),
@@ -53,6 +56,12 @@ const ERR = {
       422,
       "INVALID_DOCTOR_OR_DATE",
     ),
+    medicalRegistrationNoExists: () =>
+    new AppError(
+      "Medical registration number already exists",
+      409,
+      "MEDICAL_REGISTRATION_EXISTS",
+    ),
 
   // Common helpers
   invalidRequest: (message = "Invalid request", code = "INVALID_REQUEST") =>
@@ -69,6 +78,7 @@ const ERR = {
       400,
       "INVALID_VERIFICATION_TOKEN",
     ),
+
 
   // Generic
   internalError: () =>
