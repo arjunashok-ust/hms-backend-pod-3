@@ -8,6 +8,7 @@ const {
   signupValidation,
   loginValidation,
   changePasswordValidation,
+  forgotPasswordValidation,
 } = require("../validations/authValidation");
 
 const {
@@ -16,6 +17,8 @@ const {
   changeFirstPassword,
   refreshAccessToken,
   logout,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 
 router.post(
@@ -33,5 +36,12 @@ router.post(
   validate,
   asyncHandler(changeFirstPassword),
 );
+router.post(
+  "/forgot-password",
+  forgotPasswordValidation,
+  validate,
+  asyncHandler(forgotPassword),
+);
+router.get("/reset-password", asyncHandler(resetPassword));
 
 module.exports = router;

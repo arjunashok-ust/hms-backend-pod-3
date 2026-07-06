@@ -85,6 +85,14 @@ exports.loginValidation = [
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
+exports.forgotPasswordValidation = [
+  body("email")
+    .trim()
+    .isEmail()
+    .withMessage("A valid email is required")
+    .normalizeEmail(),
+];
+
 exports.changePasswordValidation = [
   body("password")
     .isLength({ min: 8 })

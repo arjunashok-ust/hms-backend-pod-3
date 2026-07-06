@@ -258,6 +258,104 @@ exports.signUpByAdmin = async (req, res) => {
   });
 };
 
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw ERR.invalidRequest("Email is required.", "EMAIL_REQUIRED");
+  }
+
+  const user = await Users.findOne({ email });
+
+  if (!user) {
+    throw ERR.userNotFound()
+    // return res.status(200).json({
+    //   message:
+    //     "If an account exists for this email, a password reset email has been sent.",
+    // });
+  }
+
+  const tempPassword = crypto.randomBytes(6).toString("hex");
+  const tempPasswordHash = await bcrypt.hash(tempPassword, 12);
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetExpiry = Date.now() + 60 * 60 * 1000;
+
+  user.reset_token = resetToken;
+  user.reset_expiry = new Date(resetExpiry);
+  user.reset_password_hash = tempPasswordHash;
+  await user.save();
+
+  const resetUrl = `${process.env.APP_URL || "http://localhost:5000"}/api/auth/reset-password?email=${encodeURIComponent(user.email)}&token=${resetToken}`;
+
+  await sendMail({
+    to: user.email,
+    subject: "HMS | Password Reset Request",
+    htmlContent: `
+      <h2>Password Reset Request</h2>
+      <p>A password reset was requested for your account.</p>
+      <p><strong>Temporary Password:</strong> ${tempPassword}</p>
+      <p>Use the button below to confirm the reset and activate the temporary password.</p>
+      <a href="${resetUrl}">
+        <button style="padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          Reset Password
+        </button>
+      </a>
+      <p>This link expires in 1 hour.</p>
+    `,
+  });
+
+  res.status(200).json({
+    message:
+      "If an account exists for this email, a password reset email has been sent.",
+  });
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, token } = req.query;
+
+  if (!email || !token) {
+    throw ERR.invalidRequest(
+      "Invalid password reset link.",
+      "INVALID_PASSWORD_RESET_LINK",
+    );
+  }
+
+  const user = await Users.findOne({
+    email,
+    reset_token: token,
+    reset_expiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw ERR.invalidVerificationToken();
+  }
+
+  if (!user.reset_password_hash) {
+    throw ERR.invalidRequest(
+      "No pending password reset found.",
+      "PASSWORD_RESET_NOT_FOUND",
+    );
+  }
+
+  user.passwordHash = user.reset_password_hash;
+  user.status = "PASSWORD_CHANGE_PENDING";
+  user.reset_token = undefined;
+  user.reset_expiry = undefined;
+  user.reset_password_hash = undefined;
+  await user.save();
+
+  await Employees.findOneAndUpdate(
+    { employeeCode: user.employeeID },
+    { $set: { status: "PASSWORD_CHANGE_PENDING" } },
+  );
+
+  res.status(200).json({
+    message:
+      "Password reset successfully. Please sign in with the temporary password and change it immediately.",
+    email: user.email,
+  });
+};
+
 exports.login = async (req, res) => {
   const { email, password, clientType } = req.body;
   const user = await Users.findOne({ email });
