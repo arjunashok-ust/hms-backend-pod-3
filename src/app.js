@@ -22,9 +22,6 @@ app.use(cookieParser());
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 
-const errorMiddleware = require("./middlewares/errorMiddleware");
-app.use(errorMiddleware);
-
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
@@ -61,6 +58,8 @@ app.use("/api/records", medicalRecordRoutes);
 const departmentRoutes = require("./routes/departmentRoutes");
 app.use("/api/departments", departmentRoutes);
 
+const errorMiddleware = require("./middlewares/errorMiddleware");
+app.use(errorMiddleware);
 
 mongoose
   .connect(process.env.MONGO_URI)
