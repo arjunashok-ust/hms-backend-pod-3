@@ -55,9 +55,29 @@ exports.createRole = async (req, res) => {
  * @desc    Get all user roles.
  * @access  Private
  */
+const PUBLIC_ROLE_BLOCKLIST = new Set([
+  "ADMIN",
+  "OWNER",
+  "PATIENT",
+  "SUPER_ADMIN",
+]);
+
+const filterPublicRoles = (roles) => {
+  return roles.filter((role) => {
+    const name = String(role.roleName || "").toUpperCase();
+    return !PUBLIC_ROLE_BLOCKLIST.has(name);
+  });
+};
+
 exports.getAllRoles = async (req, res) => {
   const roles = await Role.find({});
   return res.status(200).json({ success: true, data: roles });
+};
+
+exports.getPublicRoles = async (req, res) => {
+  const roles = await Role.find({});
+  const publicRoles = filterPublicRoles(roles);
+  return res.status(200).json({ success: true, data: publicRoles });
 };
 
 /**

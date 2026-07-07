@@ -31,6 +31,7 @@ router.get(
   requirePermission("VIEW_ROLES"),
   asyncHandler(roleController.getAllRoles),
 );
+router.get("/public", asyncHandler(roleController.getPublicRoles));
 router.put(
   "/:id",
   authenticateToken,
