@@ -2,7 +2,6 @@ const Role = require('../models/role.model');
 const Department = require('../models/department.model');
 const Specialization = require('../models/specialization.model');
 
-const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
 
 // getRoles
@@ -24,10 +23,10 @@ const getDepartments = asyncHandler(async (req, res) => {
 
 // getSpecializations
 const getSpecializations = asyncHandler(async (req, res) => {
-        const specializations = await Specialization.find();
-        return res.status(200).json(
-            specializations
-        );
+    const specializations = await Specialization.find();
+    return res.status(200).json(
+        specializations
+    );
 });
 
 module.exports = { getRoles, getDepartments, getSpecializations }

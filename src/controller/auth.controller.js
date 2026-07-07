@@ -7,10 +7,7 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/tokenGen
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
-const Appointment = require('../models/appointment.model');
 const Role = require('../models/role.model');
-const Department = require('../models/department.model');
-const Specialization = require('../models/specialization.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
@@ -70,7 +67,7 @@ const signUp = asyncHandler(async (req, res) => {
         throw ERR.userNotFound();
     }
 
-    let userPassword = "";
+    let userPassword;
 
     // if admin
     if (status == 'Active') {
@@ -303,7 +300,7 @@ const patientSignUp = asyncHandler(async (req, res) => {
         throw ERR.userNotFound();
     }
 
-    let userPassword = "";
+    let userPassword;
 
     if (status == 'Active') {
         userPassword = password;

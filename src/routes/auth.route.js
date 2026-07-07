@@ -5,7 +5,6 @@ const router = express.Router();
 const authController = require('../controller/auth.controller');
 const authValidate = require('../validation/auth.validate');
 const auth = require('../middleware/auth.middleware');
-const permission = require('../middleware/permission.middleware')
 
 router.post('/signUp', authValidate.validateSignUp, validate, authController.signUp);
 router.post('/login', authValidate.validateLogin, validate, authController.login);

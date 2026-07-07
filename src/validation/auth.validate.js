@@ -19,7 +19,6 @@ const medicalRoles = new Set([
 
 const allowedDepartments = ["OPD", "IPD", "ICU", "Pharmacy", "Administration", "Front Office"];
 const allowedBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const allowedStatusTypes = ["Active", "Inactive", "Pending"];
 
 const validateSignUp = [
     body("name")
@@ -154,7 +153,7 @@ const validatePatientSignUp = [
     body("phone").notEmpty().withMessage("Phone Number Invalid"),
     body("dob").notEmpty().withMessage("DOB is required"),
     body("address").notEmpty().withMessage("Address is required"),
-    body("bloodGroup").notEmpty().withMessage("Blood group is required"),
+    body("bloodGroup").notEmpty().withMessage("Blood group is required").isIn(allowedBloodGroups).withMessage("Invalid blood group"),
 ]
 
 const validateGetPermissions = [

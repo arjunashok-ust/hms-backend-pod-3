@@ -7,7 +7,6 @@ const cookieParser = require('cookie-parser');
 
 const errorHandler = require('./middleware/errorHandler.middleware');
 
-const db = require('./config/db.config');
 
 const app = new express();
 

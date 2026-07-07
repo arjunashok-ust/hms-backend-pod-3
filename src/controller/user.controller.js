@@ -6,7 +6,6 @@ const MedicalRecord = require('../models/medical-record.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
-const { json } = require('express');
 
 // Get User
 const getUserProfile = asyncHandler(async (req, res) => {

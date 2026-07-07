@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Counter = require('../models/counter.model');
 
 const nodeSchema = new mongoose.Schema({
     order: { type: Number, required: true},

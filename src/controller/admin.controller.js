@@ -8,7 +8,6 @@ const Role = require('../models/role.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
-const { trusted } = require('mongoose');
 
 const medicalRoles = new Set(['Doctor', 'Nurse']);
 
