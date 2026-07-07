@@ -51,9 +51,13 @@ exports.verifyEmail = async (req, res) => {
   user.verification_token = undefined;
   user.verification_expiry = undefined;
   await user.save();
-  const messageIfSelfSignup = " and requires your approval";
+  let messageIfSelfSignup = "";
+  let returnMessageIfSelfSignup = "";
 
   if (user.status === "ADMIN_APPROVAL_PENDING") {
+    messageIfSelfSignup = " and requires your approval";
+    returnMessageIfSelfSignup = " Your account is now pending Admin approval.";
+  }
     try {
       await sendMail({
         to: process.env.ADMIN_EMAIL,
@@ -74,12 +78,7 @@ exports.verifyEmail = async (req, res) => {
 
     return res.status(200).json({
       message:
-        "Email successfully verified. Your account is now pending Admin approval.",
+        `Email successfully verified.${returnMessageIfSelfSignup}`,
     });
-  }
-
-  res.status(200).json({
-    message:
-      "Email successfully verified. You may now log in with your temporary password.",
-  });
+  
 };
