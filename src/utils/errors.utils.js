@@ -1,5 +1,17 @@
 /**
- * Centralized error builders for common application errors.
+ * @file errors.utils.js
+ * @description
+ * This file provides a centralized factory object for creating common application errors.
+ *
+ * @overview
+ * This module exports a single object, `ERR`, which contains a collection of builder functions.
+ * Each function instantiates an `AppError` with a predefined message, status code, and error code.
+ * This approach promotes consistency, avoids magic strings, and simplifies throwing errors from controllers and services.
+ * For example, instead of `throw new AppError('User not found', 404, 'USER_NOT_FOUND')`, a developer can use `throw ERR.userNotFound()`.
+ *
+ * Connections:
+ *   (Controllers) -> ERRORS.UTILS.JS -> appError.utils.js
+ *   ERRORS.UTILS.JS -> (on throw) -> asyncHandler -> errorMiddleware
  */
 const AppError = require("./appError.utils");
 
@@ -12,7 +24,6 @@ const ERR = {
   tokenNotFound: () => new AppError("Token not found", 401, "TOKEN_NOT_FOUND"),
   emailAlreadyExists: () =>
     new AppError("Email already exists", 409, "EMAIL_ALREADY_EXISTS"),
-
 
   // User / employee / patient lookup
   userNotFound: () => new AppError("User not found", 404, "USER_NOT_FOUND"),
@@ -56,7 +67,7 @@ const ERR = {
       422,
       "INVALID_DOCTOR_OR_DATE",
     ),
-    medicalRegistrationNoExists: () =>
+  medicalRegistrationNoExists: () =>
     new AppError(
       "Medical registration number already exists",
       409,
@@ -78,7 +89,6 @@ const ERR = {
       400,
       "INVALID_VERIFICATION_TOKEN",
     ),
-
 
   // Generic
   internalError: () =>

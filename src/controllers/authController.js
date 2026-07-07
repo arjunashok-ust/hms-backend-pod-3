@@ -1,3 +1,20 @@
+/**
+ * @file authController.js
+ * @description This file contains the controller functions for handling user authentication and authorization, 
+ * including signup, login, password management, and token generation.
+ * @description
+ * This file contains the controller functions for handling user authentication and authorization.
+ * It includes signup, login, password management, and token generation.
+ *
+ * @overview
+ * This controller is called from a route handler after validation and other middleware have passed.
+ * It contains the core business logic for user registration, login, password management, and token handling.
+ * It interacts with multiple Models to create and verify user and profile data. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> validate -> asyncHandler -> AUTHCONTROLLER.JS -> [Users, Employees, Patients, Roles] Models
+ *   AUTHCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
@@ -68,6 +85,11 @@ const clearRefreshTokenCookie = (res) => {
   });
 };
 
+/**
+ * @route   POST /api/auth/signupByUser
+ * @desc    Employee self-registration. Creates an employee and user record pending admin approval.
+ * @access  Public
+ */
 exports.signupByUser = async (req, res) => {
   const {
     name,
@@ -151,6 +173,11 @@ exports.signupByUser = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/employees/create
+ * @desc    Admin-led creation of a new employee account.
+ * @access  Private
+ */
 exports.signUpByAdmin = async (req, res) => {
   const {
     name,
@@ -258,6 +285,11 @@ exports.signUpByAdmin = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Initiates the password reset process by sending an email with a temporary password and reset link.
+ * @access  Public
+ */
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -306,6 +338,11 @@ exports.forgotPassword = async (req, res) => {
   });
 };
 
+/**
+ * @route   GET /api/auth/reset-password
+ * @desc    Confirms the password reset using a token from email, activating the temporary password.
+ * @access  Public
+ */
 exports.resetPassword = async (req, res) => {
   const { email, token } = req.query;
 
@@ -352,6 +389,11 @@ exports.resetPassword = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/auth/login
+ * @desc    Authenticates a user and returns an access token and profile information.
+ * @access  Public
+ */
 exports.login = async (req, res) => {
   const { email, password, clientType } = req.body;
   const user = await Users.findOne({ email });
@@ -430,6 +472,11 @@ exports.login = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/auth/setpassword
+ * @desc    Allows a user to change their initial/temporary password.
+ * @access  Public (but requires valid old password)
+ */
 exports.changeFirstPassword = async (req, res) => {
   const { email, oldPassword, password } = req.body;
 
@@ -466,6 +513,11 @@ exports.changeFirstPassword = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/auth/refresh
+ * @desc    Generates a new access token using a valid refresh token from cookies.
+ * @access  Private (requires refresh token)
+ */
 exports.refreshAccessToken = async (req, res) => {
   console.log(req.cookies);
   const refreshToken = req.cookies?.refreshToken;
@@ -505,6 +557,11 @@ exports.refreshAccessToken = async (req, res) => {
   res.status(200).json({ accessToken });
 };
 
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logs out the user by clearing the refresh token from the database and the cookie.
+ * @access  Private (requires refresh token)
+ */
 exports.logout = async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
   if (refreshToken) {

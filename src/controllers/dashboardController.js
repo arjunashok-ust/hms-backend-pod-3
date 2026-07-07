@@ -1,8 +1,29 @@
+/**
+ * @file dashboardController.js
+ * @description This file contains controller functions for fetching aggregated data and statistics for the main dashboard.
+ *
+ * @description
+ * This file contains controller functions for fetching aggregated data for the main dashboard.
+ *
+ * @overview
+ * This controller is called from a route handler after authentication and permission middleware have passed.
+ * It contains the core business logic for aggregating statistics from various parts of the application for display on a dashboard.
+ * It interacts with multiple Models to count documents and perform aggregations. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> requirePermission -> asyncHandler -> DASHBOARDCONTROLLER.JS -> [Employees, Users, Appointments] Models
+ *   DASHBOARDCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 const Appointments = require("../models/Appointments");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   GET /api/dashboard/stats
+ * @desc    Get overall system statistics for the dashboard.
+ * @access  Private
+ */
 exports.getDashboardStats = async (req, res) => {
   const totalEmployees = await Employees.countDocuments();
   const activeEmployees = await Employees.countDocuments({ status: "ACTIVE" });
@@ -27,6 +48,11 @@ exports.getDashboardStats = async (req, res) => {
   });
 };
 
+/**
+ * @route   GET /api/dashboard/tenEmployees
+ * @desc    Get an overview of the 10 most recently created employees.
+ * @access  Private
+ */
 exports.getEmployeeOverview = async (req, res) => {
   const employees = await Employees.aggregate([
     {

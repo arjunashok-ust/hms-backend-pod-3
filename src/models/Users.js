@@ -1,3 +1,19 @@
+/**
+ * @file Users.js
+ * @description
+ * This file defines the Mongoose schema and model for user accounts.
+ *
+ * @overview
+ * This schema represents the core user account and authentication entity.
+ * It stores the user's email, hashed password, role, and account status.
+ * It also manages tokens for session management (refresh token) and security flows (email verification, password reset).
+ * The schema links to an `Employees` or `Patients` profile based on the user's role.
+ * An async validator ensures that the assigned `role` exists in the `Roles` collection, maintaining data integrity.
+ *
+ * Connections:
+ *   [authController, employeeController, etc.] -> USERS.JS
+ *   USERS.JS -> Roles.js (for validation)
+ */
 const mongoose = require("mongoose");
 const Roles = require("./Roles");
 

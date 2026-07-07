@@ -1,3 +1,17 @@
+/**
+ * @file dashboardRoutes.js
+ * @description
+ * This file defines the API routes for fetching dashboard statistics.
+ *
+ * @overview
+ * This router provides endpoints for retrieving aggregated data for the main application dashboard.
+ * It secures the routes using authentication and permission-checking middleware.
+ * A typical request flows through: API Request -> DASHBOARDROUTES.JS -> authenticateToken -> requirePermission -> asyncHandler -> dashboardController -> Model(s).
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> DASHBOARDROUTES.JS -> [authenticateToken, requirePermission] -> asyncHandler -> dashboardController -> [Employees, Users, Appointments] Models
+ */
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");

@@ -1,3 +1,16 @@
+/**
+ * @file Branch.js
+ * @description
+ * This file defines the Mongoose schema and model for a hospital branch.
+ *
+ * @overview
+ * This schema represents a physical branch or location of the hospital.
+ * It stores essential information such as the branch name, a unique code, contact details, and address.
+ * It is a simple data model used to distinguish between different operational sites.
+ *
+ * Connections:
+ *   (Controllers) -> BRANCH.JS
+ */
 const mongoose = require("mongoose");
 
 const branchSchema = new mongoose.Schema(

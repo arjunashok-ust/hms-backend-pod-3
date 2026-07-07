@@ -1,3 +1,17 @@
+/**
+ * @file menuNodeRoutes.js
+ * @description
+ * This file defines the API routes for managing dynamic navigation menu nodes.
+ *
+ * @overview
+ * This router provides endpoints for the CRUD operations on menu nodes, which are used to build the application's sidebar.
+ * It also includes routes to fetch the menu for the current user and to check permissions for a given path.
+ * A typical request flows through: API Request -> MENUNODEROUTES.JS -> authenticateToken -> requirePermission -> asyncHandler -> menuNodeController -> MenuNode Model.
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> MENUNODEROUTES.JS -> [authenticateToken, requirePermission] -> asyncHandler -> menuNodeController -> MenuNode Model
+ */
 const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");

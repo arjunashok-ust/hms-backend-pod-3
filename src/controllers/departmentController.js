@@ -1,11 +1,27 @@
+/**
+ * @file departmentController.js
+ * @description This file contains the controller functions for managing all department-related operations, 
+ * such as creating, retrieving, updating, and deleting hospital departments.
+ * @description
+ * This file contains controller functions for managing hospital departments.
+ *
+ * @overview
+ * This controller is called from a route handler after authentication and permission middleware have passed.
+ * It contains the core business logic for creating, reading, updating, and deleting department records.
+ * It interacts with the Departments and Employees Models. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> requirePermission -> asyncHandler -> DEPARTMENTCONTROLLER.JS -> [Departments, Employees] Models
+ *   DEPARTMENTCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const Departments = require("../models/Departments");
 const Employees = require("../models/Employees");
 const ERR = require("../utils/errors.utils");
 
 /**
- * @description Create a new department
- * @route POST /api/departments
- * @access Private (requires permission)
+ * @route   POST /api/departments
+ * @desc    Create a new department.
+ * @access  Private
  */
 exports.createDepartment = async (req, res) => {
   const { departmentName } = req.body;
@@ -39,9 +55,9 @@ exports.createDepartment = async (req, res) => {
 };
 
 /**
- * @description Get all departments
- * @route GET /api/departments
- * @access Private
+ * @route   GET /api/departments
+ * @desc    Get all departments.
+ * @access  Private
  */
 exports.getAllDepartments = async (req, res) => {
   const departments = await Departments.find({}).sort({ departmentName: 1 });
@@ -52,9 +68,9 @@ exports.getAllDepartments = async (req, res) => {
 };
 
 /**
- * @description Update a department by its ID
- * @route PUT /api/departments/:id
- * @access Private (requires permission)
+ * @route   PUT /api/departments/:id
+ * @desc    Update a department by its ID.
+ * @access  Private
  */
 exports.updateDepartment = async (req, res) => {
   const { id } = req.params;
@@ -85,9 +101,9 @@ exports.updateDepartment = async (req, res) => {
 };
 
 /**
- * @description Delete a department by its ID
- * @route DELETE /api/departments/:id
- * @access Private (requires permission)
+ * @route   DELETE /api/departments/:id
+ * @desc    Delete a department by its ID.
+ * @access  Private
  */
 exports.deleteDepartment = async (req, res) => {
   const { id } = req.params;

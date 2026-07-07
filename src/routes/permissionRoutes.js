@@ -1,3 +1,17 @@
+/**
+ * @file permissionRoutes.js
+ * @description
+ * This file defines the API routes for managing permissions and their assignment to roles.
+ *
+ * @overview
+ * This router provides endpoints for creating, viewing, assigning, and revoking permissions.
+ * It uses middleware to ensure that only authorized administrators can manage the access control system.
+ * A typical request flows through: API Request -> PERMISSIONROUTES.JS -> authenticateToken -> requirePermission -> asyncHandler -> permissionController -> [Permissions, Roles] Models.
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> PERMISSIONROUTES.JS -> [authenticateToken, requirePermission] -> asyncHandler -> permissionController -> [Permissions, Roles] Models
+ */
 const express = require("express");
 const router = express.Router();
 const permissionController = require("../controllers/permissionController");

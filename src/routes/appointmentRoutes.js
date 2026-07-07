@@ -1,3 +1,17 @@
+/**
+ * @file appointmentRoutes.js
+ * @description
+ * This file defines the API routes for all appointment-related operations.
+ *
+ * @overview
+ * This router handles endpoints for creating, retrieving, updating, and deleting appointments.
+ * It uses middleware for authentication (`authenticateToken`), permission checking (`requirePermission`), and handling asynchronous operations (`asyncHandler`).
+ * A typical request flows through: API Request -> APPOINTMENTROUTES.JS -> authenticateToken -> requirePermission -> asyncHandler -> appointmentController -> Model(s).
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> APPOINTMENTROUTES.JS -> [authenticateToken, requirePermission, validate] -> asyncHandler -> appointmentController -> [Appointments, Employees, Patients] Models
+ */
 const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
@@ -37,7 +51,7 @@ router.get(
 router.put(
   "/:id",
   authenticateToken,
-  requirePermission(["UPDATE_APPOINTMENT","UPDATE_MY_APPOINTMENT"]),
+  requirePermission(["UPDATE_APPOINTMENT", "UPDATE_MY_APPOINTMENT"]),
   asyncHandler(appointmentController.updateAppointment),
 );
 router.get(
@@ -49,7 +63,7 @@ router.get(
 router.delete(
   "/:id",
   authenticateToken,
-  requirePermission(["DELETE_APPOINTMENT","DELETE_MY_APPOINTMENT"]),
+  requirePermission(["DELETE_APPOINTMENT", "DELETE_MY_APPOINTMENT"]),
   asyncHandler(appointmentController.deleteAppointment),
 );
 

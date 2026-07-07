@@ -1,9 +1,33 @@
+/**
+ * @file patientController.js
+ * @description This file contains the controller functions for managing patient-related operations, including creation, retrieval, updating, and deletion of patient records.
+ * It also handles patient registration flows.
+ * @description
+ * This file contains controller functions for managing patient operations.
+ * It handles CRUD for patient records and registration flows.
+ *
+ * @overview
+ * This controller is called from a route handler after validation and permission middleware have passed.
+ * It contains the core business logic for managing patient records, including administrative CRUD and public registration.
+ * It interacts with multiple Models to ensure data integrity. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> validate -> asyncHandler -> PATIENTCONTROLLER.JS -> [Patients, Users, Appointments] Models
+ *   PATIENTCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const Patient = require("../models/Patients");
 const User = require("../models/Users");
-const Appointments = require("../models/Appointments")
+const Appointments = require("../models/Appointments");
 const bcrypt = require("bcryptjs");
+const crypto = require("node:crypto"); // Added for createPatient
+const sendMail = require("../utils/sendMail"); // Added for createPatient
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   GET /api/patients/all
+ * @desc    Get all patients with pagination and search.
+ * @access  Private
+ */
 exports.getAllPatients = async (req, res) => {
   let page = Number.parseInt(req.query.page, 10);
   let limit = Number.parseInt(req.query.limit, 10);
@@ -15,7 +39,7 @@ exports.getAllPatients = async (req, res) => {
 
   const skip = (page - 1) * limit;
 
-  let matchStage = {status:{$ne:"DELETED"}};
+  let matchStage = { status: { $ne: "DELETED" } };
 
   if (req.query.search) {
     const searchRegex = new RegExp(req.query.search, "i");
@@ -44,6 +68,11 @@ exports.getAllPatients = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/patients/create
+ * @desc    Create a new patient record (admin-led).
+ * @access  Private
+ */
 exports.createPatient = async (req, res) => {
   const {
     name,
@@ -81,7 +110,6 @@ exports.createPatient = async (req, res) => {
     allergies,
   });
 
-
   const verification_token = crypto.randomBytes(32).toString("hex");
   const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
 
@@ -95,37 +123,35 @@ exports.createPatient = async (req, res) => {
     patientUHID: newPatient.UHID,
   });
 
-  
-    await sendMail({
-      to: newUser.email,
-      subject: "HMS Patient Credentials",
-      htmlContent: `
+  await sendMail({
+    to: newUser.email,
+    subject: "HMS Patient Credentials",
+    htmlContent: `
           <h2>Welcome to HMS</h2>
           <p>Your account credentials:</p>
           <p><strong>Email:</strong> ${newUser.email}</p>
           <p><strong>Temporary Password:</strong> ${tempPassword}</p>
           <p>Please change your password immediately after your first sign in.</p>
         `,
-    });
-  
-    await sendMail({
-      to: newUser.email,
-      subject: "HMS System | Patient Email Verification",
-      htmlContent: `
+  });
+
+  await sendMail({
+    to: newUser.email,
+    subject: "HMS System | Patient Email Verification",
+    htmlContent: `
           <h1>Hospital Management System</h1>
           <p>Thank you ${profile.name} for registering. Verify your account below:</p>
           <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${newUser.email}&token=${verification_token}">
             <button>Verify Email</button>
           </a>
         `,
-    });
+  });
 
   return res.status(201).json({
     message: "Patient registered successfully",
     patientUHID: newUser.patientUHID,
   });
 };
-
 
 const buildPatientUpdatePayload = (body, currentAddress) => {
   const {
@@ -172,6 +198,11 @@ const buildStaffUpdatePayload = (body) => {
   return payload;
 };
 
+/**
+ * @route   PUT /api/patients/:id
+ * @desc    Update a patient's profile information.
+ * @access  Private
+ */
 exports.updatePatient = async (req, res) => {
   const { id } = req.params;
   const { role, email } = req.user || {};
@@ -191,7 +222,7 @@ exports.updatePatient = async (req, res) => {
     ? buildPatientUpdatePayload(req.body, targetPatient.address)
     : buildStaffUpdatePayload(req.body);
 
-    console.log(cleanUpdatePayload)
+  console.log(cleanUpdatePayload);
 
   const updated = await Patient.findOneAndUpdate(
     { UHID: id },
@@ -202,6 +233,11 @@ exports.updatePatient = async (req, res) => {
   res.status(200).json(updated);
 };
 
+/**
+ * @route   DELETE /api/patients/:id
+ * @desc    Soft delete a patient and their associated user account.
+ * @access  Private
+ */
 exports.deletePatient = async (req, res) => {
   const { id } = req.params;
   const deleted = await Patient.findOneAndUpdate(
@@ -210,11 +246,11 @@ exports.deletePatient = async (req, res) => {
     { new: true },
   );
 
-   const deletedUser = await User.findOneAndUpdate(
-     { patientUHID: id },
-     { $set: { status: "DELETED" } },
-     { new: true },
-   );
+  const deletedUser = await User.findOneAndUpdate(
+    { patientUHID: id },
+    { $set: { status: "DELETED" } },
+    { new: true },
+  );
 
   if (!deleted || !deletedUser) throw ERR.patientNotFound();
 
@@ -230,6 +266,11 @@ exports.deletePatient = async (req, res) => {
   });
 };
 
+/**
+ * @route   POST /api/patients/mobile-register
+ * @desc    Patient self-registration from a mobile client.
+ * @access  Public
+ */
 exports.createPatientFromMobile = async (req, res) => {
   const {
     name,

@@ -1,3 +1,19 @@
+/**
+ * @file authMiddleware.js
+ * @description
+ * This file contains Express.js middleware functions for handling authentication and role-based authorization.
+ *
+ * @overview
+ * This module exports two primary middleware functions.
+ * The `authenticateToken` middleware validates a JSON Web Token (JWT) from the 'Authorization' header.
+ * If the token is valid, it decodes the payload and attaches it to the request object as `req.user`.
+ * The `authorizeRoles` middleware is a higher-order function that returns a new middleware.
+ * This returned middleware checks if the role of the authenticated user (`req.user.role`) is included in the list of allowed roles for a specific route.
+ * It is typically one of the first middleware in a protected route's pipeline.
+ *
+ * Connections:
+ *   API Request -> route -> AUTHENTICATETOKEN -> [permissionMiddleware | controller]
+ */
 const jwt = require("jsonwebtoken");
 
 const authenticateToken = (req, res, next) => {

@@ -1,3 +1,18 @@
+/**
+ * @file medicalRecordRoutes.js
+ * @description
+ * This file defines the API routes for managing patient medical records.
+ *
+ * @overview
+ * This router handles endpoints for creating, updating, deleting, and retrieving medical records.
+ * It includes role-specific routes for doctors to get their records and for patients to get their own.
+ * It uses middleware for authentication, permission checking, and input validation.
+ * A typical request flows through: API Request -> MEDICALRECORDROUTES.JS -> authenticateToken -> requirePermission -> validation (validateMedicalRecord) -> validate -> asyncHandler -> medicalRecordController -> Model(s).
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> MEDICALRECORDROUTES.JS -> [authenticateToken, requirePermission, medicalRecordValidation, validate] -> asyncHandler -> medicalRecordController -> [MedicalRecords, Appointments, etc.] Models
+ */
 const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");

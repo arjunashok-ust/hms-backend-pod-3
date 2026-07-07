@@ -1,9 +1,29 @@
+/**
+ * @file medicalRecordController.js
+ * @description This file contains the controller functions for creating, retrieving, updating, and deleting patient medical records.
+ * @description
+ * This file contains controller functions for managing patient medical records.
+ *
+ * @overview
+ * This controller is called from a route handler after validation and permission middleware have passed.
+ * It contains the core business logic for creating, reading, updating, and deleting patient medical records, with role-based access control.
+ * It interacts with multiple Models to ensure data integrity. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> validate -> asyncHandler -> MEDICALRECORDCONTROLLER.JS -> [MedicalRecords, Employees, Appointments, Patients] Models
+ *   MEDICALRECORDCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const MedicalRecord = require("../models/MedicalRecords");
 const Employees = require("../models/Employees");
 const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   POST /api/medical-records/createRecord
+ * @desc    Create a new medical record.
+ * @access  Private
+ */
 exports.createMedicalRecord = async (req, res) => {
   const {
     doctorEmployeeId,
@@ -115,6 +135,11 @@ const validateCriticalFieldPermissions = (updates, record, userPermissions) => {
   return null;
 };
 
+/**
+ * @route   PUT /api/medical-records/updateRecord/:id
+ * @desc    Update an existing medical record.
+ * @access  Private
+ */
 exports.updateMedicalRecord = async (req, res) => {
   const { id } = req.params;
   const updates = { ...req.body };
@@ -172,6 +197,11 @@ exports.updateMedicalRecord = async (req, res) => {
   });
 };
 
+/**
+ * @route   DELETE /api/medical-records/deleteRecord/:id
+ * @desc    Soft delete a medical record by updating its status to 'DELETED'.
+ * @access  Private
+ */
 exports.deleteMedicalRecord = async (req, res) => {
   const { id } = req.params;
   if (!req.user.permissions?.includes("DELETE_HEALTH_RECORD")) {
@@ -303,10 +333,20 @@ const getPaginatedRecords = async (req, res, baseFilter = {}) => {
   });
 };
 
+/**
+ * @route   GET /api/medical-records/getAllRecords
+ * @desc    Get all medical records with pagination and filtering (for admins).
+ * @access  Private
+ */
 exports.getAllMedicalRecords = (req, res) => {
   return getPaginatedRecords(req, res, {});
 };
 
+/**
+ * @route   GET /api/medical-records/getMyRecords
+ * @desc    Get all medical records created by the currently authenticated doctor.
+ * @access  Private
+ */
 exports.getMyMedicalRecords = (req, res) => {
   const employeeID = req.user?.employeeID;
 
@@ -319,6 +359,11 @@ exports.getMyMedicalRecords = (req, res) => {
   return getPaginatedRecords(req, res, { doctorEmployeeId: employeeID });
 };
 
+/**
+ * @route   GET /api/medical-records/getRecord/:id
+ * @desc    Get a single medical record by its ID.
+ * @access  Private
+ */
 exports.getMedicalRecordById = async (req, res) => {
   const record = await MedicalRecord.findById(req.params.id);
   if (!record || record.status === "DELETED") {
@@ -327,6 +372,11 @@ exports.getMedicalRecordById = async (req, res) => {
   return res.status(200).json({ success: true, data: record });
 };
 
+/**
+ * @route   GET /api/medical-records/getPatientRecords
+ * @desc    Get all medical records for the currently authenticated patient.
+ * @access  Private
+ */
 exports.getPatientMedicalRecords = (req, res) => {
   const patientId = req.user?.patientId || req.user?.id;
   if (!patientId) {

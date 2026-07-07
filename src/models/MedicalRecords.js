@@ -1,3 +1,19 @@
+/**
+ * @file MedicalRecords.js
+ * @description
+ * This file defines the Mongoose schema and model for patient medical records.
+ *
+ * @overview
+ * This schema represents a single medical record associated with a patient visit.
+ * It stores critical clinical information, including diagnosis, symptoms, medications, and observations.
+ * The schema establishes relationships by referencing the `Appointments`, `Patients`, and `Employees` (for the doctor) models.
+ * A pre-save hook automatically generates a unique `recordCode` for each new record using a utility.
+ * It also includes indexes to optimize queries for records by patient, doctor, and appointment.
+ *
+ * Connections:
+ *   medicalRecordController -> MEDICALRECORDS.JS
+ *   MEDICALRECORDS.JS -> generateID.js (utility)
+ */
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
 

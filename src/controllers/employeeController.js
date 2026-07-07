@@ -1,8 +1,28 @@
+/**
+ * @file employeeController.js
+ * @description
+ * This file contains controller functions for managing employee operations.
+ * It includes fetching, updating, deleting, and managing approval status.
+ *
+ * @overview
+ * This controller is called from a route handler after authentication and permission middleware have passed.
+ * It contains the core business logic for managing employee records, including fetching lists, updating profiles, and handling administrative actions like approvals and deletions.
+ * It interacts with multiple Models to ensure data integrity across the system. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> requirePermission -> asyncHandler -> EMPLOYEECONTROLLER.JS -> [Employees, Users, Appointments] Models
+ *   EMPLOYEECONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 const Appointments = require("../models/Appointments");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   GET /api/employees/all
+ * @desc    Get all employees with pagination, filtering, and search.
+ * @access  Private
+ */
 exports.getAllEmployees = async (req, res) => {
   let page = Number.parseInt(req.query.page) || 1;
   let limit = Number.parseInt(req.query.limit) || 5;
@@ -118,6 +138,11 @@ exports.getAllEmployees = async (req, res) => {
   });
 };
 
+/**
+ * @route   DELETE /api/employees/:id
+ * @desc    Soft delete an employee and their associated user account.
+ * @access  Private
+ */
 exports.deleteEmployee = async (req, res) => {
   const { id } = req.params;
 
@@ -159,6 +184,11 @@ exports.deleteEmployee = async (req, res) => {
   });
 };
 
+/**
+ * @route   PUT /api/employees/:id
+ * @desc    Update an employee's profile and user account information.
+ * @access  Private
+ */
 exports.updateEmployee = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
@@ -208,6 +238,11 @@ exports.updateEmployee = async (req, res) => {
   });
 };
 
+/**
+ * @route   PATCH /api/employees/approve/:id
+ * @desc    Approve a new employee by setting their status to 'ACTIVE'.
+ * @access  Private
+ */
 exports.approveEmployee = async (req, res) => {
   const { id } = req.params;
 
@@ -233,6 +268,11 @@ exports.approveEmployee = async (req, res) => {
   res.status(200).json({ message: "Employee approved successfully" });
 };
 
+/**
+ * @route   PATCH /api/employees/reject/:id
+ * @desc    Reject an employee by setting their status to 'INACTIVE'.
+ * @access  Private
+ */
 exports.rejectEmployee = async (req, res) => {
   const { id } = req.params;
 

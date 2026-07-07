@@ -1,3 +1,20 @@
+/**
+ * @file app.js
+ * @description
+ * This is the main application setup file for the Express server.
+ * It configures middleware, mounts all API routes, and establishes the database connection.
+ *
+ * @overview
+ * This file is the core of the Express application. It initializes the server, sets up essential security (`helmet`, `cors`) and logging (`morgan`) middleware, and configures body/cookie parsers.
+ * It then imports and mounts all the individual route handlers under their respective API prefixes.
+ * Finally, it registers the global `errorMiddleware` which acts as the final destination for all operational errors, and it initiates the connection to the MongoDB database.
+ *
+ * Connections:
+ *   server.js -> APP.JS
+ *   APP.JS -> (Middleware: helmet, cors, morgan, express.json, cookieParser)
+ *   APP.JS -> (All Route Files: authRoutes, appointmentRoutes, etc.) -> (Controllers)
+ *   APP.JS -> errorMiddleware.js
+ */
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -61,14 +78,12 @@ app.use("/api/departments", departmentRoutes);
 const errorMiddleware = require("./middlewares/errorMiddleware");
 app.use(errorMiddleware);
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  });
+try {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("MongoDB connected");
+} catch (err) {
+  console.error("MongoDB connection error:", err);
+  process.exit(1);
+}
 
 module.exports = app;

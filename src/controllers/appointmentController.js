@@ -1,3 +1,18 @@
+/**
+ * @file appointmentController.js
+ * @description
+ * This file contains the controller functions for managing appointment-related operations.
+ * It handles the logic for creating, retrieving, updating, and deleting appointments.
+ *
+ * @overview
+ * The controller acts as the intermediary between the API routes and the database models.
+ * It is called from a route handler after all preceding middleware have passed. It contains the core business logic for each endpoint.
+ * It interacts with Mongoose Models to perform database operations. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> Middlewares -> APPOINTMENTCONTROLLER.JS -> [Appointments, Employees, Users, Patients] Models
+ *   APPOINTMENTCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const jwt = require("jsonwebtoken");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
@@ -5,6 +20,11 @@ const Appointments = require("../models/Appointments");
 const Patients = require("../models/Patients");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   GET /api/appointments/stats
+ * @desc    Get appointment statistics for the current user (Admin, Doctor, or Patient).
+ * @access  Private
+ */
 exports.getAppointmentStats = async (req, res) => {
   const userRole = req.user?.role?.toUpperCase();
   const employeeID = req.user?.employeeID;
@@ -39,6 +59,11 @@ exports.getAppointmentStats = async (req, res) => {
   res.status(200).json({ total, completed, booked, cancelled, pending });
 };
 
+/**
+ * @route   GET /api/appointments/recent
+ * @desc    Get recent appointments with pagination for the current user.
+ * @access  Private
+ */
 exports.getRecentAppointments = async (req, res) => {
   const userRole = req.user?.role?.toUpperCase();
   const employeeID = req.user?.employeeID;
@@ -120,6 +145,11 @@ exports.getRecentAppointments = async (req, res) => {
   });
 };
 
+/**
+ * @route   GET /api/appointments/doctors
+ * @desc    Get a list of all employees with the 'DOCTOR' role.
+ * @access  Private
+ */
 exports.getDoctorsList = async (req, res) => {
   const doctors = await Users.aggregate([
     { $match: { role: "DOCTOR" } },
@@ -154,6 +184,11 @@ const normalizeToUTCWithoutTime = (dateInput) => {
   );
 };
 
+/**
+ * @route   GET /api/appointments/slots
+ * @desc    Get available appointment slots for a specific doctor on a given date.
+ * @access  Private
+ */
 exports.getAvailableSlots = async (req, res) => {
   const { doctorId, date } = req.query;
 
@@ -204,6 +239,11 @@ exports.getAvailableSlots = async (req, res) => {
   res.status(200).json(availableSlots);
 };
 
+/**
+ * @route   POST /api/appointments/create
+ * @desc    Create a new appointment.
+ * @access  Private
+ */
 exports.addAppointment = async (req, res) => {
   const { patientId, doctorEmployeeID, date, timeSlot } = req.body;
   const userRole = req.user?.role;
@@ -261,6 +301,11 @@ exports.addAppointment = async (req, res) => {
   });
 };
 
+/**
+ * @route   PUT /api/appointments/:id
+ * @desc    Update an existing appointment by its code.
+ * @access  Private
+ */
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
   const { patientId, doctorEmployeeID, date, timeSlot, status } = req.body;
@@ -281,6 +326,10 @@ exports.updateAppointment = async (req, res) => {
   });
 };
 
+/**
+ * @desc    Cancel an appointment by updating its status. Note: Not directly exposed via a dedicated route in the provided files.
+ * @access  Private
+ */
 exports.cancelAppointment = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -301,6 +350,11 @@ exports.cancelAppointment = async (req, res) => {
   });
 };
 
+/**
+ * @route   DELETE /api/appointments/:id
+ * @desc    Soft delete an appointment by updating its status to 'Deleted'.
+ * @access  Private
+ */
 exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
 
@@ -320,6 +374,11 @@ exports.deleteAppointment = async (req, res) => {
   return res.status(200).json({ message: "Appointment deleted successfully" });
 };
 
+/**
+ * @route   GET /api/appointments/my-appointments
+ * @desc    Get all appointments for the currently authenticated patient, with filtering options.
+ * @access  Private
+ */
 exports.getPatientAppointments = async (req, res) => {
   const { doctor, appointmentId, date, status } = req.query;
   const patient = await Patients.findOne({ email: req.user.email });
@@ -381,6 +440,11 @@ exports.getPatientAppointments = async (req, res) => {
   res.status(200).json(appointments);
 };
 
+/**
+ * @route   GET /api/appointments/all
+ * @desc    Get all appointments, scoped to the current user's role (Admin, Doctor, or Patient).
+ * @access  Private
+ */
 exports.getAllAppointments = async (req, res) => {
   const userRole = req.user?.role?.toUpperCase();
   const employeeID = req.user?.employeeID;

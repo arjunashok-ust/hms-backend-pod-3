@@ -1,3 +1,16 @@
+/**
+ * @file sendMail.js
+ * @description
+ * This file provides a utility function for sending transactional emails using the Brevo (formerly Sendinblue) API.
+ *
+ * @overview
+ * This module configures the Brevo SDK with an API key from environment variables.
+ * It exports a single asynchronous function, `sendMail`, which takes a recipient, subject, and HTML content.
+ * It constructs and dispatches a transactional email, handling success and error logging.
+ *
+ * Connections:
+ *   [authController, patientController, verifyEmailController] -> SENDMAIL.JS -> Brevo API
+ */
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const Brevo = require("sib-api-v3-sdk");
 const client = Brevo.ApiClient.instance;

@@ -1,3 +1,17 @@
+/**
+ * @file Bills.js
+ * @description
+ * This file defines the Mongoose schema and model for managing patient bills.
+ *
+ * @overview
+ * This schema represents a bill within the Hospital Management System.
+ * It includes details such as the patient, associated appointment, a list of billable items, the total amount, and payment status.
+ * It establishes relationships with the `Patients`, `Appointments`, and `Employees` models using ObjectId references.
+ *
+ * Connections:
+ *   (Controllers) -> BILLS.JS
+ *   BILLS.JS -> generateID.js (utility)
+ */
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
 

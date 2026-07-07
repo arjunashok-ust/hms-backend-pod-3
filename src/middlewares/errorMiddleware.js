@@ -1,7 +1,21 @@
-
-
+/**
+ * @file errorMiddleware.js
+ * @description
+ * This file defines the global error handling middleware for the Express application.
+ * It catches errors passed from controllers and other middlewares and formats them into a standardized JSON response.
+ *
+ * @overview
+ * This middleware acts as a centralized error handler for the entire API.
+ * It intercepts errors passed to `next()`.
+ * It normalizes various error types, such as Mongoose validation errors (ValidationError), duplicate key errors (E11000), and JWT errors, into a consistent response format.
+ * For unrecognized errors, it defaults to a generic 500 Internal Server Error.
+ * It logs detailed error information to the console for debugging.
+ * The level of detail in the final JSON response depends on the application's environment (development vs. production).
+ *
+ * Connections:
+ *   ... -> asyncHandler -> (on error) -> ERRORMIDDLEWARE.JS -> API Response
+ */
 const errorMiddleware = (err, req, res, next) => {
-
   let statusCode = err.statusCode || 500;
   let message = err.message || "Internal server error";
   let code = err.code || "INTERNAL_SERVER_ERROR";

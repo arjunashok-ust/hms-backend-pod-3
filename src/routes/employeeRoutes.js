@@ -1,3 +1,17 @@
+/**
+ * @file employeeRoutes.js
+ * @description
+ * This file defines the API routes for employee management.
+ *
+ * @overview
+ * This router handles endpoints for creating, retrieving, updating, deleting, and managing the status of employees.
+ * It uses middleware to protect routes, ensuring only authorized users can perform administrative actions on employee records.
+ * A typical request flows through: API Request -> EMPLOYEEROUTES.JS -> authenticateToken -> requirePermission -> asyncHandler -> [employeeController | authController] -> Model(s).
+ * Any errors are caught by `asyncHandler` and passed to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> EMPLOYEEROUTES.JS -> [authenticateToken, requirePermission] -> asyncHandler -> [employeeController | authController] -> [Employees, Users, Appointments] Models
+ */
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");

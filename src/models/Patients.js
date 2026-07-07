@@ -1,3 +1,18 @@
+/**
+ * @file Patients.js
+ * @description
+ * This file defines the Mongoose schema and model for patients.
+ *
+ * @overview
+ * This schema represents a patient within the Hospital Management System.
+ * It stores essential demographic data, contact information, and basic medical details like blood group and allergies.
+ * A pre-save hook automatically generates a unique Universal Hospital ID (`UHID`) for each new patient using the `generateID` utility.
+ * This model is referenced by several other models, including `Users`, `Appointments`, and `MedicalRecords`, to link data to a specific patient.
+ *
+ * Connections:
+ *   [patientController, authController, etc.] -> PATIENTS.JS
+ *   PATIENTS.JS -> generateID.js (utility)
+ */
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
 

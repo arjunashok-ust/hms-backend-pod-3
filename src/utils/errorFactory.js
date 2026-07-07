@@ -1,5 +1,17 @@
 /**
- * Custom Error Classes for centralized error handling
+ * @file errorFactory.js
+ * @description
+ * This file defines a factory of custom error classes for centralized error handling.
+ *
+ * @overview
+ * This module provides a set of specific error classes that extend the base `AppError`.
+ * It includes classes like `ValidationError`, `AuthenticationError`, and `NotFoundError`.
+ * Using these specific classes makes the code more readable and allows the error middleware to handle different error types with more specific logic if needed.
+ *
+ * Connections:
+ *   ERRORFACTORY.JS -> appError.utils.js
+ *
+ * @note This factory provides an alternative to the `errors.utils.js` builder object.
  */
 
 class AppError extends Error {
