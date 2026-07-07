@@ -271,7 +271,7 @@ exports.signUpByAdmin = async (req, res) => {
     subject: "HMS System | User Email Verification",
     htmlContent: `
         <h1>Hospital Management System</h1>
-        <p>Thank you ${profile.name} for registering. Verify your account below:</p>
+        <p>An account for ${profile.name} has been created. Verify your account below:</p>
         <a href="${process.env.APP_URL || "http://localhost:5000"}/api/email/verify-email?email=${user.email}&token=${verification_token}">
           <button>Verify Email</button>
         </a>

@@ -51,6 +51,7 @@ exports.verifyEmail = async (req, res) => {
   user.verification_token = undefined;
   user.verification_expiry = undefined;
   await user.save();
+  const messageIfSelfSignup = " and requires your approval";
 
   if (user.status === "ADMIN_APPROVAL_PENDING") {
     try {
@@ -59,7 +60,7 @@ exports.verifyEmail = async (req, res) => {
         subject: "HMS Employee Credentials - Approval Required",
         htmlContent: `
             <h2>Hello Admin</h2>
-            <p>An employee profile has successfully verified their email and now requires your approval.</p>
+            <p>An employee [${user.employeeID}] profile has successfully verified their email${messageIfSelfSignup}.</p>
             <p>Kindly check the system and take necessary steps.</p>
             <p><strong>Employee Id:</strong> ${user.employeeID}</p>
           `,
