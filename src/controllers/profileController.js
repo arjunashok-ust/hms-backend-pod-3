@@ -1,4 +1,4 @@
- other files missed/**
+/**
  * @file profileController.js
  * @description
  * This file contains controller functions for managing the currently authenticated user's profile.
@@ -28,9 +28,8 @@ exports.deleteProfile = async (req, res) => {
   );
   if (!user) throw ERR.userNotFound();
 
-  const profile = await Employees.findOne({ email: req.user.email }).select(
-    "-__v",
-  );
+  const profile = await Employees.findOne({ email: req.user.email })
+  .select("-__v",);
   if (!profile) throw ERR.profileNotFound();
 
   res.status(200).json({ user: profile });
