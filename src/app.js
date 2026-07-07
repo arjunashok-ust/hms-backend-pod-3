@@ -21,7 +21,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 
 const app = express();
 
@@ -78,15 +78,6 @@ app.use("/api/departments", departmentRoutes);
 const errorMiddleware = require("./middlewares/errorMiddleware");
 app.use(errorMiddleware);
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  });
-  
+connectDB();
 
 module.exports = app;
