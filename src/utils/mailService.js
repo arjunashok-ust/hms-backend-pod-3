@@ -44,10 +44,7 @@ const sendEmployeeCredentials = async (to, tempPassword) => {
     console.log("Email sent successfully");
     return response;
   } catch (err) {
-      console.log(
-          "BREVO FULL ERROR:",
-          err.response?.body || err
-      );
+    console.log("BREVO FULL ERROR:", err.response?.body || err);
     throw err;
   }
 };

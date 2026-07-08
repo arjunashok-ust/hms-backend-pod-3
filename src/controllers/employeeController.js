@@ -5,6 +5,7 @@ const Appointment = require("../models/Appointment");
 const Role = require("../models/Role");
 const PERMISSIONS = require("../constants/permissions");
 
+const sendForgotPasswordMail = require("../utils/sendForgotPasswordMail");
 
 const PROTECTED_ROLES = ["super_admin", "admin"];
 
@@ -32,6 +33,10 @@ const {
   compareToken,
   refreshCookieOptions,
 } = require("../utils/tokenService");
+
+//============================
+//DASHBOARD STATS
+//============================
 
 exports.dashboardStats = asyncHandler(async (req, res) => {
   const totalEmployees = await Employee.countDocuments();
@@ -309,6 +314,67 @@ exports.login = asyncHandler(async (req, res) => {
       user: { id: user._id, email: user.email, role: user.role },
     })
   );
+});
+
+
+//================================
+//Forgot Password
+//================================
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required", "VALIDATION_ERROR");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+  }
+
+  if (!user.status) {
+    throw new ApiError(403, "Account is disabled", "ACCOUNT_DISABLED");
+  }
+
+  const tempPassword = crypto.randomBytes(4).toString("hex");
+  const password_hash = await bcrypt.hash(tempPassword, 12);
+ 
+  console.log("Generated Temp Password:", tempPassword);
+  console.log("Hash:", password_hash);
+  user.password_hash = password_hash;
+  user.isFirstLogin = true;
+  user.refreshTokenHash = null;
+
+  await user.save();
+  const isMatch = await bcrypt.compare(
+    tempPassword,
+    user.password_hash
+);
+
+console.log("Password Match:", isMatch);
+  console.log("User saved");
+
+  try {
+    console.log(tempPassword);
+    await sendForgotPasswordMail(email, tempPassword);
+  } catch (mailError) {
+    console.error("Mail Service Error:", mailError.message);
+    throw new ApiError(
+      500,
+      "Failed to send temporary password email",
+      "MAIL_ERROR",
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Temporary password has been sent to your registered email.",
+      ),
+    );
 });
 
 // ===============================

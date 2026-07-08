@@ -9,6 +9,7 @@ const PERMISSIONS = require("../constants/permissions");
 const {
   signup,
   login,
+  forgotPassword,
   currentUser,
   resetPassword,
   refreshToken,
@@ -44,9 +45,14 @@ const signUpValidation = [
   body("designation").notEmpty().withMessage("Designation is required"),
 ];
 
+const forgotPasswordValidation = [
+  body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Valid email required")
+];
+
 /* PUBLIC */
 router.post("/formSignUp", signUpValidation, validate, formSignUp);
 router.post("/login", login);
+router.post("/forgot-password",forgotPasswordValidation,validate,forgotPassword);
 /* Refresh is public: the access token is expired by definition; the httpOnly
    refresh cookie is the credential. */
 router.post("/refresh", refreshToken);
