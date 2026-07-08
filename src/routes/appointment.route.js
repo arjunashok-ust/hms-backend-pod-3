@@ -19,5 +19,4 @@ router.post('/editAppointment', appointmentValidate.validateEditAppointment, val
 router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('approve:appointment'), appointmentController.editAppointmentStatus);
 router.get('/getAppointmentByDoctorIdOrPatientId', auth, permission('view:patient'), appointmentController.getAppointmentByDoctorIdOrPatientId);
 
-
 module.exports = router;

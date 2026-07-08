@@ -1,4 +1,5 @@
 const Role = require('../models/role.model');
+const ERR = require('../utils/errors.utils');
 
 const permission = (...requiredPermissions) => {
     return async (req, res, next) => {
@@ -14,7 +15,7 @@ const permission = (...requiredPermissions) => {
                 return userPermission.includes(permission);
             })
             if (!hasPermission) {
-                return res.status(403).json({ message: "You are not authorized to perform this action." })
+                throw ERR.accessDenied();
             }
             next();
         }
