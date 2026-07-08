@@ -1,4 +1,4 @@
-name: Deploy HMS Backend
+name: Deploy HMS_BACKEND
  
 on:
   push:
