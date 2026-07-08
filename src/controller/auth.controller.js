@@ -7,10 +7,7 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/tokenGen
 const Employee = require('../models/employee.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
-const Appointment = require('../models/appointment.model');
 const Role = require('../models/role.model');
-const Department = require('../models/department.model');
-const Specialization = require('../models/specialization.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
@@ -70,7 +67,7 @@ const signUp = asyncHandler(async (req, res) => {
         throw ERR.userNotFound();
     }
 
-    let userPassword = "";
+    let userPassword;
 
     // if admin
     if (status == 'Active') {
@@ -114,13 +111,13 @@ const signUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
@@ -304,7 +301,7 @@ const patientSignUp = asyncHandler(async (req, res) => {
         throw ERR.userNotFound();
     }
 
-    let userPassword = "";
+    let userPassword;
 
     if (status == 'Active') {
         userPassword = password;
@@ -349,13 +346,13 @@ const patientSignUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: http://localhost:8080/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     // 201 created
     return res.status(201).json({
@@ -434,5 +431,63 @@ const logout = asyncHandler(async (req, res) => {
     return res.status(200).json({ message: "User logged out successfully" });
 });
 
-module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions, getAccessToken, logout };
+const resetPassword = asyncHandler(async (req, res) => {
+    const email = req.body.email;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(200).json({ message: `Reset link is sent to mail` });
+    }
+
+    const reset_token = await crypto.randomBytes(32).toString("hex");
+    const temp_password = await crypto.randomBytes(12).toString("hex");
+    const hashed_password = await bcrypt.hash(temp_password, 12);
+
+    user.reset_token = reset_token;
+    user.passwordHash = hashed_password;
+    await user.save();
+
+    // send verification mail
+    await mail.sendMail({
+        to: user.email,
+        subject: 'HMS System | Password Reset',
+        html: `
+            <h1>Hospital Management System</h1>
+            <p>You can reset your password by clicking the button below.</p>
+            <hr>
+            <h3>Login Credentials</h3>
+            <p>
+                <strong>Email:</strong> ${user.email}
+            </p>
+            <p>
+                <strong>Temporary Password:</strong> ${temp_password}
+            </p>
+                <p>
+                Please use the above credentials to sign in after resetting your password. For security, we recommend changing your password immediately after login.
+                </p>
+            <br>
+            <a href="https://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}">
+                <input type="button" value="Reset Password">
+            </a>`
+    });
+
+    console.log(`reset link: http://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}`);
+    console.log(`temp password: ${temp_password}`);
+    return res.status(200).json({ message: `Reset link is sent to mail` });
+});
+
+const verifyResetPassword = asyncHandler(async (req, res) => {
+    const email = req.query.email;
+    const reset_token = req.query.reset_token;
+
+    const user = await User.findOneAndUpdate({ email, reset_token }, { reset_token: '', firstLogin: true });
+    if (!user) {
+        throw ERR.userNotFound();
+    }
+
+    return res.status(200).json({ message: 'Password reset successfull.' });
+});
+
+module.exports = { signUp, login, setPassword, verifyMail, patientSignUp, getPermissions, getAccessToken, logout, resetPassword, verifyResetPassword };
 

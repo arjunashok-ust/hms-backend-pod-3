@@ -19,7 +19,6 @@ const medicalRoles = new Set([
 
 const allowedDepartments = ["OPD", "IPD", "ICU", "Pharmacy", "Administration", "Front Office"];
 const allowedBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const allowedStatusTypes = ["Active", "Inactive", "Pending"];
 
 const validateSignUp = [
     body("name")
@@ -38,7 +37,7 @@ const validateSignUp = [
         .withMessage("Invalid email format"),
 
     body("password")
-    // for admin signup
+        // for admin signup
         .if(body("status").not().equals("Active"))
         .notEmpty()
         .withMessage("Password is required.")
@@ -154,12 +153,21 @@ const validatePatientSignUp = [
     body("phone").notEmpty().withMessage("Phone Number Invalid"),
     body("dob").notEmpty().withMessage("DOB is required"),
     body("address").notEmpty().withMessage("Address is required"),
-    body("bloodGroup").notEmpty().withMessage("Blood group is required"),
+    body("bloodGroup").notEmpty().withMessage("Blood group is required").isIn(allowedBloodGroups).withMessage("Invalid blood group"),
 ]
 
 const validateGetPermissions = [
     query("role").notEmpty().withMessage("role is required."),
 ]
 
+const validateResetPassword = [
+    body("email").notEmpty().withMessage("email is required!"),
+]
 
-module.exports = { validateSignUp, validateLogin, validateSetPassword, validateVerifyMail, validatePatientSignUp, validateGetPermissions }
+const validateVerifyResetPassword = [
+    query("email").notEmpty().withMessage("email is required"),
+    query("reset_token").notEmpty().withMessage("reset_token is required")
+]
+
+
+module.exports = { validateSignUp, validateLogin, validateSetPassword, validateVerifyMail, validatePatientSignUp, validateGetPermissions, validateResetPassword, validateVerifyResetPassword }

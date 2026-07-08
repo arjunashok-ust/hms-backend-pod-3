@@ -1,5 +1,4 @@
 const { body, query } = require('express-validator');
-const { validate } = require('../models/counter.model');
 
 
 const validateCreateAppointment = [
