@@ -299,7 +299,7 @@ const getAppointmentByDoctorIdOrPatientId = asyncHandler(async (req, res) => {
 
     if (patientId || doctorId) {
         if (doctorId) {
-            conditions.push({ doctorId: { $regex: escapeRegex(doctorId) } });
+            conditions.push({ doctorEmployeeId: { $regex: escapeRegex(doctorId) } });
         }
 
         if (patientId) {

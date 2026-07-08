@@ -3,7 +3,7 @@ name: Deploy HMS Backend
 on:
   push:
     branches:
-      - feature/sprint_5/arjun
+      - feature/sprint_5/merin
 
 jobs:
   deploy:
@@ -13,12 +13,12 @@ jobs:
       - name: Deploy EC2
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_MERIN_HOST }}
+          username: ${{ secrets.EC2_MERIN_USER }}
+          key: ${{ secrets.EC2_MERIN_SSH_KEY }}
           script: |
             cd hms-backend-pod-3
-            git pull origin feature/sprint_5/arjun
+            git pull origin feature/sprint_5/merin
             npm ci
             pm2 restart hms-backend || pm2 start src/server.js --name hms-backend
             pm2 save
