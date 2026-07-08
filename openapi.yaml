@@ -2,162 +2,417 @@ openapi: 3.0.3
 info:
   title: HMS Backend API
   version: 1.0.0
-  description: OpenAPI specification for the Hospital Management System backend.
+  description: >-
+    Production-grade OpenAPI specification for the Hospital Management System backend.
+    It documents authentication, employee and patient management, appointments,
+    medical records, departments, roles, permissions, dynamic menu nodes, and dashboard analytics.
+  termsOfService: https://example.com/terms
+  contact:
+    name: HMS Support
+    email: support@example.com
+    url: https://example.com/support
+  license:
+    name: ISC
+    url: https://example.com/license
 servers:
   - url: http://localhost:5000
     description: Local development server
+  - url: https://api.example.com
+    description: Production server
+tags:
+  - name: Health
+    description: Service availability and health endpoints.
+  - name: Auth
+    description: Authentication, registration, session management, and password recovery.
+  - name: Profile
+    description: Current user profile retrieval.
+  - name: Appointments
+    description: Appointment creation, updates, history, and slot availability.
+  - name: Menu Nodes
+    description: Dynamic navigation/menu node operations.
+  - name: Dashboard
+    description: Dashboard statistics and overview endpoints.
+  - name: Employees
+    description: Employee lifecycle, approvals, and administrative management.
+  - name: Patients
+    description: Patient onboarding, lookup, updates, and deletion.
+  - name: Email
+    description: Email verification workflows.
+  - name: Roles
+    description: Role management and public role lookup.
+  - name: Permissions
+    description: RBAC permission definition and assignment operations.
+  - name: Medical Records
+    description: Medical record lifecycle management.
+  - name: Departments
+    description: Department definition and management.
 security:
   - bearerAuth: []
-
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
+      description: JWT access token issued by the authentication endpoints.
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Unique resource identifier.
+      schema:
+        type: string
+        example: 64f1b2c3d4e5f6789012345
+  responses:
+    BadRequest:
+      description: The request payload is invalid or missing required information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Invalid request payload.
+            statusCode: 400
+            code: BAD_REQUEST
+    Unauthorized:
+      description: Authentication is required or the provided token is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Unauthorized access.
+            statusCode: 401
+            code: UNAUTHORIZED
+    Forbidden:
+      description: The caller does not have the required permissions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Access denied.
+            statusCode: 403
+            code: FORBIDDEN
+    NotFound:
+      description: The requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Resource not found.
+            statusCode: 404
+            code: NOT_FOUND
+    Conflict:
+      description: A resource conflict occurred, such as duplicate email or registration number.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Email already exists.
+            statusCode: 409
+            code: EMAIL_ALREADY_EXISTS
   schemas:
     Error:
       type: object
+      required: [message, statusCode]
       properties:
         message:
           type: string
+          example: Something went wrong.
         statusCode:
           type: integer
+          example: 500
         code:
           type: string
-
+          example: INTERNAL_SERVER_ERROR
+        details:
+          type: object
+          additionalProperties: true
+    SuccessMessage:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: Operation completed successfully.
     LoginRequest:
       type: object
-      required: [email, password]
+      required:
+        - email
+        - password
+        - clientType
       properties:
         email:
           type: string
           format: email
         password:
           type: string
-
+        clientType:
+          type: string
+          enum:
+            - WEB
+            - MOBILE
     AuthResponse:
       type: object
+      required: [message, user]
       properties:
         message:
           type: string
+          example: Login successful.
         token:
           type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         refreshToken:
           type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         user:
           type: object
-
+          example:
+            id: 64f1b2c3d4e5f6789012345
+            email: doctor@example.com
+            role: DOCTOR
     EmployeeCreateRequest:
       type: object
       required: [name, role, email]
       properties:
         name:
           type: string
+          example: Dr. Asha Menon
         role:
           type: string
+          example: Doctor
         email:
           type: string
           format: email
+          example: asha.menon@hms.com
         department:
           type: string
+          example: Cardiology
         designation:
           type: string
+          example: Senior Consultant
         phone:
           type: string
+          example: +91-9876543210
         joiningDate:
           type: string
           format: date
+          example: 2025-01-15
         medicalRegistrationNo:
           type: string
+          example: MED-1001
         specialization:
           type: string
+          example: Cardiology
         qualification:
           type: string
+          example: MBBS, MD
         consultationFee:
           type: number
+          format: float
+          example: 1000
         weeklySchedule:
           type: array
           items:
             type: string
-
+          example: [Mon, Wed, Fri]
+    EmployeeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 64f1b2c3d4e5f6789012345
+        name:
+          type: string
+          example: Dr. Asha Menon
+        email:
+          type: string
+          format: email
+          example: asha.menon@hms.com
+        role:
+          type: string
+          example: DOCTOR
+        status:
+          type: string
+          example: ACTIVE
     PatientCreateRequest:
       type: object
       required: [name, email, phone]
       properties:
         name:
           type: string
+          example: Rahul Sharma
         email:
           type: string
           format: email
+          example: rahul.sharma@example.com
         phone:
           type: string
+          example: +91-9876543210
         address:
           type: string
+          example: 12, MG Road, Bengaluru
         gender:
           type: string
+          example: Male
         dob:
           type: string
           format: date
-
+          example: 1992-05-14
+    PatientResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: PAT-1001
+        name:
+          type: string
+          example: Rahul Sharma
+        email:
+          type: string
+          format: email
+          example: rahul.sharma@example.com
+        phone:
+          type: string
+          example: +91-9876543210
+        status:
+          type: string
+          example: ACTIVE
     AppointmentRequest:
       type: object
+      required: [patientId, doctorId, date, time]
       properties:
         patientId:
           type: string
+          example: PAT-1001
         doctorId:
           type: string
+          example: EMP-2001
         date:
           type: string
           format: date
+          example: 2026-07-15
         time:
           type: string
-
+          example: 10:30
+        notes:
+          type: string
+          example: Follow-up for hypertension
+    AppointmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: APPT-9001
+        patientId:
+          type: string
+          example: PAT-1001
+        doctorId:
+          type: string
+          example: EMP-2001
+        date:
+          type: string
+          example: 2026-07-15
+        time:
+          type: string
+          example: 10:30
+        status:
+          type: string
+          example: SCHEDULED
     MedicalRecordRequest:
       type: object
+      required: [patientId, diagnosis]
       properties:
         patientId:
           type: string
+          example: PAT-1001
         diagnosis:
           type: string
+          example: Hypertension
         treatment:
           type: string
+          example: Prescribed antihypertensive medication
         notes:
           type: string
-
+          example: Patient advised dietary changes and routine monitoring
+    MedicalRecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: REC-1001
+        patientId:
+          type: string
+          example: PAT-1001
+        diagnosis:
+          type: string
+          example: Hypertension
+        treatment:
+          type: string
+          example: Prescribed antihypertensive medication
+        notes:
+          type: string
+          example: Patient advised dietary changes and routine monitoring
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-07-08T10:30:00.000Z
     DepartmentRequest:
       type: object
+      required: [name]
       properties:
         name:
           type: string
+          example: Cardiology
         description:
           type: string
-
+          example: Department for heart and vascular care
+    DepartmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: DEP-101
+        name:
+          type: string
+          example: Cardiology
+        description:
+          type: string
+          example: Department for heart and vascular care
     RoleRequest:
       type: object
+      required: [name]
       properties:
         name:
           type: string
+          example: DOCTOR
         description:
           type: string
-
+          example: Physician role with access to medical records
     PermissionRequest:
       type: object
+      required: [name]
       properties:
         name:
           type: string
+          example: VIEW_PATIENTS
         description:
           type: string
-
+          example: Allows viewing patient records
 paths:
   /:
     get:
       tags: [Health]
       summary: Health check
+      description: Confirms that the API service is available.
+      operationId: getHealth
       responses:
         '200':
-          description: API is running
+          description: Service is running.
           content:
             application/json:
               schema:
@@ -165,28 +420,52 @@ paths:
                 properties:
                   message:
                     type: string
-
+                    example: API running
   /api/auth/signupByUser:
     post:
       tags: [Auth]
       summary: Register a new user
+      description: Registers a new employee or user account and initiates verification.
+      operationId: signupByUser
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+            example:
+              name: Dr. Asha Menon
+              role: Doctor
+              email: asha.menon@hms.com
+              department: Cardiology
+              designation: Senior Consultant
+              phone: +91-9876543210
+              joiningDate: 2025-01-15
+              medicalRegistrationNo: MED-1001
+              specialization: Cardiology
+              qualification: MBBS, MD
+              consultationFee: 1000
+              weeklySchedule: [Mon, Wed, Fri]
       responses:
         '201':
-          description: Registration initiated successfully
+          description: Registration initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+              example:
+                message: Registration successful. Please check your email to verify your account.
         '400':
-          description: Validation error
-
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/auth/login:
     post:
       tags: [Auth]
       summary: Sign in a user
+      description: Authenticates a user and returns access and refresh tokens.
+      operationId: loginUser
       security: []
       requestBody:
         required: true
@@ -196,34 +475,41 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful
+          description: Login successful.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Invalid credentials
-
+          $ref: '#/components/responses/Unauthorized'
   /api/auth/refresh:
     post:
       tags: [Auth]
       summary: Refresh access token
+      description: Exchanges a valid refresh token for a new access token.
+      operationId: refreshToken
       responses:
         '200':
-          description: Token refreshed successfully
-
+          description: Access token refreshed successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/auth/logout:
     post:
       tags: [Auth]
       summary: Logout current user
+      description: Clears the active refresh-token cookie and invalidates the session.
+      operationId: logoutUser
       responses:
         '200':
-          description: Logout successful
-
+          description: Logout completed successfully.
   /api/auth/setpassword:
     post:
       tags: [Auth]
-      summary: Set or change first password
+      summary: Set or change the first password
+      description: Allows a newly created user to set their initial password.
+      operationId: setPassword
       security: []
       requestBody:
         required: true
@@ -231,14 +517,20 @@ paths:
           application/json:
             schema:
               type: object
+            example:
+              email: user@example.com
+              password: NewStrongPass123!
       responses:
         '200':
-          description: Password updated
-
+          description: Password updated successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/auth/forgot-password:
     post:
       tags: [Auth]
       summary: Request password reset
+      description: Sends a password-reset email to the supplied account.
+      operationId: forgotPassword
       security: []
       requestBody:
         required: true
@@ -251,84 +543,125 @@ paths:
                 email:
                   type: string
                   format: email
+            example:
+              email: user@example.com
       responses:
         '200':
-          description: Reset email sent if account exists
-
+          description: If the account exists, a reset email has been sent.
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/auth/reset-password:
     get:
       tags: [Auth]
       summary: Complete password reset flow
+      description: Validates the reset token and completes the password reset.
+      operationId: resetPassword
       security: []
       parameters:
         - in: query
           name: email
+          required: true
           schema:
             type: string
+            example: user@example.com
         - in: query
           name: token
+          required: true
           schema:
             type: string
+            example: reset-token-123
       responses:
         '200':
-          description: Password reset verified
-
+          description: Password reset verified successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/profile/me:
     get:
       tags: [Profile]
       summary: Get current user profile
+      description: Returns profile information for the authenticated user.
+      operationId: getMyProfile
       responses:
         '200':
-          description: User profile retrieved
-
+          description: Profile retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/appointment/create:
     post:
       tags: [Appointments]
       summary: Create an appointment
+      description: Schedules a new appointment for the selected patient and doctor.
+      operationId: createAppointment
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AppointmentRequest'
+            example:
+              patientId: PAT-1001
+              doctorId: EMP-2001
+              date: 2026-07-15
+              time: 10:30
+              notes: Follow-up for hypertension
       responses:
         '201':
-          description: Appointment created
-
+          description: Appointment created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/appointment/stats:
     get:
       tags: [Appointments]
       summary: Get appointment statistics
+      description: Returns appointment statistics for the current user context.
+      operationId: getAppointmentStats
       responses:
         '200':
-          description: Statistics retrieved
-
+          description: Statistics retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/appointment/doctors:
     get:
       tags: [Appointments]
       summary: Get doctors list
+      description: Returns doctors available for appointment booking.
+      operationId: listDoctors
       responses:
         '200':
-          description: Doctors retrieved
-
+          description: Doctors list retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/appointment/recent:
     get:
       tags: [Appointments]
       summary: Get recent appointments
+      description: Returns recent appointment activity for the caller.
+      operationId: recentAppointments
       responses:
         '200':
-          description: Recent appointments retrieved
-
+          description: Recent appointments retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/appointment/{id}:
     put:
       tags: [Appointments]
       summary: Update an appointment
+      description: Updates an appointment using the supplied identifier.
+      operationId: updateAppointment
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       requestBody:
         required: true
         content:
@@ -337,138 +670,202 @@ paths:
               $ref: '#/components/schemas/AppointmentRequest'
       responses:
         '200':
-          description: Appointment updated
+          description: Appointment updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Appointments]
       summary: Delete an appointment
+      description: Deletes the appointment identified by the supplied ID.
+      operationId: deleteAppointment
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Appointment deleted
-
+          description: Appointment deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/appointment/slots:
     get:
       tags: [Appointments]
       summary: Get available slots
+      description: Returns available appointment slots for the requested context.
+      operationId: getAvailableSlots
       responses:
         '200':
-          description: Available slots retrieved
-
+          description: Available slots returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/appointment/my-appointments:
     get:
       tags: [Appointments]
       summary: Get authenticated user's appointments
+      description: Returns appointments belonging to the current user.
+      operationId: getMyAppointments
       responses:
         '200':
-          description: Appointments retrieved
-
+          description: Appointments retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/appointment/all:
     get:
       tags: [Appointments]
       summary: Get all appointments
+      description: Returns all appointments permitted for the current caller.
+      operationId: getAllAppointments
       responses:
         '200':
-          description: Appointments retrieved
-
+          description: Appointments retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/menuNode/createMenuNode:
     post:
       tags: [Menu Nodes]
       summary: Create menu node
+      description: Creates a new dynamic menu node entry used by the UI sidebar.
+      operationId: createMenuNode
       responses:
         '201':
-          description: Menu node created
-
+          description: Menu node created successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/menuNode/updateMenuNode/{id}:
     put:
       tags: [Menu Nodes]
       summary: Update menu node
+      description: Updates an existing menu node by identifier.
+      operationId: updateMenuNode
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Menu node updated
-
+          description: Menu node updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/menuNode/deleteMenuNode/{id}:
     delete:
       tags: [Menu Nodes]
       summary: Delete menu node
+      description: Deletes a menu node identified by the supplied ID.
+      operationId: deleteMenuNode
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Menu node deleted
-
+          description: Menu node deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/menuNode/getSidebarMenu:
     get:
       tags: [Menu Nodes]
       summary: Get sidebar menu for current user
+      description: Returns the sidebar/navigation hierarchy visible to the caller.
+      operationId: getSidebarMenu
       responses:
         '200':
-          description: Sidebar menu retrieved
-
+          description: Sidebar menu returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/menuNode/getMenus:
     get:
       tags: [Menu Nodes]
       summary: Get all menu nodes
+      description: Returns all menu nodes available in the system.
+      operationId: getMenus
       responses:
         '200':
-          description: Menu nodes retrieved
-
+          description: Menu nodes returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/menuNode/check-permission/{path}:
     get:
       tags: [Menu Nodes]
       summary: Check permission for a path
+      description: Returns whether the current user is permitted to access the supplied UI route.
+      operationId: checkPermission
       parameters:
         - in: path
           name: path
           required: true
           schema:
             type: string
+            example: /patients
       responses:
         '200':
-          description: Permission check result
-
+          description: Permission check completed successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/dashboard/stats:
     get:
       tags: [Dashboard]
       summary: Get dashboard statistics
+      description: Returns aggregated dashboard metrics for administrative overview.
+      operationId: getDashboardStats
       responses:
         '200':
-          description: Dashboard stats retrieved
-
+          description: Dashboard statistics returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/dashboard/tenEmployees:
     get:
       tags: [Dashboard]
       summary: Get employee overview
+      description: Returns a compact overview of employee data for the dashboard.
+      operationId: getEmployeeOverview
       responses:
         '200':
-          description: Employee overview retrieved
-
+          description: Employee overview returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/employees/all:
     get:
       tags: [Employees]
       summary: Get all employees
+      description: Returns all employees visible to the requesting user.
+      operationId: listEmployees
       responses:
         '200':
-          description: Employees retrieved
-
+          description: Employees returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/employees/create:
     post:
       tags: [Employees]
       summary: Create an employee account
+      description: Creates a new employee account, generates a temporary password, and sends setup emails.
+      operationId: createEmployee
       requestBody:
         required: true
         content:
@@ -477,74 +874,105 @@ paths:
               $ref: '#/components/schemas/EmployeeCreateRequest'
       responses:
         '201':
-          description: Employee account created
-
+          description: Employee account created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/employees/{id}:
     put:
       tags: [Employees]
       summary: Update an employee
+      description: Updates employee profile details by identifier.
+      operationId: updateEmployee
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Employee updated
+          description: Employee updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Employees]
       summary: Delete an employee
+      description: Deletes an employee by identifier.
+      operationId: deleteEmployee
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Employee deleted
-
+          description: Employee deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/employees/approve/{id}:
     patch:
       tags: [Employees]
       summary: Approve an employee
+      description: Approves a pending employee account.
+      operationId: approveEmployee
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Employee approved
-
+          description: Employee approved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/employees/reject/{id}:
     patch:
       tags: [Employees]
       summary: Reject an employee
+      description: Rejects a pending employee account.
+      operationId: rejectEmployee
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Employee rejected
-
+          description: Employee rejected successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/patients/all:
     get:
       tags: [Patients]
       summary: Get all patients
+      description: Returns all patients visible to the requesting user.
+      operationId: listPatients
       responses:
         '200':
-          description: Patients retrieved
-
+          description: Patients returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/patients/create:
     post:
       tags: [Patients]
       summary: Create a patient
+      description: Creates a new patient record from the admin workflow.
+      operationId: createPatient
       requestBody:
         required: true
         content:
@@ -553,38 +981,52 @@ paths:
               $ref: '#/components/schemas/PatientCreateRequest'
       responses:
         '201':
-          description: Patient created
-
+          description: Patient created successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/patients/{id}:
     put:
       tags: [Patients]
       summary: Update a patient
+      description: Updates an existing patient by identifier.
+      operationId: updatePatient
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Patient updated
+          description: Patient updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Patients]
       summary: Delete a patient
+      description: Deletes a patient by identifier.
+      operationId: deletePatient
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Patient deleted
-
+          description: Patient deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/patients/mobile-register:
     post:
       tags: [Patients]
       summary: Register a patient from mobile
+      description: Public/mobile registration endpoint for patient onboarding.
+      operationId: mobileRegisterPatient
       security: []
       requestBody:
         required: true
@@ -594,30 +1036,40 @@ paths:
               $ref: '#/components/schemas/PatientCreateRequest'
       responses:
         '201':
-          description: Mobile patient registration successful
-
+          description: Patient registered successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/email/verify-email:
     get:
       tags: [Email]
       summary: Verify user email
+      description: Verifies a user email using the token sent in the verification email.
+      operationId: verifyEmail
       security: []
       parameters:
         - in: query
           name: email
+          required: true
           schema:
             type: string
+            example: user@example.com
         - in: query
           name: token
+          required: true
           schema:
             type: string
+            example: verification-token-123
       responses:
         '200':
-          description: Email verified
-
+          description: Email verified successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/roles/create:
     post:
       tags: [Roles]
       summary: Create a role
+      description: Creates a new role definition for access control.
+      operationId: createRole
       requestBody:
         required: true
         content:
@@ -626,55 +1078,73 @@ paths:
               $ref: '#/components/schemas/RoleRequest'
       responses:
         '201':
-          description: Role created
-
+          description: Role created successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/roles/show:
     get:
       tags: [Roles]
       summary: Get all roles
+      description: Returns all available roles in the system.
+      operationId: listRoles
       responses:
         '200':
-          description: Roles retrieved
-
+          description: Roles returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/roles/public:
     get:
       tags: [Roles]
       summary: Get public roles
+      description: Returns roles intended to be publicly accessible.
+      operationId: getPublicRoles
       security: []
       responses:
         '200':
-          description: Public roles retrieved
-
+          description: Public roles returned successfully.
   /api/roles/{id}:
     put:
       tags: [Roles]
       summary: Update a role
+      description: Updates a role definition by identifier.
+      operationId: updateRole
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Role updated
+          description: Role updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Roles]
       summary: Delete a role
+      description: Deletes a role by identifier.
+      operationId: deleteRole
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Role deleted
-
+          description: Role deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/permissions:
     post:
       tags: [Permissions]
       summary: Create a permission
+      description: Creates a new permission used by the RBAC engine.
+      operationId: createPermission
       requestBody:
         required: true
         content:
@@ -683,34 +1153,55 @@ paths:
               $ref: '#/components/schemas/PermissionRequest'
       responses:
         '201':
-          description: Permission created
+          description: Permission created successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     get:
       tags: [Permissions]
       summary: Get all permissions
+      description: Lists all defined permissions in the system.
+      operationId: listPermissions
       responses:
         '200':
-          description: Permissions retrieved
-
+          description: Permissions returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/permissions/assign:
     post:
       tags: [Permissions]
       summary: Assign a permission to a role
+      description: Grants a permission to a role.
+      operationId: assignPermissionToRole
       responses:
         '200':
-          description: Permission assigned
-
+          description: Permission assigned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/permissions/revoke:
     post:
       tags: [Permissions]
       summary: Revoke a permission from a role
+      description: Removes a permission assignment from a role.
+      operationId: revokePermissionFromRole
       responses:
         '200':
-          description: Permission revoked
-
+          description: Permission revoked successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/records/createRecord:
     post:
       tags: [Medical Records]
       summary: Create a medical record
+      description: Creates a new medical record for a patient.
+      operationId: createMedicalRecord
       requestBody:
         required: true
         content:
@@ -719,78 +1210,111 @@ paths:
               $ref: '#/components/schemas/MedicalRecordRequest'
       responses:
         '201':
-          description: Medical record created
-
+          description: Medical record created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRecordResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/records/updateRecord/{id}:
     put:
       tags: [Medical Records]
       summary: Update a medical record
+      description: Updates a medical record identified by its unique ID.
+      operationId: updateMedicalRecord
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Medical record updated
-
+          description: Medical record updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/records/deleteRecord/{id}:
     delete:
       tags: [Medical Records]
       summary: Delete a medical record
+      description: Deletes a medical record by identifier.
+      operationId: deleteMedicalRecord
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Medical record deleted
-
+          description: Medical record deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/records/getAllRecords:
     get:
       tags: [Medical Records]
       summary: Get all medical records
+      description: Returns all medical records available to the caller.
+      operationId: getAllMedicalRecords
       responses:
         '200':
-          description: Medical records retrieved
-
+          description: Medical records retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/records/getMyRecords:
     get:
       tags: [Medical Records]
       summary: Get current user's medical records
+      description: Returns the medical records associated with the current user.
+      operationId: getMyMedicalRecords
       responses:
         '200':
-          description: Medical records retrieved
-
+          description: Medical records retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/records/getRecord/{id}:
     get:
       tags: [Medical Records]
       summary: Get a medical record by ID
+      description: Returns the requested medical record by identifier.
+      operationId: getMedicalRecordById
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Medical record retrieved
-
+          description: Medical record retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/records/getPatientRecords:
     get:
       tags: [Medical Records]
       summary: Get patient medical records
+      description: Returns the medical records for the patient context of the caller.
+      operationId: getPatientMedicalRecords
       responses:
         '200':
-          description: Patient medical records retrieved
-
+          description: Patient medical records retrieved successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/departments:
     post:
       tags: [Departments]
       summary: Create a department
+      description: Creates a new department entry for the organization.
+      operationId: createDepartment
       requestBody:
         required: true
         content:
@@ -799,36 +1323,61 @@ paths:
               $ref: '#/components/schemas/DepartmentRequest'
       responses:
         '201':
-          description: Department created
+          description: Department created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     get:
       tags: [Departments]
       summary: Get all departments
+      description: Returns all departments configured in the system.
+      operationId: listDepartments
       responses:
         '200':
-          description: Departments retrieved
-
+          description: Departments retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/departments/{id}:
     put:
       tags: [Departments]
       summary: Update a department
+      description: Updates a department definition by identifier.
+      operationId: updateDepartment
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Department updated
+          description: Department updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Departments]
       summary: Delete a department
+      description: Deletes a department by identifier.
+      operationId: deleteDepartment
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResourceId'
       responses:
         '200':
-          description: Department deleted
+          description: Department deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

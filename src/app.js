@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.get("/", (req, res) => res.json({ message: "API running" }));
 
 const swaggerDocument = YAML.load(path.join(__dirname, "..", "openapi.yaml"));
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/docs-hms", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
