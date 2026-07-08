@@ -1,0 +1,25 @@
+name: Deploy HMS Backend
+ 
+on:
+  push:
+    branches:
+      - feature/sprint_5/ayush
+ 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Deploy EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_AYUSH_HOST }}
+          username: ${{ secrets.EC2_AYUSH_USER }}
+          key: ${{ secrets.EC2_AYUSH_KEY }}
+          script: |
+            cd hms_project/hms-backend-pod-3
+            git pull origin feature/sprint_5/ayush
+            npm ci
+            pm2 restart hms_backend || pm2 start src/server.js --name hms_backend
+            pm2 save
+ 
