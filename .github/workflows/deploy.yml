@@ -19,6 +19,6 @@ jobs:
           script: |
             cd hms-backend-pod-3
             git pull origin feature/sprint_5/vinayasri
-            npm ci
+            sudo npm ci
             pm2 restart hms-backend || pm2 start src/server.js --name hms-backend
             pm2 save

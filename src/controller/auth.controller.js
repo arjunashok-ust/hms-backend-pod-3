@@ -111,13 +111,13 @@ const signUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
@@ -190,8 +190,8 @@ const login = asyncHandler(async (req, res) => {
 
     res.cookie("refresh_token", refreshToken, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
 
     return res.status(200).json({
@@ -254,7 +254,6 @@ const verifyMail = asyncHandler(async (req, res) => {
 const patientSignUp = asyncHandler(async (req, res) => {
     const {
         name,
-        role,
         email,
         password,
         status,
@@ -295,7 +294,7 @@ const patientSignUp = asyncHandler(async (req, res) => {
     });
 
     const verification_token = crypto.randomBytes(32).toString("hex");
-    const verification_expiry = Date.now() + 60 * 60 * 24;
+    const verification_expiry = Date.now() + 60 * 60 * 24 * 1000;
 
     if (!profile) {
         throw ERR.userNotFound();
@@ -331,7 +330,7 @@ const patientSignUp = asyncHandler(async (req, res) => {
         email: email,
         passwordHash: passwordHash,
         status: 'Active',
-        role: role,
+        role: 'Patient',
         patientId: profile.uhid,
         verification_token: verification_token,
         verification_expiry: verification_expiry,
@@ -346,14 +345,13 @@ const patientSignUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: https://hms.fortrancer.in/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
-
+    console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
     // 201 created
     return res.status(201).json({
         message: "Account created sucessfully.",
@@ -366,7 +364,7 @@ const getPermissions = asyncHandler(async (req, res) => {
 
     const roleData = await Role.findOne({ role_name: role });
     if (!roleData) {
-        ERR.unknownRole();
+        throw ERR.unknownRole();
     }
 
     return res.status(200).json(roleData);
@@ -445,6 +443,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     const hashed_password = await bcrypt.hash(temp_password, 12);
 
     user.reset_token = reset_token;
+    user.firstLogin = true;
     user.passwordHash = hashed_password;
     await user.save();
 
@@ -466,13 +465,9 @@ const resetPassword = asyncHandler(async (req, res) => {
                 <p>
                 Please use the above credentials to sign in after resetting your password. For security, we recommend changing your password immediately after login.
                 </p>
-            <br>
-            <a href="https://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}">
-                <input type="button" value="Reset Password">
-            </a>`
+            <br>`
     });
 
-    console.log(`reset link: http://hms.fortrancer.in:8080/auth/verify-reset-password?email=${user.email}&reset_token=${user.reset_token}`);
     console.log(`temp password: ${temp_password}`);
     return res.status(200).json({ message: `Reset link is sent to mail` });
 });
