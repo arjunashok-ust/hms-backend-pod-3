@@ -139,6 +139,7 @@ The server will be accessible at `http://localhost:5000` (or the `PORT` specifie
 The backend now includes an OpenAPI/Swagger documentation page.
 
 - Swagger UI: http://localhost:5000/docs-hms
+- Swagger in production environment: http://api.hms.imaws.in/docs-hms
 - OpenAPI spec file: [openapi.yaml](openapi.yaml)
 
 After starting the server, open the Swagger UI URL in your browser to explore the available endpoints and test them interactively.

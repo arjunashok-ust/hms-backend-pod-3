@@ -6,14 +6,9 @@ info:
     Production-grade OpenAPI specification for the Hospital Management System backend.
     It documents authentication, employee and patient management, appointments,
     medical records, departments, roles, permissions, dynamic menu nodes, and dashboard analytics.
-  termsOfService: https://example.com/terms
   contact:
-    name: HMS Support
-    email: support@example.com
-    url: https://example.com/support
-  license:
-    name: ISC
-    url: https://example.com/license
+    name: HMS Admin
+    email: myhms111@gmail.com
 servers:
   - url: http://localhost:5000
     description: Local development server
