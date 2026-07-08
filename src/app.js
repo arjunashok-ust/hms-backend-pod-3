@@ -7,7 +7,6 @@ const cookieParser = require('cookie-parser');
 
 const errorHandler = require('./middleware/errorHandler.middleware');
 
-
 const app = new express();
 
 app.use(helmet());
