@@ -29,7 +29,7 @@ This is the backend server for the Hospital Management System (HMS), a comprehen
 
 ## About The Project
 
-----
+---
 
 This project serves as the data and logic layer for the HMS ecosystem. It communicates with client applications (like `HMS-FRONTEND`) by exposing a secure and comprehensive RESTful API, handling data persistence, business logic, and security.
 
@@ -116,19 +116,32 @@ Make sure you have the following software installed on your system:
 
 ### Running the Application
 
-----
--   **Run in Development Mode:**
-    This command starts the server with `nodemon`, which automatically restarts on file changes.
-    ```sh
-    npm run dev
-    ```
+---
 
--   **Run in Production Mode:**
-    ```sh
-    npm start
-    ```
+- **Run in Development Mode:**
+  This command starts the server with `nodemon`, which automatically restarts on file changes.
+
+  ```sh
+  npm run dev
+  ```
+
+- **Run in Production Mode:**
+  ```sh
+  npm start
+  ```
 
 The server will be accessible at `http://localhost:5000` (or the `PORT` specified in your `.env` file).
+
+---
+
+## API Documentation
+
+The backend now includes an OpenAPI/Swagger documentation page.
+
+- Swagger UI: http://localhost:5000/api-docs
+- OpenAPI spec file: [openapi.yaml](openapi.yaml)
+
+After starting the server, open the Swagger UI URL in your browser to explore the available endpoints and test them interactively.
 
 ---
 
@@ -136,13 +149,13 @@ The server will be accessible at `http://localhost:5000` (or the `PORT` specifie
 
 The backend is built on a modern, modular architecture to ensure scalability and maintainability.
 
--   **`config`**: Contains configuration files, such as the database connection logic (`db.js`).
--   **`controllers`**: Holds the core business logic. Each controller is responsible for handling the logic of a specific feature (e.g., `authController`, `appointmentController`).
--   **`middlewares`**: Contains custom Express middleware for tasks like authentication (`authMiddleware`), error handling (`errorMiddleware`), and input validation (`validate.js`).
--   **`models`**: Defines the Mongoose schemas for all database collections (e.g., `Users`, `Appointments`, `Patients`). This is the data layer of the application.
--   **`routes`**: Defines the API endpoints. Each file maps HTTP routes (e.g., `/api/auth/login`) to the corresponding controller functions.
--   **`utils`**: A collection of helper functions and classes for shared tasks like generating unique IDs (`generateID.js`), sending emails (`sendMail.js`), and creating standardized errors (`errors.utils.js`).
--   **`validations`**: Contains validation rules using `express-validator` to ensure incoming request data is well-formed before it reaches the controllers.
+- **`config`**: Contains configuration files, such as the database connection logic (`db.js`).
+- **`controllers`**: Holds the core business logic. Each controller is responsible for handling the logic of a specific feature (e.g., `authController`, `appointmentController`).
+- **`middlewares`**: Contains custom Express middleware for tasks like authentication (`authMiddleware`), error handling (`errorMiddleware`), and input validation (`validate.js`).
+- **`models`**: Defines the Mongoose schemas for all database collections (e.g., `Users`, `Appointments`, `Patients`). This is the data layer of the application.
+- **`routes`**: Defines the API endpoints. Each file maps HTTP routes (e.g., `/api/auth/login`) to the corresponding controller functions.
+- **`utils`**: A collection of helper functions and classes for shared tasks like generating unique IDs (`generateID.js`), sending emails (`sendMail.js`), and creating standardized errors (`errors.utils.js`).
+- **`validations`**: Contains validation rules using `express-validator` to ensure incoming request data is well-formed before it reaches the controllers.
 
 ---
 
@@ -153,14 +166,13 @@ A typical authenticated API request follows this pipeline:
 1.  **HTTP Request**: A client sends a request to an API endpoint (e.g., `POST /api/appointments/create`).
 2.  **Routing**: Express matches the endpoint in the appropriate file in the `routes` directory (e.g., `appointmentRoutes.js`).
 3.  **Middleware Chain**: The request passes through a series of middleware functions defined for that route:
-    -   `authenticateToken`: Verifies the JWT in the `Authorization` header and attaches the user payload to the request (`req.user`).
-    -   `requirePermission`: Checks if the user's role and permissions (from `req.user`) are sufficient to access the endpoint.
-    -   **Validation (`express-validator`)**: If present, checks and sanitizes the request body or query parameters.
-    -   `validate`: A custom middleware that catches any validation errors and sends a `422` response.
+    - `authenticateToken`: Verifies the JWT in the `Authorization` header and attaches the user payload to the request (`req.user`).
+    - `requirePermission`: Checks if the user's role and permissions (from `req.user`) are sufficient to access the endpoint.
+    - **Validation (`express-validator`)**: If present, checks and sanitizes the request body or query parameters.
+    - `validate`: A custom middleware that catches any validation errors and sends a `422` response.
 4.  **Controller Logic**: If all middleware passes, the request is handed to the controller function (e.g., `appointmentController.addAppointment`). The controller executes the core business logic.
 5.  **Database Interaction**: The controller uses Mongoose **Models** to interact with the MongoDB database (e.g., creating a new appointment document).
 6.  **Response**: The controller sends a JSON response back to the client with a status code (e.g., `201 Created`).
 7.  **Error Handling**: If any error is thrown within an `asyncHandler`-wrapped controller, it is caught and passed to the global `errorMiddleware`, which formats and sends a standardized error response.
 
 ---
-

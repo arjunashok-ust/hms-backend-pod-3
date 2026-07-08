@@ -1,0 +1,834 @@
+openapi: 3.0.3
+info:
+  title: HMS Backend API
+  version: 1.0.0
+  description: OpenAPI specification for the Hospital Management System backend.
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        statusCode:
+          type: integer
+        code:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          type: object
+
+    EmployeeCreateRequest:
+      type: object
+      required: [name, role, email]
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        email:
+          type: string
+          format: email
+        department:
+          type: string
+        designation:
+          type: string
+        phone:
+          type: string
+        joiningDate:
+          type: string
+          format: date
+        medicalRegistrationNo:
+          type: string
+        specialization:
+          type: string
+        qualification:
+          type: string
+        consultationFee:
+          type: number
+        weeklySchedule:
+          type: array
+          items:
+            type: string
+
+    PatientCreateRequest:
+      type: object
+      required: [name, email, phone]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        gender:
+          type: string
+        dob:
+          type: string
+          format: date
+
+    AppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        doctorId:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+
+    MedicalRecordRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+        notes:
+          type: string
+
+    DepartmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    RoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    PermissionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+paths:
+  /:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/auth/signupByUser:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Registration initiated successfully
+        '400':
+          description: Validation error
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Sign in a user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      responses:
+        '200':
+          description: Token refreshed successfully
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current user
+      responses:
+        '200':
+          description: Logout successful
+
+  /api/auth/setpassword:
+    post:
+      tags: [Auth]
+      summary: Set or change first password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Password updated
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent if account exists
+
+  /api/auth/reset-password:
+    get:
+      tags: [Auth]
+      summary: Complete password reset flow
+      security: []
+      parameters:
+        - in: query
+          name: email
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Password reset verified
+
+  /api/profile/me:
+    get:
+      tags: [Profile]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile retrieved
+
+  /api/appointment/create:
+    post:
+      tags: [Appointments]
+      summary: Create an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+      responses:
+        '201':
+          description: Appointment created
+
+  /api/appointment/stats:
+    get:
+      tags: [Appointments]
+      summary: Get appointment statistics
+      responses:
+        '200':
+          description: Statistics retrieved
+
+  /api/appointment/doctors:
+    get:
+      tags: [Appointments]
+      summary: Get doctors list
+      responses:
+        '200':
+          description: Doctors retrieved
+
+  /api/appointment/recent:
+    get:
+      tags: [Appointments]
+      summary: Get recent appointments
+      responses:
+        '200':
+          description: Recent appointments retrieved
+
+  /api/appointment/{id}:
+    put:
+      tags: [Appointments]
+      summary: Update an appointment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+      responses:
+        '200':
+          description: Appointment updated
+    delete:
+      tags: [Appointments]
+      summary: Delete an appointment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointment deleted
+
+  /api/appointment/slots:
+    get:
+      tags: [Appointments]
+      summary: Get available slots
+      responses:
+        '200':
+          description: Available slots retrieved
+
+  /api/appointment/my-appointments:
+    get:
+      tags: [Appointments]
+      summary: Get authenticated user's appointments
+      responses:
+        '200':
+          description: Appointments retrieved
+
+  /api/appointment/all:
+    get:
+      tags: [Appointments]
+      summary: Get all appointments
+      responses:
+        '200':
+          description: Appointments retrieved
+
+  /api/menuNode/createMenuNode:
+    post:
+      tags: [Menu Nodes]
+      summary: Create menu node
+      responses:
+        '201':
+          description: Menu node created
+
+  /api/menuNode/updateMenuNode/{id}:
+    put:
+      tags: [Menu Nodes]
+      summary: Update menu node
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Menu node updated
+
+  /api/menuNode/deleteMenuNode/{id}:
+    delete:
+      tags: [Menu Nodes]
+      summary: Delete menu node
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Menu node deleted
+
+  /api/menuNode/getSidebarMenu:
+    get:
+      tags: [Menu Nodes]
+      summary: Get sidebar menu for current user
+      responses:
+        '200':
+          description: Sidebar menu retrieved
+
+  /api/menuNode/getMenus:
+    get:
+      tags: [Menu Nodes]
+      summary: Get all menu nodes
+      responses:
+        '200':
+          description: Menu nodes retrieved
+
+  /api/menuNode/check-permission/{path}:
+    get:
+      tags: [Menu Nodes]
+      summary: Check permission for a path
+      parameters:
+        - in: path
+          name: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission check result
+
+  /api/dashboard/stats:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard statistics
+      responses:
+        '200':
+          description: Dashboard stats retrieved
+
+  /api/dashboard/tenEmployees:
+    get:
+      tags: [Dashboard]
+      summary: Get employee overview
+      responses:
+        '200':
+          description: Employee overview retrieved
+
+  /api/employees/all:
+    get:
+      tags: [Employees]
+      summary: Get all employees
+      responses:
+        '200':
+          description: Employees retrieved
+
+  /api/employees/create:
+    post:
+      tags: [Employees]
+      summary: Create an employee account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Employee account created
+
+  /api/employees/{id}:
+    put:
+      tags: [Employees]
+      summary: Update an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee updated
+    delete:
+      tags: [Employees]
+      summary: Delete an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee deleted
+
+  /api/employees/approve/{id}:
+    patch:
+      tags: [Employees]
+      summary: Approve an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee approved
+
+  /api/employees/reject/{id}:
+    patch:
+      tags: [Employees]
+      summary: Reject an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee rejected
+
+  /api/patients/all:
+    get:
+      tags: [Patients]
+      summary: Get all patients
+      responses:
+        '200':
+          description: Patients retrieved
+
+  /api/patients/create:
+    post:
+      tags: [Patients]
+      summary: Create a patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreateRequest'
+      responses:
+        '201':
+          description: Patient created
+
+  /api/patients/{id}:
+    put:
+      tags: [Patients]
+      summary: Update a patient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient updated
+    delete:
+      tags: [Patients]
+      summary: Delete a patient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient deleted
+
+  /api/patients/mobile-register:
+    post:
+      tags: [Patients]
+      summary: Register a patient from mobile
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreateRequest'
+      responses:
+        '201':
+          description: Mobile patient registration successful
+
+  /api/email/verify-email:
+    get:
+      tags: [Email]
+      summary: Verify user email
+      security: []
+      parameters:
+        - in: query
+          name: email
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified
+
+  /api/roles/create:
+    post:
+      tags: [Roles]
+      summary: Create a role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+      responses:
+        '201':
+          description: Role created
+
+  /api/roles/show:
+    get:
+      tags: [Roles]
+      summary: Get all roles
+      responses:
+        '200':
+          description: Roles retrieved
+
+  /api/roles/public:
+    get:
+      tags: [Roles]
+      summary: Get public roles
+      security: []
+      responses:
+        '200':
+          description: Public roles retrieved
+
+  /api/roles/{id}:
+    put:
+      tags: [Roles]
+      summary: Update a role
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role updated
+    delete:
+      tags: [Roles]
+      summary: Delete a role
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role deleted
+
+  /api/permissions:
+    post:
+      tags: [Permissions]
+      summary: Create a permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionRequest'
+      responses:
+        '201':
+          description: Permission created
+    get:
+      tags: [Permissions]
+      summary: Get all permissions
+      responses:
+        '200':
+          description: Permissions retrieved
+
+  /api/permissions/assign:
+    post:
+      tags: [Permissions]
+      summary: Assign a permission to a role
+      responses:
+        '200':
+          description: Permission assigned
+
+  /api/permissions/revoke:
+    post:
+      tags: [Permissions]
+      summary: Revoke a permission from a role
+      responses:
+        '200':
+          description: Permission revoked
+
+  /api/records/createRecord:
+    post:
+      tags: [Medical Records]
+      summary: Create a medical record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordRequest'
+      responses:
+        '201':
+          description: Medical record created
+
+  /api/records/updateRecord/{id}:
+    put:
+      tags: [Medical Records]
+      summary: Update a medical record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medical record updated
+
+  /api/records/deleteRecord/{id}:
+    delete:
+      tags: [Medical Records]
+      summary: Delete a medical record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medical record deleted
+
+  /api/records/getAllRecords:
+    get:
+      tags: [Medical Records]
+      summary: Get all medical records
+      responses:
+        '200':
+          description: Medical records retrieved
+
+  /api/records/getMyRecords:
+    get:
+      tags: [Medical Records]
+      summary: Get current user's medical records
+      responses:
+        '200':
+          description: Medical records retrieved
+
+  /api/records/getRecord/{id}:
+    get:
+      tags: [Medical Records]
+      summary: Get a medical record by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medical record retrieved
+
+  /api/records/getPatientRecords:
+    get:
+      tags: [Medical Records]
+      summary: Get patient medical records
+      responses:
+        '200':
+          description: Patient medical records retrieved
+
+  /api/departments:
+    post:
+      tags: [Departments]
+      summary: Create a department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+      responses:
+        '201':
+          description: Department created
+    get:
+      tags: [Departments]
+      summary: Get all departments
+      responses:
+        '200':
+          description: Departments retrieved
+
+  /api/departments/{id}:
+    put:
+      tags: [Departments]
+      summary: Update a department
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Department updated
+    delete:
+      tags: [Departments]
+      summary: Delete a department
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Department deleted

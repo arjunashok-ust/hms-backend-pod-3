@@ -21,6 +21,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const path = require("node:path");
 const connectDB = require("./config/db");
 
 const app = express();
@@ -38,6 +41,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
+
+const swaggerDocument = YAML.load(path.join(__dirname, "..", "openapi.yaml"));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
