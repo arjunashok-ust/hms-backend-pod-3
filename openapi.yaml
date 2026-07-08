@@ -17,7 +17,7 @@ info:
 servers:
   - url: http://localhost:5000
     description: Local development server
-  - url: https://api.example.com
+  - url: https://api.hms.imasw.in
     description: Production server
 tags:
   - name: Health
