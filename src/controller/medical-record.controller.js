@@ -62,7 +62,7 @@ const createMedicalRecord = asyncHandler(async (req, res) => {
         createdBy,
     });
 
-    return res.status(200).json({ message: "Medical record created successfully." });
+    return res.status(201).json({ message: "Medical record created successfully." });
 });
 
 const updateMedicalRecord = asyncHandler(async (req, res) => {
@@ -133,9 +133,9 @@ const updateMedicalRecord = asyncHandler(async (req, res) => {
 const getMedicalRecordStats = asyncHandler(async (req, res) => {
     const [medicalRecordCount, completedCount, draftCount, deletedCount] =
         await Promise.all([
-            MedicalRecord.countDocuments(),
-            MedicalRecord.countDocuments({ status: 'Completed' }),
-            MedicalRecord.countDocuments({ status: 'Draft' }),
+            MedicalRecord.countDocuments({ isDeleted: false}),
+            MedicalRecord.countDocuments({ status: 'Completed' , isDeleted: false}),
+            MedicalRecord.countDocuments({ status: 'Draft', isDeleted: false }),
             MedicalRecord.countDocuments({ isDeleted: true }),
         ]);
 
@@ -161,34 +161,7 @@ const getMedicalRecords = asyncHandler(async (req, res) => {
     }
 
     if (selectedText) {
-        const isIdLike = /^(REC-?|APT-?|PAT-?|EMP-?)?\d+$/i.test(selectedText);
-
-        if (isIdLike) {
-            const normalized = selectedText
-                .replace(/^(REC-?|APT-?|PAT-?|EMP-?)/i, '')
-                .padStart(6, '0');
-
-            const prefix = selectedText.match(/^(REC|APT|PAT|EMP)/i)?.[0]?.toUpperCase();
-
-            if (prefix === 'REC') {
-                filter.medicalRecordId = { $regex: `^REC-${normalized}$`, $options: 'i' };
-            } else if (prefix === 'APT') {
-                filter.appointmentId = { $regex: `^APT-${normalized}$`, $options: 'i' };
-            } else if (prefix === 'PAT') {
-                filter.patientId = { $regex: `^PAT-${normalized}$`, $options: 'i' };
-            } else if (prefix === 'EMP') {
-                filter.doctorId = { $regex: `^EMP-${normalized}$`, $options: 'i' };
-            } else {
-                filter.$or = [
-                    { medicalRecordId: { $regex: `^REC-${normalized}$`, $options: 'i' } },
-                    { patientId: { $regex: `^PAT-${normalized}$`, $options: 'i' } },
-                    { doctorId: { $regex: `^EMP-${normalized}$`, $options: 'i' } },
-                    { appointmentId: { $regex: `^APT-${normalized}$`, $options: 'i' } },
-                ];
-            }
-        } else {
-            filter.$text = { $search: selectedText };
-        }
+         filter.medicalRecordId = { $regex: selectedText, $options: 'i' };
     }
 
     if (isClientApp) {

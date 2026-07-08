@@ -8,7 +8,6 @@ const Role = require('../models/role.model');
 
 const ERR = require('../utils/errors.utils');
 const asyncHandler = require('../utils/asyncHandler.utils');
-const { trusted } = require('mongoose');
 
 const medicalRoles = new Set(['Doctor', 'Nurse']);
 
@@ -16,7 +15,7 @@ const findUserByEmployeeId = async (employeeId) => {
     return await User.findOne({ employeeId, isDeleted: false });
 };
 
-const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) => {
+const changeUserStatus = async (req, res, status, sucessMessage) => {
     const employeeId = req.body.employeeId;
     const user = await findUserByEmployeeId(employeeId);
 
@@ -24,13 +23,10 @@ const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) =>
         throw ERR.userNotFound();
     }
 
-    if (user.status == "Active") {
-        if (user.status === status) {
-            throw ERR.alreadyActivated();
-        }
-    }
-    else if (user.status === status) {
-        throw ERR.alreadyNotActivated();
+    if (user.status === status) {
+        throw status === 'Active'
+            ? ERR.alreadyActivated()
+            : ERR.alreadyNotActivated();
     }
 
     user.status = status;
@@ -40,7 +36,7 @@ const changeUserStatus = asyncHandler(async (req, res, status, sucessMessage) =>
         message: sucessMessage,
         employeeId: user.employeeId,
     });
-});
+};
 
 const deleteUserProfile = asyncHandler(async (req, res) => {
     const employeeId = req.body.employeeId;
@@ -236,7 +232,7 @@ const approveUser = asyncHandler(async (req, res) => {
 });
 
 const rejectUser = asyncHandler(async (req, res) => {
-    return changeUserStatus(req, res, 'Inactive', 'Account rejected sucessfully');
+    return changeUserStatus(req, res, 'Inactive', 'Account rejected successfully');
 });
 
 // Update User Profile

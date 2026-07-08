@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Counter = require('./counter.model');
 
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },

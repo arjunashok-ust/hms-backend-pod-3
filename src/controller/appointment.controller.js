@@ -69,8 +69,8 @@ const createAppointment = asyncHandler(async (req, res) => {
         createdByEmployeeId: createdByEmployeeId,
     });
 
-    return res.status(200).json({
-        message: "Appointment Created Sucessfully",
+    return res.status(201).json({
+        message: "Appointment Created Successfully",
         date: appointment.date,
         status: appointment.status,
     })
@@ -240,24 +240,27 @@ const editAppointment = asyncHandler(async (req, res) => {
         date,
         timeSlot,
         status: { $ne: 'Cancelled' },
-        isDeleted: false
+        isDeleted: false,
+        appointmentId: { $ne: appointmentId },
     });
 
     if (existingAppointment) {
         throw ERR.existingSlot();
     }
 
-    const appointment = await Appointment.findOneAndUpdate({ appointmentId }, {
-        patientId,
-        doctorEmployeeId,
-        date,
-        timeSlot,
-        status,
-        isDeleted: false
-    }, {
-        new: true,
-        runValidators: true,
-    });
+    const appointment = await Appointment.findOneAndUpdate(
+        { appointmentId, isDeleted: false },
+        {
+            $set: {      
+                patientId,
+                doctorEmployeeId,
+                date,
+                timeSlot,
+                status,
+            }
+        },
+        { new: true, runValidators: true }
+    );
 
     if (!appointment) {
         throw ERR.appointmentNotFound();
