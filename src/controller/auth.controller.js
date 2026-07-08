@@ -351,7 +351,6 @@ const patientSignUp = asyncHandler(async (req, res) => {
     });
 
     console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
-
     // 201 created
     return res.status(201).json({
         message: "Account created sucessfully.",
