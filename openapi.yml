@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local development server
-  - url: https://hms.fortrancer.in
+  - url: http://65.2.195.31
     description: Production server
 security:
   - bearerAuth: []
