@@ -285,7 +285,7 @@ const normalizeNumber = (value, defaultValue) => {
     return Number.isNaN(num) || num < 1 ? defaultValue : num;
 };
 
-const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (string) => string.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 module.exports = {
     getUserProfile,

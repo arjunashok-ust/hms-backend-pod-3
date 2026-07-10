@@ -437,8 +437,8 @@ const resetPassword = asyncHandler(async (req, res) => {
         return res.status(200).json({ message: `Reset link is sent to mail` });
     }
 
-    const reset_token = await crypto.randomBytes(32).toString("hex");
-    const temp_password = await crypto.randomBytes(12).toString("hex");
+    const reset_token =  crypto.randomBytes(32).toString("hex");
+    const temp_password = crypto.randomBytes(12).toString("hex");
     const hashed_password = await bcrypt.hash(temp_password, 12);
 
     user.reset_token = reset_token;
