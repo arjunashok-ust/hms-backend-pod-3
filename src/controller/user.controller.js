@@ -198,10 +198,12 @@ const getPatientsBySearch = asyncHandler(async (req, res) => {
         searchText,
     } = req.query;
 
+    const escaped = escapeRegex(searchText);
+
     const patients = await Patient.find({
         $or: [
-            { uhid: { $regex: searchText, $options: "i" } },
-            { name: { $regex: searchText, $options: "i" } },
+            { uhid: { $regex: escaped, $options: "i" } },
+            { name: { $regex: escaped, $options: "i" } },
         ]
     });
 
@@ -213,13 +215,14 @@ const getDoctorsBySearch = asyncHandler(async (req, res) => {
         searchText,
     } = req.query;
 
+    const escaped = escapeRegex(searchText);
 
     const doctors = await Employee.find({
         department: { $ne: 'Administration' },
         $or: [
-            { employeeCode: { $regex: searchText, $options: "i" } },
-            { name: { $regex: searchText, $options: "i" } },
-            { specialization: { $regex: searchText, $options: "i" } }
+            { employeeCode: { $regex: escaped, $options: "i" } },
+            { name: { $regex: escaped, $options: "i" } },
+            { specialization: { $regex: escaped, $options: "i" } }
         ]
     });
 
@@ -281,6 +284,8 @@ const normalizeNumber = (value, defaultValue) => {
     const num = Number.parseInt(value);
     return Number.isNaN(num) || num < 1 ? defaultValue : num;
 };
+
+const escapeRegex = (string) => string.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 module.exports = {
     getUserProfile,

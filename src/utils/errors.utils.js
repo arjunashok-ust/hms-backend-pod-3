@@ -41,6 +41,8 @@ const ERR = {
 
     appointmentPastTime: () => new AppError("You cant book appointment in the past", 400),
     doctorNoSlot: () => new AppError("No slots find for doctor", 404),
+
+    accessDenied: () => new AppError("You are not authorized to perform this action.", 403),
 }
 
 module.exports = ERR;
