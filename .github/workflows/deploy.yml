@@ -20,6 +20,6 @@ jobs:
             cd hms_project/hms-backend-pod-3
             git pull origin feature/sprint_5/ayush
             npm ci
-            pm2 restart hms_backend || pm2 start src/server.js --name hms_backend
+            sudo pm2 restart hms_backend || pm2 start server.js --name hms_backend
             pm2 save
  
