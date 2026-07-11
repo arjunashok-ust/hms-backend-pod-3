@@ -110,13 +110,13 @@ const signUp = asyncHandler(async (req, res) => {
         html: `
             <h1>Hospital Management System</h1><br>
             <p>Thank you ${profile.name} for registering with <b>hms</b>,You can now verify your email by clicking the button below.</p><br>
-            <a href="https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
+            <a href="http://32.199.67.5/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}">
             <input type="Button" value="Verify">
             </a>
             `
     });
 
-    console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
+    console.log(`verify url: http://32.199.67.5/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
 
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
