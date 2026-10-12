@@ -2,16 +2,27 @@ const mongoose = require('mongoose');
 const Counter = require('./counter.model');
 
 const patientSchema = new mongoose.Schema({
-    uhid: { type: String, unique: true, required: true },
+    uhid: { type: String, unique: true },
     name: { type: String, required: true },
-    phone: { type: String, default: null, required: true },
-    email: { type: String, required: true, unique: true },
-    gender: { type: String, enum: ['male', 'female'], required: true },
+    phone: { type: String, default: null },
+    email: { type: String, required: true, lowercase: true, trim: true, unique: true },
+    gender: { type: String, enum: ['Male', 'Female'], required: true },
     dob: { type: Date, required: true },
+    bloodGroup: { type: String, required: true, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
+    allergies: { type: String },
     address: { type: String, required: true },
     emergencyContact: { type: String, default: null },
-    status: { type: String, enum: ['active', 'inactive'] },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
 });
+
+patientSchema.index({
+    name: "text",
+    email: "text",
+    phone: "text",
+    uhid: "text",
+})
 
 // pre hook
 patientSchema.pre('save', async function () {
@@ -25,10 +36,10 @@ patientSchema.pre('save', async function () {
             this.uhid = `PAT-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
-             console.error("patient model pre hook error : "+err);
+            console.error("patient model pre hook error : " + err);
             throw (err);
         }
     }
 });
 
-module.exports = mongoose.model('Patients', patientSchema);
+module.exports = mongoose.model('patients', patientSchema);

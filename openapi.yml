@@ -1,0 +1,2226 @@
+openapi: 3.0.3
+info:
+  title: HMS Backend API
+  version: 1.0.0
+  description: |
+    OpenAPI specification based solely on the application's actual Express routes and validation rules.
+  contact:
+    name: HMS Admin
+    email: mrfortrancer@gmail.com
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://hms.fortrancer.in
+    description: Production server
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+    description: Authentication and user session endpoints.
+  - name: User
+    description: User and patient profile operations.
+  - name: Admin
+    description: Admin user management operations.
+  - name: Node
+    description: Sidebar/navigation node operations.
+  - name: UI
+    description: Public UI support data.
+  - name: Appointment
+    description: Appointment scheduling and lookup.
+  - name: MedicalRecord
+    description: Medical record management.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Invalid request payload or missing required information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication is required or token is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Caller does not have the required permissions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: A resource conflict occurred.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Something went wrong.
+        statusCode:
+          type: integer
+          example: 500
+        code:
+          type: string
+          example: INTERNAL_SERVER_ERROR
+        details:
+          type: object
+          additionalProperties: true
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Operation completed successfully.
+    AuthLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: doctor@example.com
+        password:
+          type: string
+          example: StrongPass123
+        isClientApp:
+          type: boolean
+          example: false
+    AuthLoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: login sucessfull
+        email:
+          type: string
+          format: email
+          example: doctor@example.com
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        role:
+          type: string
+          example: Doctor
+        status:
+          type: string
+          example: Active
+        firstLogin:
+          type: boolean
+          example: false
+    SignUpRequest:
+      type: object
+      required:
+        - name
+        - role
+        - email
+        - department
+        - designation
+        - joiningDate
+      properties:
+        name:
+          type: string
+          example: Dr. Asha Menon
+        role:
+          type: string
+          enum:
+            - Admin
+            - Super Admin
+            - Doctor
+            - Receptionist
+            - Cashier
+            - Nurse
+            - Pharmacist
+            - LabTech
+          example: Doctor
+        email:
+          type: string
+          format: email
+          example: asha.menon@hms.com
+        password:
+          type: string
+          example: StrongPass123
+        status:
+          type: string
+          example: Pending
+        department:
+          type: string
+          enum:
+            - OPD
+            - IPD
+            - ICU
+            - Pharmacy
+            - Administration
+            - Front Office
+          example: OPD
+        designation:
+          type: string
+          example: Senior Consultant
+        joiningDate:
+          type: string
+          format: date
+          example: 2025-01-15
+        medicalRegistrationNo:
+          type: string
+          example: MED-1001
+        specialization:
+          type: string
+          example: Cardiology
+        qualification:
+          type: string
+          example: MBBS, MD
+        consultationFee:
+          type: number
+          format: float
+          example: 1000
+        availabilitySlots:
+          type: array
+          items:
+            type: string
+          example: ["09:00", "11:00", "14:00"]
+    SetPasswordRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          example: NewStrongPass123!
+    VerifyEmailQuery:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        verification_token:
+          type: string
+          example: verification-token-123
+    PatientSignUpRequest:
+      type: object
+      required:
+        - name
+        - role
+        - email
+        - gender
+        - phone
+        - dob
+        - address
+        - bloodGroup
+      properties:
+        name:
+          type: string
+          example: Rahul Sharma
+        role:
+          type: string
+          example: Patient
+        email:
+          type: string
+          format: email
+          example: rahul.sharma@example.com
+        password:
+          type: string
+          example: PatientPass123
+        status:
+          type: string
+          example: Active
+        phone:
+          type: string
+          example: +91-9876543210
+        gender:
+          type: string
+          example: Male
+        dob:
+          type: string
+          format: date
+          example: 1992-05-14
+        address:
+          type: string
+          example: 12, MG Road, Bengaluru
+        bloodGroup:
+          type: string
+          enum:
+            - A+
+            - A-
+            - B+
+            - B-
+            - AB+
+            - AB-
+            - O+
+            - O-
+          example: O+
+        allergies:
+          type: string
+          example: Peanuts
+        emergencyContact:
+          type: string
+          example: +91-9998887776
+    ResetPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+    VerifyResetPasswordQuery:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        reset_token:
+          type: string
+          example: reset-token-123
+    AppointmentCreateRequest:
+      type: object
+      required:
+        - patientId
+        - doctorEmployeeId
+        - date
+        - timeSlot
+        - createdByEmployeeId
+      properties:
+        patientId:
+          type: string
+          example: PAT-1001
+        doctorEmployeeId:
+          type: string
+          example: EMP-2001
+        date:
+          type: string
+          example: 2026-07-15
+        timeSlot:
+          type: string
+          example: 10:30
+        status:
+          type: string
+          example: Booked
+        createdByEmployeeId:
+          type: string
+          example: EMP-1001
+    AppointmentEditRequest:
+      type: object
+      required:
+        - appointmentId
+        - patientId
+        - doctorEmployeeId
+        - date
+        - timeSlot
+      properties:
+        appointmentId:
+          type: string
+          example: APT-9001
+        patientId:
+          type: string
+          example: PAT-1001
+        doctorEmployeeId:
+          type: string
+          example: EMP-2001
+        date:
+          type: string
+          example: 2026-07-16
+        timeSlot:
+          type: string
+          example: 11:00
+        status:
+          type: string
+          example: Rescheduled
+    AppointmentStatusRequest:
+      type: object
+      required:
+        - appointmentId
+        - status
+      properties:
+        appointmentId:
+          type: string
+          example: APT-9001
+        status:
+          type: string
+          example: Completed
+    AppointmentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+          example: 23
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 5
+    MedicalRecordCreateRequest:
+      type: object
+      required:
+        - doctorId
+        - appointmentId
+        - patientId
+        - diagnosis
+        - complaint
+        - symptoms
+        - createdBy
+      properties:
+        doctorId:
+          type: string
+          example: EMP-2001
+        appointmentId:
+          type: string
+          example: APT-9001
+        patientId:
+          type: string
+          example: PAT-1001
+        diagnosis:
+          type: string
+          example: Hypertension
+        complaint:
+          type: string
+          example: Headache and dizziness
+        symptoms:
+          type: string
+          example: Elevated blood pressure and fatigue
+        medications:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Amlodipine
+              dosage:
+                type: string
+                example: 5mg
+              frequency:
+                type: string
+                example: Once daily
+              duration:
+                type: string
+                example: 30 days
+        medicalObservations:
+          type: array
+          items:
+            type: object
+            properties:
+              metricName:
+                type: string
+                example: Blood Pressure
+              metricValue:
+                type: string
+                example: 140/90
+              recordedTime:
+                type: string
+                format: date-time
+                example: 2026-07-08T10:30:00.000Z
+        notes:
+          type: string
+          example: Patient advised dietary changes and routine monitoring
+        status:
+          type: string
+          example: Completed
+        createdBy:
+          type: string
+          example: EMP-1001
+    MedicalRecordUpdateRequest:
+      type: object
+      required:
+        - medicalRecordId
+        - doctorId
+        - appointmentId
+        - patientId
+        - diagnosis
+        - complaint
+        - symptoms
+        - createdBy
+      properties:
+        medicalRecordId:
+          type: string
+          example: REC-1001
+        doctorId:
+          type: string
+          example: EMP-2001
+        appointmentId:
+          type: string
+          example: APT-9001
+        patientId:
+          type: string
+          example: PAT-1001
+        diagnosis:
+          type: string
+          example: Hypertension
+        complaint:
+          type: string
+          example: Headache and dizziness
+        symptoms:
+          type: string
+          example: Elevated blood pressure and fatigue
+        medications:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Amlodipine
+              dosage:
+                type: string
+                example: 5mg
+              frequency:
+                type: string
+                example: Once daily
+              duration:
+                type: string
+                example: 30 days
+        medicalObservations:
+          type: array
+          items:
+            type: object
+            properties:
+              metricName:
+                type: string
+                example: Blood Pressure
+              metricValue:
+                type: string
+                example: 140/90
+              recordedTime:
+                type: string
+                format: date-time
+                example: 2026-07-08T10:30:00.000Z
+        notes:
+          type: string
+          example: Updated patient history notes
+        status:
+          type: string
+          example: Completed
+        createdBy:
+          type: string
+          example: EMP-1001
+        updatedBy:
+          type: string
+          example: EMP-1002
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2026-07-09T12:00:00.000Z
+    MedicalRecordQueryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+          example: 12
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 3
+    NodeCreateRequest:
+      type: object
+      required:
+        - order
+        - name
+        - path
+        - role
+        - icon
+      properties:
+        order:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Dashboard
+        path:
+          type: string
+          example: /dashboard
+        role:
+          type: array
+          items:
+            type: string
+          example: ["Admin", "Doctor"]
+        icon:
+          type: string
+          example: dashboard
+    NodeEditRequest:
+      type: object
+      required:
+        - nodeName
+      properties:
+        nodeName:
+          type: string
+          example: Dashboard
+        data:
+          type: object
+          additionalProperties: true
+    NodeDeleteRequest:
+      type: object
+      required:
+        - nodeName
+      properties:
+        nodeName:
+          type: string
+          example: Dashboard
+    PatientUpdateRequest:
+      type: object
+      required:
+        - patientId
+      properties:
+        patientId:
+          type: string
+          example: PAT-1001
+        name:
+          type: string
+          example: Rahul Sharma
+        gender:
+          type: string
+          example: Male
+        dob:
+          type: string
+          format: date
+          example: 1992-05-14
+        address:
+          type: string
+          example: 12, MG Road, Bengaluru
+        bloodGroup:
+          type: string
+          example: O+
+        allergies:
+          type: string
+          example: Penicillin
+        emergencyContact:
+          type: string
+          example: +91-9998887776
+    UpdateUserProfileRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+            status:
+              type: string
+            department:
+              type: string
+            role:
+              type: string
+            designation:
+              type: string
+            joiningDate:
+              type: string
+              format: date
+            consultationFee:
+              type: number
+            availabilitySlots:
+              type: array
+              items:
+                type: string
+            medicalRegistrationNo:
+              type: string
+            specialization:
+              type: string
+    UpdateRoleRequest:
+      type: object
+      required:
+        - roleName
+      properties:
+        roleName:
+          type: string
+          example: Doctor
+        data:
+          type: object
+          additionalProperties: true
+    UserProfileResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Sucessfully obtained user information
+        name:
+          type: string
+          example: Dr. Asha Menon
+        email:
+          type: string
+          format: email
+          example: asha.menon@hms.com
+        status:
+          type: string
+          example: Active
+        role:
+          type: string
+          example: Doctor
+        employeeId:
+          type: string
+          example: EMP-2001
+        isVerified:
+          type: boolean
+          example: true
+        firstLogin:
+          type: boolean
+          example: false
+        department:
+          type: string
+          example: OPD
+        designation:
+          type: string
+          example: Senior Consultant
+        joiningDate:
+          type: string
+          format: date
+          example: 2025-01-15
+        medicalRegistrationNo:
+          type: string
+          example: MED-1001
+        specialization:
+          type: string
+          example: Cardiology
+        qualification:
+          type: string
+          example: MBBS, MD
+        consultationFee:
+          type: number
+          example: 1000
+        availabilitySlots:
+          type: array
+          items:
+            type: string
+          example: ["09:00", "11:00"]
+    PatientProfileResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Sucessfully obtained user information
+        email:
+          type: string
+          format: email
+          example: rahul.sharma@example.com
+        status:
+          type: string
+          example: Active
+        role:
+          type: string
+          example: Patient
+        isVerified:
+          type: boolean
+          example: true
+        uhid:
+          type: string
+          example: PAT-1001
+        name:
+          type: string
+          example: Rahul Sharma
+        gender:
+          type: string
+          example: Male
+        dob:
+          type: string
+          format: date
+          example: 1992-05-14
+        allergies:
+          type: string
+          example: Peanuts
+        bloodGroup:
+          type: string
+          example: O+
+        address:
+          type: string
+          example: 12, MG Road, Bengaluru
+        phone:
+          type: string
+          example: +91-9876543210
+        emergencyContact:
+          type: string
+          example: +91-9998887776
+    PermissionsResponse:
+      type: object
+      additionalProperties: true
+paths:
+  /auth/signUp:
+    post:
+      tags: [Auth]
+      summary: Register employee sign-up
+      description: Creates a new employee profile and sends verification email.
+      operationId: signUp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '201':
+          description: Account created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      description: Authenticates a user and returns access token.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthLoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/set-password:
+    post:
+      tags: [Auth]
+      summary: Set password for first-time user
+      description: Sets a password for a newly created user.
+      operationId: setPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+      responses:
+        '200':
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verify user email
+      description: Validates email verification token.
+      operationId: verifyEmail
+      security: []
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: verification_token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/patientSignUp:
+    post:
+      tags: [Auth]
+      summary: Register patient
+      description: Creates a patient profile and linked user account.
+      operationId: patientSignUp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientSignUpRequest'
+      responses:
+        '201':
+          description: Patient account created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /auth/getPermissions:
+    get:
+      tags: [Auth]
+      summary: Get role permissions
+      description: Retrieves permissions for the supplied role.
+      operationId: getPermissions
+      security: []
+      parameters:
+        - in: query
+          name: role
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permissions returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/refresh-token:
+    get:
+      tags: [Auth]
+      summary: Refresh access token
+      description: Issues a fresh access token using the refresh token cookie.
+      operationId: refreshToken
+      security: []
+      responses:
+        '200':
+          description: Access token refreshed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      description: Sends password reset email if the account exists.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Reset link sent successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/verify-reset-password:
+    get:
+      tags: [Auth]
+      summary: Verify reset password token
+      description: Validates reset token and enables password reset.
+      operationId: verifyResetPassword
+      security: []
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: reset_token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reset token verified successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/logout:
+    get:
+      tags: [Auth]
+      summary: Logout current user
+      description: Clears refresh token cookie and ends session.
+      operationId: logout
+      responses:
+        '200':
+          description: Logout completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /user/getUserProfile:
+    get:
+      tags: [User]
+      summary: Get user profile by email
+      description: Returns employee profile data for the supplied email.
+      operationId: getUserProfile
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getPatients:
+    get:
+      tags: [User]
+      summary: Get patients list
+      description: Returns a paginated list of patients.
+      operationId: getPatients
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: selectedText
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patients retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/deletePatient:
+    post:
+      tags: [User]
+      summary: Delete patient
+      description: Soft-deletes a patient and related user records.
+      operationId: deletePatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - patientId
+              properties:
+                patientId:
+                  type: string
+                  example: PAT-1001
+                deletedBy:
+                  type: string
+                  example: EMP-1001
+      responses:
+        '200':
+          description: Patient deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getPatientProfile:
+    get:
+      tags: [User]
+      summary: Get patient profile by email
+      description: Returns patient profile data for the supplied email.
+      operationId: getPatientProfile
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Patient profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getPatientId:
+    get:
+      tags: [User]
+      summary: Get patient ID by email
+      description: Returns the patient UHID associated with the email.
+      operationId: getPatientId
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Patient ID returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient id sent successfully
+                  patientId:
+                    type: string
+                    example: PAT-1001
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getAvailableTimeSlots:
+    get:
+      tags: [User]
+      summary: Get available time slots
+      description: Returns available appointment slots for a doctor.
+      operationId: getAvailableTimeSlots
+      parameters:
+        - in: query
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            example: EMP-2001
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            example: 2026-07-15
+      responses:
+        '200':
+          description: Available slots returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: slots fetched sucessfully
+                  slots:
+                    type: array
+                    items:
+                      type: string
+                    example: ["10:00", "11:00"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/updatePatientProfile:
+    post:
+      tags: [User]
+      summary: Update patient profile
+      description: Updates patient profile fields by patientId.
+      operationId: updatePatientProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientUpdateRequest'
+      responses:
+        '200':
+          description: Patient profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getPatientsBySearch:
+    get:
+      tags: [User]
+      summary: Search patients
+      description: Returns patient records matching search text.
+      operationId: getPatientsBySearch
+      parameters:
+        - in: query
+          name: searchText
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient search results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getDoctorsBySearch:
+    get:
+      tags: [User]
+      summary: Search doctors
+      description: Returns doctor records matching search text.
+      operationId: getDoctorsBySearch
+      parameters:
+        - in: query
+          name: searchText
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Doctor search results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getPatientById:
+    get:
+      tags: [User]
+      summary: Get patient by ID
+      description: Returns a patient record for the supplied patientId.
+      operationId: getPatientById
+      parameters:
+        - in: query
+          name: patientId
+          required: true
+          schema:
+            type: string
+            example: PAT-1001
+      responses:
+        '200':
+          description: Patient returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getDoctorById:
+    get:
+      tags: [User]
+      summary: Get doctor by ID
+      description: Returns a doctor record for the supplied doctorId.
+      operationId: getDoctorById
+      parameters:
+        - in: query
+          name: doctorId
+          required: true
+          schema:
+            type: string
+            example: EMP-2001
+      responses:
+        '200':
+          description: Doctor returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /user/getSingleUser:
+    get:
+      tags: [User]
+      summary: Get a single user by email
+      description: Returns combined employee and user profile data.
+      operationId: getSingleUser
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: User returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/deleteUserProfile:
+    post:
+      tags: [Admin]
+      summary: Delete employee profile
+      description: Deletes an employee by employeeId.
+      operationId: deleteUserProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employeeId
+              properties:
+                employeeId:
+                  type: string
+                  example: EMP-1001
+      responses:
+        '200':
+          description: Employee deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/getDashBoardData:
+    get:
+      tags: [Admin]
+      summary: Get dashboard data
+      description: Returns dashboard data for admin.
+      operationId: getDashBoardData
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/getAllUsers:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      description: Returns paginated user listings.
+      operationId: getAllUsers
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Users returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/getUsers:
+    get:
+      tags: [Admin]
+      summary: Get all user profiles
+      description: Returns all user profiles visible to admin.
+      operationId: getUsers
+      responses:
+        '200':
+          description: Users returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/getUserEmployee:
+    get:
+      tags: [Admin]
+      summary: Get employee user list
+      description: Returns paginated employee user data.
+      operationId: getUserEmployee
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Employee user data returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/approveUser:
+    post:
+      tags: [Admin]
+      summary: Approve a user
+      description: Approves a pending user registration.
+      operationId: approveUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employeeId
+              properties:
+                employeeId:
+                  type: string
+                  example: EMP-1001
+      responses:
+        '200':
+          description: User approved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/rejectUser:
+    post:
+      tags: [Admin]
+      summary: Reject a user
+      description: Rejects a pending user registration.
+      operationId: rejectUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employeeId
+              properties:
+                employeeId:
+                  type: string
+                  example: EMP-1001
+      responses:
+        '200':
+          description: User rejected successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/updateUserProfile:
+    post:
+      tags: [Admin]
+      summary: Update user profile
+      description: Updates employee profile fields.
+      operationId: updateUserProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+      responses:
+        '200':
+          description: User profile updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/getRolesData:
+    get:
+      tags: [Admin]
+      summary: Get roles metadata
+      description: Returns role metadata for admin.
+      operationId: getRolesData
+      responses:
+        '200':
+          description: Role metadata returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/updateRole:
+    post:
+      tags: [Admin]
+      summary: Update role metadata
+      description: Updates an existing role definition.
+      operationId: updateRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+      responses:
+        '200':
+          description: Role updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /node/getNodes:
+    get:
+      tags: [Node]
+      summary: Get nodes by role
+      description: Returns UI nodes permitted for the requested role.
+      operationId: getNodes
+      parameters:
+        - in: query
+          name: role
+          required: true
+          schema:
+            type: string
+            example: Doctor
+      responses:
+        '200':
+          description: Nodes returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NodeCreateRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /node/createNode:
+    post:
+      tags: [Node]
+      summary: Create node
+      description: Creates a new sidebar/navigation node.
+      operationId: createNode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeCreateRequest'
+      responses:
+        '201':
+          description: Node created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeCreateRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /node/editNode:
+    post:
+      tags: [Node]
+      summary: Edit node
+      description: Updates a node by nodeName.
+      operationId: editNode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeEditRequest'
+      responses:
+        '200':
+          description: Node edited successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /node/deleteNode:
+    post:
+      tags: [Node]
+      summary: Delete node
+      description: Deletes a node by nodeName.
+      operationId: deleteNode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeDeleteRequest'
+      responses:
+        '200':
+          description: Node deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /ui/getRoles:
+    get:
+      tags: [UI]
+      summary: Get roles for UI
+      description: Returns UI role options.
+      operationId: getRoles
+      security: []
+      responses:
+        '200':
+          description: Roles returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /ui/getDepartments:
+    get:
+      tags: [UI]
+      summary: Get departments for UI
+      description: Returns UI department options.
+      operationId: getDepartments
+      security: []
+      responses:
+        '200':
+          description: Departments returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /ui/getSpecializations:
+    get:
+      tags: [UI]
+      summary: Get specializations for UI
+      description: Returns UI specialization options.
+      operationId: getSpecializations
+      security: []
+      responses:
+        '200':
+          description: Specializations returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /appointment/createAppointment:
+    post:
+      tags: [Appointment]
+      summary: Create appointment
+      description: Schedules a new appointment.
+      operationId: createAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCreateRequest'
+      responses:
+        '201':
+          description: Appointment created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Appointment Created Successfully
+                  date:
+                    type: string
+                  status:
+                    type: string
+                    example: Booked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getAllAppointments:
+    get:
+      tags: [Appointment]
+      summary: Get all appointments
+      description: Returns paginated appointments.
+      operationId: getAllAppointments
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: selectedText
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointments retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getDoctors:
+    get:
+      tags: [Appointment]
+      summary: Get doctors list
+      description: Returns active doctors for appointment booking.
+      operationId: getDoctors
+      responses:
+        '200':
+          description: Doctors returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getAppointmentUiData:
+    get:
+      tags: [Appointment]
+      summary: Get appointment UI data
+      description: Returns appointment dashboard summary counts.
+      operationId: getAppointmentUiData
+      responses:
+        '200':
+          description: Appointment UI data returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointmentCount:
+                    type: integer
+                  bookedCount:
+                    type: integer
+                  cancelledCount:
+                    type: integer
+                  completedCount:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/deleteAppointment:
+    get:
+      tags: [Appointment]
+      summary: Delete appointment
+      description: Soft-deletes an appointment by ID.
+      operationId: deleteAppointment
+      parameters:
+        - in: query
+          name: appointmentId
+          required: true
+          schema:
+            type: string
+            example: APT-9001
+        - in: query
+          name: deletedBy
+          required: false
+          schema:
+            type: string
+            example: EMP-1001
+      responses:
+        '200':
+          description: Appointment deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getAppointmentsByPatientId:
+    get:
+      tags: [Appointment]
+      summary: Get appointments by patient
+      description: Returns appointments filtered by patientId.
+      operationId: getAppointmentsByPatientId
+      parameters:
+        - in: query
+          name: patientId
+          required: true
+          schema:
+            type: string
+            example: PAT-1001
+        - in: query
+          name: selectedText
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Appointments returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getDoctorByEmployeeId:
+    get:
+      tags: [Appointment]
+      summary: Get doctor by employee ID
+      description: Returns doctor data for the supplied employeeId.
+      operationId: getDoctorByEmployeeId
+      parameters:
+        - in: query
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            example: EMP-2001
+      responses:
+        '200':
+          description: Doctor returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/editAppointment:
+    post:
+      tags: [Appointment]
+      summary: Edit appointment
+      description: Updates appointment details by appointmentId.
+      operationId: editAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentEditRequest'
+      responses:
+        '200':
+          description: Appointment updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/editAppointmentStatus:
+    post:
+      tags: [Appointment]
+      summary: Edit appointment status
+      description: Updates only an appointment status.
+      operationId: editAppointmentStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentStatusRequest'
+      responses:
+        '200':
+          description: Appointment status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /appointment/getAppointmentByDoctorIdOrPatientId:
+    get:
+      tags: [Appointment]
+      summary: Get appointment by doctor, patient, or appointment ID
+      description: Returns completed appointments matching supplied identifiers.
+      operationId: getAppointmentByDoctorIdOrPatientId
+      parameters:
+        - in: query
+          name: doctorId
+          required: false
+          schema:
+            type: string
+            example: EMP-2001
+        - in: query
+          name: patientId
+          required: false
+          schema:
+            type: string
+            example: PAT-1001
+        - in: query
+          name: appointmentId
+          required: false
+          schema:
+            type: string
+            example: APT-9001
+      responses:
+        '200':
+          description: Appointments returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/createMedicalRecord:
+    post:
+      tags: [MedicalRecord]
+      summary: Create medical record
+      description: Creates a medical record for an appointment.
+      operationId: createMedicalRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordCreateRequest'
+      responses:
+        '201':
+          description: Medical record created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/updateMedicalRecord:
+    post:
+      tags: [MedicalRecord]
+      summary: Update medical record
+      description: Updates an existing medical record.
+      operationId: updateMedicalRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordUpdateRequest'
+      responses:
+        '200':
+          description: Medical record updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/getMedicalRecordStats:
+    get:
+      tags: [MedicalRecord]
+      summary: Get medical record stats
+      description: Returns aggregated medical record counts.
+      operationId: getMedicalRecordStats
+      responses:
+        '200':
+          description: Statistics returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  medicalRecordCount:
+                    type: integer
+                  completedCount:
+                    type: integer
+                  draftCount:
+                    type: integer
+                  deletedCount:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/getMedicalRecords:
+    get:
+      tags: [MedicalRecord]
+      summary: Get medical records
+      description: Returns paginated medical records.
+      operationId: getMedicalRecords
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: patientId
+          required: false
+          schema:
+            type: string
+            example: PAT-1001
+        - in: query
+          name: doctorId
+          required: false
+          schema:
+            type: string
+            example: EMP-2001
+        - in: query
+          name: isClientApp
+          required: false
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: selectedText
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medical records returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRecordQueryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/getMedicalRecordById:
+    get:
+      tags: [MedicalRecord]
+      summary: Get medical record by ID
+      description: Returns a medical record for the supplied medicalRecordId.
+      operationId: getMedicalRecordById
+      parameters:
+        - in: query
+          name: medicalRecordId
+          required: true
+          schema:
+            type: string
+            example: REC-1001
+      responses:
+        '200':
+          description: Medical record returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /medicalRecord/deleteMedicalRecord:
+    post:
+      tags: [MedicalRecord]
+      summary: Delete medical record
+      description: Marks a medical record as deleted.
+      operationId: deleteMedicalRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - medicalRecordId
+              properties:
+                medicalRecordId:
+                  type: string
+                  example: REC-1001
+      responses:
+        '200':
+          description: Medical record deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

@@ -4,19 +4,26 @@ const Counter = require('./counter.model');
 const employeeSchema = new mongoose.Schema({
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, lowercase: true, trim: true },
-    department: { type: String, enum: ['opd', 'ipd', 'lab', 'pharmacy', 'admin'], required: true },
-    designation: { type: String, enum: ['doctor', 'nurse', 'receptionist', 'owner', 'lab_tech', 'cashier', 'pharmacist'], required: true },
-    status: { type: String, enum: ['active', 'inactive'], required: true },
+    email: { type: String, required: true, lowercase: true, trim: true, unique: true },
+    department: { type: String, enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Administration', 'ICU'], required: true },
+    designation: { type: String, required: true },
     joiningDate: { type: Date, required: true },
-    medicalRegistrationNo: { type: String },
+    medicalRegistrationNo: { type: String, sparse: true },
     specialization: { type: String },
-    qualification: [{ type: String, enum: ['MBBS', 'MD'], required: true }],
+    qualification: { type: String },
     consultationFee: { type: Number },
-    availabilitySlots: {
-        startTime: { type: String },
-        endTime: { type: String }
-    },
+    availabilitySlots: [{ type: String }],
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
+});
+
+employeeSchema.index({
+    name: "text",
+    email: "text",
+    department: "text",
+    specialization: "text",
+    employeeCode: "text"
 });
 
 // pre hook

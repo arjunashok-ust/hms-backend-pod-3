@@ -8,9 +8,19 @@ const appointmentSchema = new mongoose.Schema({
     doctorEmployeeId: { type: String, ref: 'Employees', required: true },
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true },
-    status: { type: String, enum: ['booked', 'cancelled', 'completed'], required: true },
+    status: { type: String, enum: ['Booked', 'Cancelled', 'Completed', 'Pending'], required: true },
     createdByEmployeeId: { type: String, ref: 'Employees', required: true },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
 });
+
+appointmentSchema.index({
+    appointmentId: "text",
+    patientId: "text",
+    doctorEmployeeId: "text",
+    status: "text",
+})
 
 // pre hook
 appointmentSchema.pre('save', async function () {
@@ -22,7 +32,7 @@ appointmentSchema.pre('save', async function () {
                 { new: true, upsert: true },
             );
 
-            this.appointmentId = `APP-${String(counter.seq).padStart(6, '0')}`;
+            this.appointmentId = `APT-${String(counter.seq).padStart(6, '0')}`;
         }
         catch (err) {
             console.error("appointment model pre hook error : " + err);

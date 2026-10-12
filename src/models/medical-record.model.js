@@ -1,0 +1,67 @@
+const mongoose = require("mongoose");
+const Counter = require("./counter.model");
+
+const MedicalRecordSchema = new mongoose.Schema(
+    {
+        medicalRecordId: { type: String, unique: true },
+        doctorId: { type: String, required: true },
+        appointmentId: { type: String, required: true },
+        patientId: { type: String, required: true },
+        complaint: { type: String },
+        symptoms: { type: String },
+        diagnosis: { type: String },
+        medications: [
+            {
+                name: { type: String },
+                dosage: { type: String },
+                frequency: { type: String },
+                duration: { type: String },
+            },
+        ],
+        medicalObservations: [
+            {
+                metricName: { type: String },
+                metricValue: { type: String },
+                recordedTime: { type: Date },
+            },
+        ],
+        notes: { type: String },
+        createdBy: { type: String, required: true },
+        updatedBy: { type: String },
+        updatedAt: { type: Date },
+        isDeleted: { type: Boolean, default: false },
+        deletedAt: { type: Date },
+        deletedBy: { type: String },
+        status: { type: String, enum: ['Draft', 'Completed'] },
+    },
+    { timestamps: { createdAt: "created_at" } },
+);
+
+MedicalRecordSchema.index({
+    medicalRecordId: "text",
+    doctorId: "text",
+    patientId: "text",
+    appointmentId: "text",
+    status: "text",
+});
+
+// pre hook
+MedicalRecordSchema.pre('save', async function () {
+    if (this.isNew) {
+        try {
+            const counter = await Counter.findOneAndUpdate(
+                { name: 'medicalRecord' },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+
+            this.medicalRecordId = `REC-${String(counter.seq).padStart(6, '0')}`;
+        }
+        catch (err) {
+            console.error("Medical record model pre hook error : " + err);
+            throw (err);
+        }
+    }
+});
+
+module.exports = mongoose.model('MedicalRecord', MedicalRecordSchema);

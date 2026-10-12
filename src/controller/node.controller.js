@@ -1,53 +1,54 @@
 const Node = require('../models/node.model');
+const Role = require('../models/role.model');
+
+const ERR = require('../utils/errors.utils');
+const asyncHandler = require('../utils/asyncHandler.utils');
+
+
+// Get Node
+const getNodes = asyncHandler(async (req, res) => {
+    const role = req.query.role;
+
+    const isRole = await Role.findOne({ role_name: role });
+    if (!isRole) {
+        throw ERR.unknownRole();
+    }
+
+    const node = await Node.find({ role: role }).sort({ order: 1 });
+
+    return res.status(200).json(node);
+});
 
 // Create Node
-const addNode = async (req, res) => {
-    try {
-        const {
-            name,
-            role
-        } = req.body;
+const createNode = asyncHandler(async (req, res) => {
+    const data = req.body;
+    const node = await Node.create(data);
+    return res.status(201).json(node);
+})
 
-        const existingNode = await Node.findOne({ name: name });
-        if (existingNode) {
-            return res.status(409).json({ message: 'node already defined.' });
-        }
+// Edit Node
+const editNode = asyncHandler(async (req, res) => {
+    const nodeName = req.body.nodeName;
+    const data = req.body.data;
 
-        const node = await Node.create({
-            name,
-            role
-        });
-
-        return res.status(200).json({
-            message: `node created successfully, ${node.name}`,
-            roles: role
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'server error during add node' });
+    const updatedNode = await Node.findOneAndUpdate({ name: nodeName }, data, { new: true });
+    if (!updatedNode) {
+        throw ERR.nodeNotFound();
     }
-}
 
+    return res.status(200).json(updatedNode);
+})
 
 // Delete Node
-const deleteNode = async (req, res) => {
-    try {
-        const name = req.body.name;
+const deleteNode = asyncHandler(async (req, res) => {
+    const nodeName = req.body.nodeName;
 
-        const node = await Node.findOneAndDelete({ name });
-
-        if (!node) {
-            return res.status(404).json({ message: 'node not found' });
-        }
-
-        return res.status(200).json({
-            message: `node deleted successfully ${node.name}`,
-            roles: node.roles
-        })
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'server error during delete node' });
+    const deletedNode = await Node.findOneAndDelete({ name: nodeName });
+    if (!deletedNode) {
+        throw ERR.nodeNotFound();
     }
-}
 
-module.exports = { addNode, deleteNode }
+    return res.status(200).json({ message: "Node deleted sucessfully" });
+});
+
+module.exports = { getNodes, createNode, editNode, deleteNode }

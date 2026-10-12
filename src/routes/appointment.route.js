@@ -1,0 +1,22 @@
+const express = require('express');
+const router = express.Router();
+
+const appointmentValidate = require('../validation/appointment.validate');
+const appointmentController = require('../controller/appointment.controller');
+const validate = require('../middleware/validate.middleware');
+const validateUser = require('../validation/user.validate');
+const auth = require('../middleware/auth.middleware');
+const permission = require('../middleware/permission.middleware');
+
+router.post('/createAppointment', appointmentValidate.validateCreateAppointment, validate, auth, permission('create:appointment'), appointmentController.createAppointment);
+router.get('/getAllAppointments', validateUser.validatePagination, validate, auth, permission('view:appointment'), appointmentController.getAllAppointments);
+router.get('/getDoctors', auth, permission('view:appointment'), appointmentController.getDoctors);
+router.get('/getAppointmentUiData', auth, permission('view:appointment'), appointmentController.getAppointmentUiData);
+router.get('/deleteAppointment', appointmentValidate.validateDeleteAppointment, validate, auth, permission('delete:appointment'), appointmentController.deleteAppointment);
+router.get('/getAppointmentsByPatientId', validateUser.validatePagination, appointmentValidate.validateGetAppointmentByPatientId, validate, auth, permission('view:appointment'), appointmentController.getAppointmentsByPatientId);
+router.get('/getDoctorByEmployeeId', appointmentValidate.validateGetDoctorByEmployeeId, validate, auth, permission('view:appointment'), appointmentController.getDoctorByEmployeeId);
+router.post('/editAppointment', appointmentValidate.validateEditAppointment, validate, auth, permission('edit:appointment'), appointmentController.editAppointment);
+router.post('/editAppointmentStatus', appointmentValidate.validateEditAppointmentStatus, validate, auth, permission('approve:appointment'), appointmentController.editAppointmentStatus);
+router.get('/getAppointmentByDoctorIdOrPatientId', auth, permission('view:patient'), appointmentController.getAppointmentByDoctorIdOrPatientId);
+
+module.exports = router;

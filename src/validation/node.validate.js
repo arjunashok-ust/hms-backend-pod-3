@@ -1,12 +1,7 @@
-const { body } = require('express-validator');
+const { query } = require('express-validator');
 
-const validateCreateNode = [
-    body("name").notEmpty().withMessage("name is required."),
-    body("roles").notEmpty().withMessage("roles is required.")
-];
+const validateGetNode = [
+    query("role").notEmpty().withMessage("Role Is Required"),
+]
 
-const validateDeleteNode = [
-    body("name").notEmpty().withMessage("name is required."),
-];
-
-module.exports = { validateCreateNode, validateDeleteNode }
+module.exports = { validateGetNode }

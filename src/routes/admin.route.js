@@ -3,9 +3,22 @@ const router = express.Router();
 
 const adminController = require('../controller/admin.controller');
 const validateAdmin = require('../validation/admin.validate');
+const validateUser = require('../validation/user.validate');
 const validate = require('../middleware/validate.middleware');
 const auth = require('../middleware/auth.middleware');
+const permission = require('../middleware/permission.middleware');
 
-router.post('/deleteUserProfile', validateAdmin.validateDeleteUserProfile, validate, auth, adminController.deleteUserProfile);
+
+router.post('/deleteUserProfile', validateAdmin.validateDeleteUserProfile, validate, auth, permission('view:employee'), adminController.deleteUserProfile);
+router.get('/getDashBoardData', auth, permission('view:dashboard'), adminController.getDashboardData);
+router.get('/getAllUsers', validateUser.validatePagination, validate, auth, permission('view:dashboard'), adminController.getAllUsers);
+router.get('/getUsers', auth, permission('view:dashboard'), adminController.getUsers);
+router.get('/getUserEmployee', validateUser.validatePagination, validate, auth, permission('view:dashboard', 'edit:profile'), adminController.getUserEmployee);
+router.post('/approveUser', validateAdmin.validateApproveUser, validate, auth, permission('approve:user'), adminController.approveUser);
+router.post('/rejectUser', validateAdmin.validateRejectUser, validate, auth, permission('reject:user'), adminController.rejectUser);
+router.post('/updateUserProfile', validateAdmin.validateUpdateProfile, validate, auth, permission('edit:employee', 'edit:profile'), adminController.updateUserProfile);
+router.get('/getRolesData', auth, permission('view:permission'), adminController.getRolesData)
+router.post('/updateRole', auth, permission('edit:permission'), adminController.updateRole)
+
 
 module.exports = router;
