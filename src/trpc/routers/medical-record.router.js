@@ -1,52 +1,37 @@
-const { router, protectedProcedure, requirePermission } = require('../trpc');
-const MedicalRecord = require('../../models/medical-record.model');
-const ERR = require('../../utils/errors.utils');
-const {
-    getMedicalRecordsInput,
-    getMedicalRecordsOutput,
-    getMedicalRecordByIdInput,
-    medicalRecordSchema,
-} = require('../schemas/medical-record.schema');
-
-const viewProcedure = protectedProcedure.use(requirePermission('view:medical-record'));
+const { router, permissionProcedure } = require('../trpc');
+const medicalRecordService = require('../../services/medical-record.service');
+const { PERMISSIONS: P } = require('../../constants/permissions.constants');
+const schema = require('../schemas/medical-record.schema');
 
 const medicalRecordRouter = router({
-    getMedicalRecords: viewProcedure
-        .input(getMedicalRecordsInput)
-        .output(getMedicalRecordsOutput)
-        .query(async ({ input }) => {
-            const { selectedText, page, limit, patientId, doctorId, isClientApp } = input;
+    createMedicalRecord: permissionProcedure(P.CREATE_MEDICAL_RECORD)
+        .input(schema.createMedicalRecordInput)
+        .output(schema.createMedicalRecordOutput)
+        .mutation(({ input, ctx }) => medicalRecordService.createMedicalRecord(ctx.user, input)),
 
-            const filter = { isDeleted: false };
-            if (selectedText) filter.medicalRecordId = { $regex: selectedText, $options: 'i' };
-            if (isClientApp) filter.status = 'Completed';
-            if (doctorId) filter.doctorId = doctorId;
-            else if (patientId) filter.patientId = patientId;
+    updateMedicalRecord: permissionProcedure(P.EDIT_MEDICAL_RECORD)
+        .input(schema.updateMedicalRecordInput)
+        .output(schema.messageOutput)
+        .mutation(({ input, ctx }) => medicalRecordService.updateMedicalRecord(ctx.user, input)),
 
-            const [total, data] = await Promise.all([
-                MedicalRecord.countDocuments(filter),
-                MedicalRecord.find(filter)
-                    .sort({ created_at: -1 })
-                    .skip((page - 1) * limit)
-                    .limit(limit)
-                    .lean(),
-            ]);
+    getMedicalRecordStats: permissionProcedure(P.VIEW_MEDICAL_RECORD)
+        .output(schema.medicalRecordStatsOutput)
+        .query(() => medicalRecordService.getMedicalRecordStats()),
 
-            return { data, total, page, totalPages: Math.ceil(total / limit) };
-        }),
+    getMedicalRecords: permissionProcedure(P.VIEW_MEDICAL_RECORD)
+        .input(schema.getMedicalRecordsInput)
+        .output(schema.getMedicalRecordsOutput)
+        .query(({ input, ctx }) => medicalRecordService.getMedicalRecords(ctx.user, input)),
 
-    getMedicalRecordById: viewProcedure
-        .input(getMedicalRecordByIdInput)
-        .output(medicalRecordSchema)
-        .query(async ({ input }) => {
-            const record = await MedicalRecord.findOne({
-                medicalRecordId: input.medicalRecordId,
-                isDeleted: false,
-            }).lean();
+    getMedicalRecordById: permissionProcedure(P.VIEW_MEDICAL_RECORD)
+        .input(schema.getMedicalRecordByIdInput)
+        .output(schema.medicalRecordSchema)
+        .query(({ input, ctx }) => medicalRecordService.getMedicalRecordById(ctx.user, input)),
 
-            if (!record) throw ERR.medicalRecordNotFound();
-            return record;
-        }),
+    deleteMedicalRecord: permissionProcedure(P.DELETE_MEDICAL_RECORD)
+        .input(schema.deleteMedicalRecordInput)
+        .output(schema.messageOutput)
+        .mutation(({ input, ctx }) => medicalRecordService.deleteMedicalRecord(ctx.user, input)),
 });
 
 module.exports = { medicalRecordRouter };

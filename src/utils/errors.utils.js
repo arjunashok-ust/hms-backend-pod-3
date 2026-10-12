@@ -1,48 +1,59 @@
 const AppError = require('./appError.utils');
+const { ERROR_MESSAGES: MSG } = require('../constants/messages.constants');
 
 const ERR = {
-    emailExists: () => new AppError("Email is already registered.", 409),
-    phoneExists: () => new AppError("Phone number is already registered", 409),
-    uniqueMedRegNo: () => new AppError("Medical registration no should be unique", 409),
-    medicalRecordExists: () => new AppError("Medical record already exists", 409),
+    emailExists: () => new AppError(MSG.EMAIL_EXISTS, 409),
+    phoneExists: () => new AppError(MSG.PHONE_EXISTS, 409),
+    uniqueMedRegNo: () => new AppError(MSG.UNIQUE_MED_REG_NO, 409),
+    medicalRecordExists: () => new AppError(MSG.MEDICAL_RECORD_EXISTS, 409),
+    nodeExists: () => new AppError(MSG.NODE_EXISTS, 409),
+    duplicateEntry: () => new AppError(MSG.DUPLICATE_ENTRY, 409),
 
-    userNotFound: () => new AppError("User not found", 404),
-    employeeNotFound: () => new AppError("Employee not found", 404),
-    noUsersFound: () => new AppError("No users found", 404),
-    patientNotFound: () => new AppError("Patient not found", 404),
-    doctorNotFound: () => new AppError("Doctor not found", 404),
-    roleNotFound: () => new AppError("Role not found", 404),
-    appointmentNotFound: () => new AppError("Appointment not found", 404),
-    medicalRecordNotFound: () => new AppError("Medical Record not found", 404),
-    tokenNotFound: () => new AppError("Token not found", 403),
-    nodeNotFound: () => new AppError("Node not found", 403),
+    userNotFound: () => new AppError(MSG.USER_NOT_FOUND, 404),
+    employeeNotFound: () => new AppError(MSG.EMPLOYEE_NOT_FOUND, 404),
+    noUsersFound: () => new AppError(MSG.NO_USERS_FOUND, 404),
+    patientNotFound: () => new AppError(MSG.PATIENT_NOT_FOUND, 404),
+    doctorNotFound: () => new AppError(MSG.DOCTOR_NOT_FOUND, 404),
+    roleNotFound: () => new AppError(MSG.ROLE_NOT_FOUND, 404),
+    appointmentNotFound: () => new AppError(MSG.APPOINTMENT_NOT_FOUND, 404),
+    medicalRecordNotFound: () => new AppError(MSG.MEDICAL_RECORD_NOT_FOUND, 404),
+    tokenNotFound: () => new AppError(MSG.TOKEN_NOT_FOUND, 403),
+    nodeNotFound: () => new AppError(MSG.NODE_NOT_FOUND, 404),
 
-    existingPatientAppointment: () => new AppError("Patient have another appointment booked for this slot", 400),
-    existingSlot: () => new AppError("Time slot already booked"),
+    existingPatientAppointment: () => new AppError(MSG.EXISTING_PATIENT_APPOINTMENT, 400),
+    existingSlot: () => new AppError(MSG.EXISTING_SLOT, 409),
 
-    invalidCredentials: () => new AppError("Invalid credentials", 401),
-    tokenInvalidOrExpired: () => new AppError("Invalid or expired token", 403),
+    invalidCredentials: () => new AppError(MSG.INVALID_CREDENTIALS, 401),
+    tokenInvalidOrExpired: () => new AppError(MSG.TOKEN_INVALID_OR_EXPIRED, 403),
 
-    emailNotVerified: () => new AppError("Email not verified", 400),
-    accountNotActivated: () => new AppError("Account not activated", 400),
-    verificationTokenInvalid: () => new AppError("Verification token in invalid", 400),
+    // 401 variants, used by the tRPC layer so clients know when to refresh the token
+    unauthenticated: () => new AppError(MSG.AUTH_REQUIRED, 401),
+    sessionExpired: () => new AppError(MSG.TOKEN_INVALID_OR_EXPIRED, 401),
+    refreshTokenMissing: () => new AppError(MSG.TOKEN_NOT_FOUND, 401),
 
-    alreadyActivated: () => new AppError("Account is already activated", 400),
-    alreadyNotActivated: () => new AppError("Account is already not active", 400),
+    emailNotVerified: () => new AppError(MSG.EMAIL_NOT_VERIFIED, 400),
+    accountNotActivated: () => new AppError(MSG.ACCOUNT_NOT_ACTIVATED, 400),
+    verificationTokenInvalid: () => new AppError(MSG.VERIFICATION_TOKEN_INVALID, 400),
 
-    medRoleRequired: () => new AppError("This role requires medical registration number", 422),
-    qualificationRequired: () => new AppError("This role requires qualification", 422),
+    alreadyActivated: () => new AppError(MSG.ALREADY_ACTIVATED, 400),
+    alreadyNotActivated: () => new AppError(MSG.ALREADY_NOT_ACTIVATED, 400),
 
-    clientMobileApp: () => new AppError("Only patients are allowed to sign in using the mobile app", 403),
-    setPassword: () => new AppError("Set password is only allowed for first time users", 400),
+    medRoleRequired: () => new AppError(MSG.MED_ROLE_REQUIRED, 422),
+    qualificationRequired: () => new AppError(MSG.QUALIFICATION_REQUIRED, 422),
 
-    unknownRole: () => new AppError("Unknown role", 400),
-    nodeCreateFailed: () => new AppError("Error creating node", 400),
+    clientMobileApp: () => new AppError(MSG.CLIENT_MOBILE_APP, 403),
+    setPassword: () => new AppError(MSG.SET_PASSWORD, 400),
 
-    appointmentPastTime: () => new AppError("You cant book appointment in the past", 400),
-    doctorNoSlot: () => new AppError("No slots find for doctor", 404),
+    unknownRole: () => new AppError(MSG.UNKNOWN_ROLE, 400),
+    nodeCreateFailed: () => new AppError(MSG.NODE_CREATE_FAILED, 400),
 
-    accessDenied: () => new AppError("You are not authorized to perform this action.", 403),
+    appointmentPastTime: () => new AppError(MSG.APPOINTMENT_PAST_TIME, 400),
+    doctorNoSlot: () => new AppError(MSG.DOCTOR_NO_SLOT, 404),
+
+    accessDenied: () => new AppError(MSG.ACCESS_DENIED, 403),
+
+    // business-rule violation; the message comes from VALIDATION_MESSAGES
+    invalidInput: (message) => new AppError(message, 422),
 }
 
 module.exports = ERR;
