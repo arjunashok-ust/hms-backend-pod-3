@@ -5,6 +5,9 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 
+const { createExpressMiddleware } = require('@trpc/server/adapters/express');
+const { appRouter } = require('./trpc');
+const { createContext } = require('./trpc/trpc');
 const errorHandler = require('./middleware/errorHandler.middleware');
 
 
@@ -37,6 +40,8 @@ app.use('/ui', uiRoute);
 app.use('/node', nodeRoute);
 app.use('/appointment', appointmentRoute);
 app.use('/medicalRecord', medicalRecordRoute);
+
+app.use('/trpc', createExpressMiddleware({router: appRouter, createContext}));
 
 app.use(errorHandler);
 
