@@ -9,5 +9,5 @@ sonar-project.properties
 .vscode/
 # sonar config
 sonar-project.properties
-# migration plan
+# migration plan (sensitive)
 migration-plan.md
